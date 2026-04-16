@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Más Prevención — Generador RIOHS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B2E6E">
+<style>
+  :root {
+    --azul: #1B2E6E;
+    --naranja: #E87722;
+    --azul-claro: #2A3F8F;
+    --azul-hover: #152558;
+    --fondo: #F4F5F8;
+    --superficie: #FFFFFF;
+    --texto: #1A1A2E;
+    --texto-suave: #6B7280;
+    --borde: #E5E7EB;
+    --error: #DC2626;
+    --exito: #16A34A;
+    --naranja-claro: #FFF4EC;
+    --sombra: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --sombra-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* ── LOGIN ─────────────────────────────────────────── */
+  #pantalla-login {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--azul) 0%, var(--azul-claro) 100%);
+    padding: 1.5rem;
+  }
+
+  .login-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+
+  .login-logo {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .login-logo .marca {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--azul);
+    letter-spacing: -0.5px;
+  }
+
+  .login-logo .marca span { color: var(--naranja); }
+
+  .login-logo .sub {
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .login-titulo {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--texto);
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .campo { margin-bottom: 1rem; }
+
+  .campo label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--texto-suave);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  .campo input {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: 1.5px solid var(--borde);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--texto);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .campo input:focus { border-color: var(--azul); }
+
+  .btn-primario {
+    width: 100%;
+    padding: 0.8rem;
+    background: var(--azul);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 0.5rem;
+    font-family: inherit;
+  }
+
+  .btn-primario:hover { background: var(--azul-hover); }
+  .btn-primario:active { transform: scale(0.98); }
+  .btn-primario:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .error-msg {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: var(--error);
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+    display: none;
+  }
+
+  /* ── APP PRINCIPAL ──────────────────────────────────── */
+  #pantalla-app { display: none; min-height: 100vh; }
+
+  /* Sidebar */
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 240px;
+    background: var(--azul);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    transition: transform 0.3s;
+  }
+
+  .sidebar-logo {
+    padding: 1.5rem 1.25rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .sidebar-logo .marca {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -0.3px;
+  }
+
+  .sidebar-logo .marca span { color: var(--naranja); }
+  .sidebar-logo .sub { font-size: 0.7rem; color: rgba(255,255,255,0.5); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+
+  .sidebar-nav { flex: 1; padding: 1rem 0; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.65rem 1.25rem;
+    color: rgba(255,255,255,0.65);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .nav-item:hover { color: white; background: rgba(255,255,255,0.07); }
+  .nav-item.activo { color: white; background: rgba(255,255,255,0.12); border-left-color: var(--naranja); }
+
+  .nav-item .icono { font-size: 1rem; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .usuario-info { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+  .usuario-email { color: rgba(255,255,255,0.8); font-weight: 500; font-size: 0.82rem; display: block; }
+
+  .btn-salir {
+    width: 100%;
+    padding: 0.5rem;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .btn-salir:hover { background: rgba(255,255,255,0.15); color: white; }
+
+  /* Contenido principal */
+  .contenido {
+    margin-left: 240px;
+    flex: 1;
+    padding: 2rem;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+
+  .titulo-pagina { font-size: 1.4rem; font-weight: 700; color: var(--texto); }
+  .subtitulo-pagina { font-size: 0.85rem; color: var(--texto-suave); margin-top: 2px; }
+
+  /* ── VISTAS ─────────────────────────────────────────── */
+  .vista { display: none; }
+  .vista.activa { display: block; }
+
+  /* Dashboard */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--sombra);
+    border-left: 4px solid var(--azul);
+  }
+
+  .stat-card.naranja { border-left-color: var(--naranja); }
+  .stat-card.verde { border-left-color: var(--exito); }
+
+  .stat-numero { font-size: 2rem; font-weight: 800; color: var(--azul); }
+  .stat-card.naranja .stat-numero { color: var(--naranja); }
+  .stat-card.verde .stat-numero { color: var(--exito); }
+  .stat-label { font-size: 0.82rem; color: var(--texto-suave); font-weight: 500; margin-top: 2px; }
+
+  /* Tabla clientes */
+  .card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--sombra);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--borde);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-titulo { font-size: 1rem; font-weight: 700; color: var(--texto); }
+
+  .btn-accion {
+    padding: 0.55rem 1.1rem;
+    background: var(--azul);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-accion:hover { background: var(--azul-hover); }
+
+  .btn-accion.secundario {
+    background: transparent;
+    color: var(--azul);
+    border: 1.5px solid var(--azul);
+  }
+
+  .btn-accion.secundario:hover { background: #EEF1FA; }
+
+  .btn-accion.naranja-btn { background: var(--naranja); }
+  .btn-accion.naranja-btn:hover { background: #C96A1A; }
+
+  .btn-accion.peligro { background: var(--error); }
+  .btn-accion.peligro:hover { background: #B91C1C; }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  th {
+    text-align: left;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--texto-suave);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: #FAFAFA;
+    border-bottom: 1px solid var(--borde);
+  }
+
+  td {
+    padding: 0.9rem 1.25rem;
+    font-size: 0.88rem;
+    border-bottom: 1px solid var(--borde);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #FAFBFF; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .badge-azul { background: #EEF1FA; color: var(--azul); }
+  .badge-naranja { background: var(--naranja-claro); color: var(--naranja); }
+  .badge-verde { background: #DCFCE7; color: var(--exito); }
+  .badge-gris { background: #F3F4F6; color: #6B7280; }
+
+  .acciones-td { display: flex; gap: 6px; }
+
+  .btn-mini {
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .btn-mini-azul { background: #EEF1FA; color: var(--azul); }
+  .btn-mini-azul:hover { background: #DCE2F5; }
+  .btn-mini-naranja { background: var(--naranja-claro); color: var(--naranja); }
+  .btn-mini-naranja:hover { background: #FDEBD8; }
+  .btn-mini-rojo { background: #FEF2F2; color: var(--error); }
+  .btn-mini-rojo:hover { background: #FEE2E2; }
+
+  .vacio-msg {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--texto-suave);
+  }
+
+  .vacio-msg .icono-grande { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .vacio-msg p { font-size: 0.9rem; }
+
+  /* ── FORMULARIO FICHA CLIENTE ───────────────────────── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  .form-grid.tres { grid-template-columns: 1fr 1fr 1fr; }
+  .col-completo { grid-column: 1 / -1; }
+
+  .form-grupo { display: flex; flex-direction: column; gap: 5px; }
+
+  .form-grupo label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--texto-suave);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .form-grupo label .requerido { color: var(--naranja); }
+
+  .form-grupo input,
+  .form-grupo select,
+  .form-grupo textarea {
+    padding: 0.65rem 0.9rem;
+    border: 1.5px solid var(--borde);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--texto);
+    background: white;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-grupo input:focus,
+  .form-grupo select:focus,
+  .form-grupo textarea:focus { border-color: var(--azul); }
+
+  .form-grupo textarea { resize: vertical; min-height: 80px; }
+
+  .seccion-form {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .seccion-form:last-child { border-bottom: none; }
+
+  .seccion-titulo {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--azul);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .seccion-titulo::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--borde);
+  }
+
+  /* Checkboxes opciones */
+  .opciones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px;
+  }
+
+  .opcion-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.6rem 0.9rem;
+    border: 1.5px solid var(--borde);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.85rem;
+  }
+
+  .opcion-check:hover { border-color: var(--azul); background: #FAFBFF; }
+  .opcion-check.seleccionado { border-color: var(--azul); background: #EEF1FA; color: var(--azul); font-weight: 600; }
+
+  .opcion-check input[type="checkbox"] { accent-color: var(--azul); }
+
+  /* Colores corporativos */
+  .color-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .color-preview {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 2px solid var(--borde);
+    cursor: pointer;
+  }
+
+  /* Historial */
+  .historial-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--borde);
+    font-size: 0.87rem;
+  }
+
+  .historial-item:last-child { border-bottom: none; }
+  .historial-fecha { color: var(--texto-suave); font-size: 0.8rem; }
+
+  /* Pantalla de carga */
+  #pantalla-carga {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(27, 46, 110, 0.92);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  #pantalla-carga.visible { display: flex; }
+
+  .spinner {
+    width: 56px;
+    height: 56px;
+    border: 4px solid rgba(255,255,255,0.2);
+    border-top-color: var(--naranja);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .carga-texto { color: white; font-size: 1rem; font-weight: 600; text-align: center; }
+  .carga-sub { color: rgba(255,255,255,0.6); font-size: 0.82rem; text-align: center; }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--texto);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: var(--sombra-md);
+    z-index: 9999;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+
+  #toast.visible { transform: translateY(0); opacity: 1; }
+  #toast.exito { background: var(--exito); }
+  #toast.error { background: var(--error); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.abierto { transform: translateX(0); }
+    .contenido { margin-left: 0; padding: 1rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid.tres { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .btn-menu-movil {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 200;
+    background: var(--azul);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (max-width: 768px) { .btn-menu-movil { display: flex; } }
+
+  .separador-acciones {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .alerta-info {
+    background: #EEF1FA;
+    border: 1px solid #C7D2F0;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    font-size: 0.87rem;
+    color: var(--azul);
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .tag-rubro {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #F3F4F6;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #374151;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     PANTALLA LOGIN
+════════════════════════════════════════════ -->
+<div id="pantalla-login">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="marca">Más <span>Prevención</span></div>
+      <div class="sub">Generador de RIOHS</div>
+    </div>
+    <p class="login-titulo">Ingresa a tu cuenta</p>
+
+    <div class="campo">
+      <label>Correo electrónico</label>
+      <input type="email" id="login-email" placeholder="tu@correo.cl" autocomplete="email">
+    </div>
+    <div class="campo">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <button class="btn-primario" id="btn-login" onclick="iniciarSesion()">
+      Ingresar
+    </button>
+
+    <div class="error-msg" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PANTALLA APP PRINCIPAL
+════════════════════════════════════════════ -->
+<div id="pantalla-app">
+
+  <button class="btn-menu-movil" onclick="toggleSidebar()">☰</button>
+
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="marca">Más <span>Prevención</span></div>
+        <div class="sub">Generador RIOHS</div>
+      </div>
+
+      <div class="sidebar-nav">
+        <div class="nav-item activo" onclick="mostrarVista('dashboard')" id="nav-dashboard">
+          <span class="icono">📊</span> Dashboard
+        </div>
+        <div class="nav-item" onclick="mostrarVista('clientes')" id="nav-clientes">
+          <span class="icono">🏢</span> Clientes
+        </div>
+        <div class="nav-item" onclick="mostrarVista('nuevo-cliente')" id="nav-nuevo">
+          <span class="icono">➕</span> Nuevo cliente
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="usuario-info">
+          Sesión activa
+          <span class="usuario-email" id="usuario-email-display">—</span>
+        </div>
+        <button class="btn-salir" onclick="cerrarSesion()">Cerrar sesión</button>
+      </div>
+    </nav>
+
+    <!-- Contenido -->
+    <main class="contenido">
+
+      <!-- ── DASHBOARD ── -->
+      <div class="vista activa" id="vista-dashboard">
+        <div class="topbar">
+          <div>
+            <div class="titulo-pagina">Dashboard</div>
+            <div class="subtitulo-pagina">Resumen de actividad</div>
+          </div>
+          <button class="btn-accion" onclick="mostrarVista('nuevo-cliente')">
+            ➕ Nuevo cliente
+          </button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-numero" id="stat-clientes">0</div>
+            <div class="stat-label">Clientes registrados</div>
+          </div>
+          <div class="stat-card naranja">
+            <div class="stat-numero" id="stat-riohs">0</div>
+            <div class="stat-label">RIOHS generados</div>
+          </div>
+          <div class="stat-card verde">
+            <div class="stat-numero" id="stat-mes">0</div>
+            <div class="stat-label">Este mes</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-titulo">Últimos clientes</span>
+            <button class="btn-accion secundario" onclick="mostrarVista('clientes')">Ver todos</button>
+          </div>
+          <div id="tabla-recientes">
+            <div class="vacio-msg">
+              <div class="icono-grande">🏢</div>
+              <p>Aún no hay clientes registrados.<br>Comienza agregando tu primer cliente.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LISTA CLIENTES ── -->
+      <div class="vista" id="vista-clientes">
+        <div class="topbar">
+          <div>
+            <div class="titulo-pagina">Clientes</div>
+            <div class="subtitulo-pagina" id="contador-clientes">0 clientes registrados</div>
+          </div>
+          <button class="btn-accion" onclick="mostrarVista('nuevo-cliente')">
+            ➕ Nuevo cliente
+          </button>
+        </div>
+
+        <div class="card">
+          <div id="tabla-clientes-contenido">
+            <div class="vacio-msg">
+              <div class="icono-grande">🏢</div>
+              <p>No hay clientes aún.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── NUEVO / EDITAR CLIENTE ── -->
+      <div class="vista" id="vista-nuevo-cliente">
+        <div class="topbar">
+          <div>
+            <div class="titulo-pagina" id="titulo-form-cliente">Nuevo cliente</div>
+            <div class="subtitulo-pagina">Completa los datos para generar el RIOHS</div>
+          </div>
+          <div class="separador-acciones">
+            <button class="btn-accion secundario" onclick="mostrarVista('clientes')">← Volver</button>
+            <button class="btn-accion" onclick="guardarCliente()">💾 Guardar cliente</button>
+          </div>
+        </div>
+
+        <input type="hidden" id="cliente-id-editar">
+
+        <!-- SECCIÓN 1: Datos generales -->
+        <div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+          <div class="seccion-form">
+            <div class="seccion-titulo">📋 Identificación de la empresa</div>
+            <div class="form-grid">
+              <div class="form-grupo col-completo">
+                <label>Razón social <span class="requerido">*</span></label>
+                <input type="text" id="f-razon-social" placeholder="Ej: SOCOVAL SpA">
+              </div>
+              <div class="form-grupo">
+                <label>RUT empresa <span class="requerido">*</span></label>
+                <input type="text" id="f-rut" placeholder="76.123.456-7">
+              </div>
+              <div class="form-grupo">
+                <label>Representante legal</label>
+                <input type="text" id="f-representante" placeholder="Nombre completo">
+              </div>
+              <div class="form-grupo">
+                <label>RUT representante</label>
+                <input type="text" id="f-rut-rep" placeholder="12.345.678-9">
+              </div>
+              <div class="form-grupo">
+                <label>Dirección</label>
+                <input type="text" id="f-direccion" placeholder="Av. Ejemplo 123">
+              </div>
+              <div class="form-grupo">
+                <label>Región <span class="requerido">*</span></label>
+                <select id="f-region">
+                  <option value="">Seleccionar región...</option>
+                  <option>Región Metropolitana</option>
+                  <option>Región de Valparaíso</option>
+                  <option>Región del Biobío</option>
+                  <option>Región de La Araucanía</option>
+                  <option>Región de Antofagasta</option>
+                  <option>Región de Atacama</option>
+                  <option>Región de Coquimbo</option>
+                  <option>Región de O'Higgins</option>
+                  <option>Región del Maule</option>
+                  <option>Región de Ñuble</option>
+                  <option>Región de Los Ríos</option>
+                  <option>Región de Los Lagos</option>
+                  <option>Región de Aysén</option>
+                  <option>Región de Magallanes</option>
+                  <option>Región de Tarapacá</option>
+                  <option>Región de Arica y Parinacota</option>
+                </select>
+              </div>
+              <div class="form-grupo">
+                <label>Correo empresa</label>
+                <input type="email" id="f-correo" placeholder="contacto@empresa.cl">
+              </div>
+              <div class="form-grupo">
+                <label>Mutual de seguridad</label>
+                <select id="f-mutual">
+                  <option value="">Seleccionar...</option>
+                  <option>IST</option>
+                  <option>ACHS</option>
+                  <option>Mutual de Seguridad</option>
+                  <option>SUSESO</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 2: Rubro e industria -->
+          <div class="seccion-form">
+            <div class="seccion-titulo">🏭 Rubro e industria</div>
+            <div class="form-grid">
+              <div class="form-grupo">
+                <label>Rubro principal <span class="requerido">*</span></label>
+                <select id="f-rubro" onchange="actualizarSubrubros()">
+                  <option value="">Seleccionar rubro...</option>
+                  <option value="construccion">Construcción y obras civiles</option>
+                  <option value="montaje">Montaje industrial / Piping / Metalmecánica</option>
+                  <option value="mineria">Minería</option>
+                  <option value="retail">Comercio / Retail / Multitienda</option>
+                  <option value="manufactura">Manufactura / Producción</option>
+                  <option value="logistica">Logística / Transporte / Bodega</option>
+                  <option value="servicios">Servicios / Consultoría</option>
+                  <option value="salud">Salud / Clínica / Farmacia</option>
+                  <option value="educacion">Educación</option>
+                  <option value="agricola">Agrícola / Forestal</option>
+                  <option value="hoteleria">Hotelería / Gastronomía</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div class="form-grupo">
+                <label>Descripción de actividad</label>
+                <input type="text" id="f-actividad" placeholder="Ej: Montaje de estructuras metálicas en planta industrial">
+              </div>
+              <div class="form-grupo">
+                <label>N° de trabajadores <span class="requerido">*</span></label>
+                <select id="f-trabajadores">
+                  <option value="">Seleccionar...</option>
+                  <option value="menos10">Menos de 10</option>
+                  <option value="10-25">10 a 25</option>
+                  <option value="26-50">26 a 50</option>
+                  <option value="51-100">51 a 100</option>
+                  <option value="101-200">101 a 200</option>
+                  <option value="mas200">Más de 200</option>
+                </select>
+              </div>
+              <div class="form-grupo">
+                <label>Código CIIU (opcional)</label>
+                <input type="text" id="f-ciiu" placeholder="Ej: 2599">
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 3: Jornada y turnos -->
+          <div class="seccion-form">
+            <div class="seccion-titulo">🕐 Jornada de trabajo</div>
+            <div class="form-grid tres">
+              <div class="form-grupo">
+                <label>Horas semanales <span class="requerido">*</span></label>
+                <select id="f-horas">
+                  <option value="42">42 horas (Ley 21.561 - desde abril 2026)</option>
+                  <option value="40">40 horas (desde abril 2028)</option>
+                  <option value="45">45 horas (régimen anterior)</option>
+                </select>
+              </div>
+              <div class="form-grupo">
+                <label>Distribución jornada</label>
+                <select id="f-distribucion">
+                  <option value="lunes-viernes">Lunes a viernes</option>
+                  <option value="lunes-sabado">Lunes a sábado</option>
+                  <option value="turnos">Sistema de turnos rotativos</option>
+                  <option value="ciclos">Turnos por ciclos (20x10, 14x7, etc.)</option>
+                </select>
+              </div>
+              <div class="form-grupo">
+                <label>Horario habitual</label>
+                <input type="text" id="f-horario" placeholder="Ej: 8:00 a 17:30 con 30 min colación">
+              </div>
+            </div>
+            <div style="margin-top: 1rem;">
+              <label style="font-size:0.8rem; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:8px;">Detalles adicionales de turnos (si aplica)</label>
+              <textarea id="f-turnos-detalle" placeholder="Ej: Turno A: 6:00-14:00 / Turno B: 14:00-22:00 / Turno C: 22:00-6:00. Indicar días de descanso, ciclos, etc."></textarea>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 4: Estructura organizacional -->
+          <div class="seccion-form">
+            <div class="seccion-titulo">🏗️ Estructura y condiciones</div>
+            <div class="opciones-grid">
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="f-sindicato"> Tiene sindicato
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="f-cphs"> Tiene Comité Paritario (CPHS)
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="f-experto"> Tiene Experto en Prevención
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="f-teletrabajo"> Teletrabajo / trabajo remoto
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="f-subcontrato"> Subcontratistas / Contratistas
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="f-faenas"> Trabaja en faenas de clientes
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="f-menores"> Puede contratar menores de 18
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="f-inclusion"> Aplica Ley de Inclusión (21.015)
+              </label>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 5: Protocolos de riesgo -->
+          <div class="seccion-form">
+            <div class="seccion-titulo">⚠️ Protocolos de riesgo aplicables</div>
+            <div class="alerta-info">
+              ℹ️ Selecciona los protocolos que aplican a esta empresa. El RIOHS incluirá los títulos y artículos correspondientes a cada uno.
+            </div>
+            <div class="opciones-grid">
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-altura"> Trabajos en altura física
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-espacios"> Espacios confinados
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-loto"> Energías peligrosas (LOTO)
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-caliente"> Trabajos en caliente
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-izaje"> Izaje y grúas
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-quimicos"> Sustancias químicas peligrosas
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-prexor"> Ruido / PREXOR
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-tmert"> Ergonomía / TMERT
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-calor"> Estrés térmico / PECOT
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-uv"> Radiación UV solar
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-electrico"> Riesgo eléctrico
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-vehiculos"> Conducción / vehículos
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-caidas"> Caídas al mismo nivel
+              </label>
+              <label class="opcion-check" onclick="toggleCheck(this)">
+                <input type="checkbox" id="p-incendio"> Prevención de incendios
+              </label>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 6: Identidad corporativa del cliente -->
+          <div class="seccion-form">
+            <div class="seccion-titulo">🎨 Identidad corporativa (para el PDF)</div>
+            <div class="form-grid">
+              <div class="form-grupo">
+                <label>Color primario (hex)</label>
+                <div class="color-picker-row">
+                  <input type="color" id="f-color1" value="#1B2E6E" class="color-preview" oninput="actualizarHex('f-color1','f-hex1')">
+                  <input type="text" id="f-hex1" value="#1B2E6E" placeholder="#000000" oninput="actualizarColor('f-hex1','f-color1')" style="flex:1">
+                </div>
+              </div>
+              <div class="form-grupo">
+                <label>Color secundario (hex)</label>
+                <div class="color-picker-row">
+                  <input type="color" id="f-color2" value="#E87722" class="color-preview" oninput="actualizarHex('f-color2','f-hex2')">
+                  <input type="text" id="f-hex2" value="#E87722" placeholder="#000000" oninput="actualizarColor('f-hex2','f-color2')" style="flex:1">
+                </div>
+              </div>
+              <div class="form-grupo">
+                <label>URL del logo (opcional)</label>
+                <input type="url" id="f-logo" placeholder="https://empresa.cl/logo.png">
+              </div>
+              <div class="form-grupo">
+                <label>Notas adicionales para el RIOHS</label>
+                <textarea id="f-notas" placeholder="Información adicional específica de la empresa que debe incluirse en el reglamento..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:1rem; padding-top:1rem;">
+            <button class="btn-accion secundario" onclick="mostrarVista('clientes')">Cancelar</button>
+            <button class="btn-accion naranja-btn" onclick="guardarYGenerar()">⚡ Guardar y generar RIOHS</button>
+            <button class="btn-accion" onclick="guardarCliente()">💾 Solo guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DETALLE CLIENTE ── -->
+      <div class="vista" id="vista-detalle-cliente">
+        <div class="topbar">
+          <div>
+            <div class="titulo-pagina" id="detalle-nombre">—</div>
+            <div class="subtitulo-pagina" id="detalle-rubro-tag">—</div>
+          </div>
+          <div class="separador-acciones">
+            <button class="btn-accion secundario" onclick="mostrarVista('clientes')">← Volver</button>
+            <button class="btn-accion secundario" id="btn-editar-cliente">✏️ Editar</button>
+            <button class="btn-accion naranja-btn" id="btn-generar-desde-detalle">⚡ Generar RIOHS</button>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+          <div class="card" style="padding:1.5rem;">
+            <div class="seccion-titulo" style="margin-bottom:1rem;">Datos del cliente</div>
+            <div id="detalle-datos" style="font-size:0.88rem; display:flex; flex-direction:column; gap:0.6rem;"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-titulo">Historial de RIOHS generados</span>
+            </div>
+            <div id="detalle-historial">
+              <div class="vacio-msg" style="padding:2rem;">
+                <p>Sin documentos generados aún.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Pantalla de carga/generación -->
+<div id="pantalla-carga">
+  <div class="spinner"></div>
+  <div class="carga-texto" id="carga-texto">Generando RIOHS...</div>
+  <div class="carga-sub" id="carga-sub">Esto puede tomar hasta 90 segundos</div>
+</div>
+
+<!-- Toast notificaciones -->
+<div id="toast"></div>
+
+<!-- ════════════════════════════════════════════
+     FIREBASE + LÓGICA
+════════════════════════════════════════════ -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, getDoc, doc,
+  updateDoc, deleteDoc, query, orderBy, where, Timestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ── CONFIGURACIÓN FIREBASE ──────────────────────────────────
+// ⚠️ RAFAEL: Reemplaza estos valores con los de tu proyecto Firebase
+// Los encuentras en Firebase Console → Configuración del proyecto → SDK
+const firebaseConfig = {
+  apiKey: "AIzaSyDuw-kfJ9Xph5M1XGRSYdqvcs0eMHtdiZw",
+  authDomain: "mas-prevencion-riohs.firebaseapp.com",
+  projectId: "mas-prevencion-riohs",
+  storageBucket: "mas-prevencion-riohs.firebasestorage.app",
+  messagingSenderId: "89226607512",
+  appId: "1:89226607512:web:b1c0f6af3326744d0909ed"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ── ESTADO GLOBAL ───────────────────────────────────────────
+let clienteActual = null;
+let todosLosClientes = [];
+
+// ── AUTH ────────────────────────────────────────────────────
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    document.getElementById('pantalla-login').style.display = 'none';
+    document.getElementById('pantalla-app').style.display = 'block';
+    document.getElementById('usuario-email-display').textContent = user.email;
+    cargarDashboard();
+  } else {
+    document.getElementById('pantalla-login').style.display = 'flex';
+    document.getElementById('pantalla-app').style.display = 'none';
+  }
+});
+
+window.iniciarSesion = async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const btn = document.getElementById('btn-login');
+  const errDiv = document.getElementById('login-error');
+
+  if (!email || !pass) {
+    mostrarError(errDiv, 'Ingresa tu correo y contraseña.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Ingresando...';
+  errDiv.style.display = 'none';
+
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch (e) {
+    let msg = 'Error al ingresar. Verifica tus credenciales.';
+    if (e.code === 'auth/invalid-credential') msg = 'Correo o contraseña incorrectos.';
+    if (e.code === 'auth/too-many-requests') msg = 'Demasiados intentos. Espera un momento.';
+    mostrarError(errDiv, msg);
+    btn.disabled = false;
+    btn.textContent = 'Ingresar';
+  }
+};
+
+window.cerrarSesion = () => signOut(auth);
+
+// ── NAVEGACIÓN ──────────────────────────────────────────────
+window.mostrarVista = (vista) => {
+  document.querySelectorAll('.vista').forEach(v => v.classList.remove('activa'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('activo'));
+
+  document.getElementById(`vista-${vista}`)?.classList.add('activa');
+  document.getElementById(`nav-${vista.split('-')[0]}`)?.classList.add('activo');
+
+  if (vista === 'clientes') cargarListaClientes();
+  if (vista === 'dashboard') cargarDashboard();
+  if (vista === 'nuevo-cliente') limpiarFormulario();
+
+  // Cerrar sidebar en móvil
+  document.getElementById('sidebar').classList.remove('abierto');
+};
+
+window.toggleSidebar = () => {
+  document.getElementById('sidebar').classList.toggle('abierto');
+};
+
+// ── CLIENTES — CRUD ─────────────────────────────────────────
+window.guardarCliente = async () => {
+  const datos = recopilarFormulario();
+  if (!datos) return;
+
+  const idEditar = document.getElementById('cliente-id-editar').value;
+
+  try {
+    mostrarCarga('Guardando cliente...');
+    if (idEditar) {
+      await updateDoc(doc(db, 'clientes', idEditar), { ...datos, actualizadoEn: Timestamp.now() });
+      mostrarToast('Cliente actualizado correctamente', 'exito');
+    } else {
+      await addDoc(collection(db, 'clientes'), { ...datos, creadoEn: Timestamp.now(), riohs: [] });
+      mostrarToast('Cliente guardado correctamente', 'exito');
+    }
+    ocultarCarga();
+    mostrarVista('clientes');
+  } catch (e) {
+    ocultarCarga();
+    mostrarToast('Error al guardar: ' + e.message, 'error');
+  }
+};
+
+window.guardarYGenerar = async () => {
+  const datos = recopilarFormulario();
+  if (!datos) return;
+
+  const idEditar = document.getElementById('cliente-id-editar').value;
+  let clienteId;
+
+  try {
+    mostrarCarga('Guardando cliente...');
+    if (idEditar) {
+      await updateDoc(doc(db, 'clientes', idEditar), { ...datos, actualizadoEn: Timestamp.now() });
+      clienteId = idEditar;
+    } else {
+      const ref = await addDoc(collection(db, 'clientes'), { ...datos, creadoEn: Timestamp.now(), riohs: [] });
+      clienteId = ref.id;
+    }
+    ocultarCarga();
+    generarRIOHS(datos, clienteId);
+  } catch (e) {
+    ocultarCarga();
+    mostrarToast('Error al guardar: ' + e.message, 'error');
+  }
+};
+
+function recopilarFormulario() {
+  const razonSocial = document.getElementById('f-razon-social').value.trim();
+  const rut = document.getElementById('f-rut').value.trim();
+  const region = document.getElementById('f-region').value;
+  const rubro = document.getElementById('f-rubro').value;
+  const trabajadores = document.getElementById('f-trabajadores').value;
+
+  if (!razonSocial || !rut || !region || !rubro || !trabajadores) {
+    mostrarToast('Completa los campos obligatorios (*)','error');
+    return null;
+  }
+
+  return {
+    razonSocial,
+    rut,
+    representante: document.getElementById('f-representante').value.trim(),
+    rutRepresentante: document.getElementById('f-rut-rep').value.trim(),
+    direccion: document.getElementById('f-direccion').value.trim(),
+    region,
+    correo: document.getElementById('f-correo').value.trim(),
+    mutual: document.getElementById('f-mutual').value,
+    rubro,
+    actividad: document.getElementById('f-actividad').value.trim(),
+    trabajadores,
+    ciiu: document.getElementById('f-ciiu').value.trim(),
+    horasSemanales: document.getElementById('f-horas').value,
+    distribucionJornada: document.getElementById('f-distribucion').value,
+    horarioHabitual: document.getElementById('f-horario').value.trim(),
+    turnosDetalle: document.getElementById('f-turnos-detalle').value.trim(),
+    tieneSindicato: document.getElementById('f-sindicato').checked,
+    tieneCPHS: document.getElementById('f-cphs').checked,
+    tieneExperto: document.getElementById('f-experto').checked,
+    tieneTeletrabajo: document.getElementById('f-teletrabajo').checked,
+    tieneSubcontrato: document.getElementById('f-subcontrato').checked,
+    trabajaEnFaenas: document.getElementById('f-faenas').checked,
+    puedeContratarMenores: document.getElementById('f-menores').checked,
+    aplicaInclusion: document.getElementById('f-inclusion').checked,
+    protocolos: {
+      altura: document.getElementById('p-altura').checked,
+      espacios: document.getElementById('p-espacios').checked,
+      loto: document.getElementById('p-loto').checked,
+      caliente: document.getElementById('p-caliente').checked,
+      izaje: document.getElementById('p-izaje').checked,
+      quimicos: document.getElementById('p-quimicos').checked,
+      prexor: document.getElementById('p-prexor').checked,
+      tmert: document.getElementById('p-tmert').checked,
+      calor: document.getElementById('p-calor').checked,
+      uv: document.getElementById('p-uv').checked,
+      electrico: document.getElementById('p-electrico').checked,
+      vehiculos: document.getElementById('p-vehiculos').checked,
+      caidas: document.getElementById('p-caidas').checked,
+      incendio: document.getElementById('p-incendio').checked,
+    },
+    colorPrimario: document.getElementById('f-hex1').value,
+    colorSecundario: document.getElementById('f-hex2').value,
+    logoUrl: document.getElementById('f-logo').value.trim(),
+    notas: document.getElementById('f-notas').value.trim(),
+  };
+}
+
+async function cargarListaClientes() {
+  const contenedor = document.getElementById('tabla-clientes-contenido');
+  try {
+    const snap = await getDocs(query(collection(db, 'clientes'), orderBy('creadoEn', 'desc')));
+    todosLosClientes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    document.getElementById('contador-clientes').textContent =
+      `${todosLosClientes.length} cliente${todosLosClientes.length !== 1 ? 's' : ''} registrado${todosLosClientes.length !== 1 ? 's' : ''}`;
+
+    if (todosLosClientes.length === 0) {
+      contenedor.innerHTML = `<div class="vacio-msg"><div class="icono-grande">🏢</div><p>No hay clientes aún.<br>Agrega tu primer cliente.</p></div>`;
+      return;
+    }
+
+    contenedor.innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Empresa</th><th>Rubro</th><th>Región</th><th>Trabajadores</th><th>RIOHS</th><th>Acciones</th>
+        </tr></thead>
+        <tbody>
+          ${todosLosClientes.map(c => `
+            <tr>
+              <td>
+                <div style="font-weight:600;">${c.razonSocial}</div>
+                <div style="font-size:0.78rem;color:var(--texto-suave);">${c.rut}</div>
+              </td>
+              <td><span class="tag-rubro">${etiquetaRubro(c.rubro)}</span></td>
+              <td style="font-size:0.85rem;">${c.region || '—'}</td>
+              <td><span class="badge badge-azul">${etiquetaTrabajadores(c.trabajadores)}</span></td>
+              <td><span class="badge ${(c.riohs||[]).length > 0 ? 'badge-verde' : 'badge-gris'}">${(c.riohs||[]).length} doc${(c.riohs||[]).length !== 1 ? 's' : ''}</span></td>
+              <td>
+                <div class="acciones-td">
+                  <button class="btn-mini btn-mini-azul" onclick="verCliente('${c.id}')">Ver</button>
+                  <button class="btn-mini btn-mini-naranja" onclick="generarRIOHSDesdeId('${c.id}')">⚡ RIOHS</button>
+                  <button class="btn-mini btn-mini-rojo" onclick="eliminarCliente('${c.id}','${c.razonSocial}')">🗑</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+  } catch (e) {
+    contenedor.innerHTML = `<div class="vacio-msg"><p>Error al cargar clientes: ${e.message}</p></div>`;
+  }
+}
+
+async function cargarDashboard() {
+  try {
+    const snap = await getDocs(collection(db, 'clientes'));
+    const clientes = snap.docs.map(d => d.data());
+    const totalRiohs = clientes.reduce((a, c) => a + (c.riohs||[]).length, 0);
+
+    const ahora = new Date();
+    const riohs_mes = clientes.reduce((a, c) => {
+      const delMes = (c.riohs||[]).filter(r => {
+        const f = r.fecha?.toDate?.() || new Date(r.fecha);
+        return f.getMonth() === ahora.getMonth() && f.getFullYear() === ahora.getFullYear();
+      });
+      return a + delMes.length;
+    }, 0);
+
+    document.getElementById('stat-clientes').textContent = clientes.length;
+    document.getElementById('stat-riohs').textContent = totalRiohs;
+    document.getElementById('stat-mes').textContent = riohs_mes;
+
+    // Últimos 5 clientes
+    const recientes = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0))
+      .slice(0, 5);
+
+    const contenedor = document.getElementById('tabla-recientes');
+    if (recientes.length === 0) {
+      contenedor.innerHTML = `<div class="vacio-msg"><div class="icono-grande">🏢</div><p>Aún no hay clientes.</p></div>`;
+      return;
+    }
+
+    contenedor.innerHTML = `<table>
+      <thead><tr><th>Empresa</th><th>Rubro</th><th>RIOHS</th><th></th></tr></thead>
+      <tbody>${recientes.map(c => `
+        <tr>
+          <td><div style="font-weight:600;">${c.razonSocial}</div></td>
+          <td><span class="tag-rubro">${etiquetaRubro(c.rubro)}</span></td>
+          <td><span class="badge ${(c.riohs||[]).length > 0 ? 'badge-verde':'badge-gris'}">${(c.riohs||[]).length}</span></td>
+          <td><button class="btn-mini btn-mini-naranja" onclick="generarRIOHSDesdeId('${c.id}')">⚡ Generar</button></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+window.verCliente = async (id) => {
+  try {
+    const snap = await getDoc(doc(db, 'clientes', id));
+    if (!snap.exists()) return;
+    const c = { id: snap.id, ...snap.data() };
+    clienteActual = c;
+
+    document.getElementById('detalle-nombre').textContent = c.razonSocial;
+    document.getElementById('detalle-rubro-tag').textContent = `${etiquetaRubro(c.rubro)} · ${c.region || ''} · ${etiquetaTrabajadores(c.trabajadores)} trabajadores`;
+
+    document.getElementById('detalle-datos').innerHTML = `
+      ${fila('RUT', c.rut)}
+      ${fila('Representante', c.representante || '—')}
+      ${fila('Dirección', c.direccion || '—')}
+      ${fila('Mutual', c.mutual || '—')}
+      ${fila('Jornada', `${c.horasSemanales}h · ${c.distribucionJornada || ''}`)}
+      ${fila('Sindicato', c.tieneSindicato ? '✅ Sí' : '—')}
+      ${fila('CPHS', c.tieneCPHS ? '✅ Sí' : '—')}
+      ${fila('Teletrabajo', c.tieneTeletrabajo ? '✅ Sí' : '—')}
+    `;
+
+    const historial = c.riohs || [];
+    document.getElementById('detalle-historial').innerHTML = historial.length === 0
+      ? `<div class="vacio-msg" style="padding:2rem;"><p>Sin documentos generados aún.</p></div>`
+      : historial.map(r => `
+          <div class="historial-item">
+            <div>
+              <div style="font-weight:600; font-size:0.88rem;">RIOHS v${r.version || 1}</div>
+              <div class="historial-fecha">${formatearFecha(r.fecha)}</div>
+            </div>
+            <span class="badge badge-verde">Generado</span>
+          </div>`).join('');
+
+    document.getElementById('btn-editar-cliente').onclick = () => editarCliente(c);
+    document.getElementById('btn-generar-desde-detalle').onclick = () => generarRIOHS(c, c.id);
+
+    mostrarVista('detalle-cliente');
+  } catch(e) {
+    mostrarToast('Error al cargar cliente', 'error');
+  }
+};
+
+window.editarCliente = (c) => {
+  mostrarVista('nuevo-cliente');
+  document.getElementById('titulo-form-cliente').textContent = 'Editar cliente';
+  document.getElementById('cliente-id-editar').value = c.id;
+
+  document.getElementById('f-razon-social').value = c.razonSocial || '';
+  document.getElementById('f-rut').value = c.rut || '';
+  document.getElementById('f-representante').value = c.representante || '';
+  document.getElementById('f-rut-rep').value = c.rutRepresentante || '';
+  document.getElementById('f-direccion').value = c.direccion || '';
+  document.getElementById('f-region').value = c.region || '';
+  document.getElementById('f-correo').value = c.correo || '';
+  document.getElementById('f-mutual').value = c.mutual || '';
+  document.getElementById('f-rubro').value = c.rubro || '';
+  document.getElementById('f-actividad').value = c.actividad || '';
+  document.getElementById('f-trabajadores').value = c.trabajadores || '';
+  document.getElementById('f-ciiu').value = c.ciiu || '';
+  document.getElementById('f-horas').value = c.horasSemanales || '42';
+  document.getElementById('f-distribucion').value = c.distribucionJornada || '';
+  document.getElementById('f-horario').value = c.horarioHabitual || '';
+  document.getElementById('f-turnos-detalle').value = c.turnosDetalle || '';
+
+  const checks = ['sindicato','cphs','experto','teletrabajo','subcontrato','faenas','menores','inclusion'];
+  const keys   = ['tieneSindicato','tieneCPHS','tieneExperto','tieneTeletrabajo','tieneSubcontrato','trabajaEnFaenas','puedeContratarMenores','aplicaInclusion'];
+  checks.forEach((ch, i) => {
+    const el = document.getElementById(`f-${ch}`);
+    if (el) el.checked = c[keys[i]] || false;
+    const label = el?.closest('.opcion-check');
+    if (label && el?.checked) label.classList.add('seleccionado');
+  });
+
+  const prots = ['altura','espacios','loto','caliente','izaje','quimicos','prexor','tmert','calor','uv','electrico','vehiculos','caidas','incendio'];
+  prots.forEach(p => {
+    const el = document.getElementById(`p-${p}`);
+    if (el) el.checked = c.protocolos?.[p] || false;
+    const label = el?.closest('.opcion-check');
+    if (label && el?.checked) label.classList.add('seleccionado');
+  });
+
+  document.getElementById('f-hex1').value = c.colorPrimario || '#1B2E6E';
+  document.getElementById('f-color1').value = c.colorPrimario || '#1B2E6E';
+  document.getElementById('f-hex2').value = c.colorSecundario || '#E87722';
+  document.getElementById('f-color2').value = c.colorSecundario || '#E87722';
+  document.getElementById('f-logo').value = c.logoUrl || '';
+  document.getElementById('f-notas').value = c.notas || '';
+};
+
+window.generarRIOHSDesdeId = async (id) => {
+  try {
+    const snap = await getDoc(doc(db, 'clientes', id));
+    if (!snap.exists()) return;
+    const c = { id: snap.id, ...snap.data() };
+    generarRIOHS(c, id);
+  } catch(e) {
+    mostrarToast('Error al cargar cliente', 'error');
+  }
+};
+
+window.generarRIOHS = async (datos, clienteId) => {
+  // Esta función será implementada en Etapa 2 con Claude API
+  // Por ahora muestra el estado de preparación
+  mostrarCarga('Preparando generación del RIOHS...');
+  setTimeout(() => {
+    ocultarCarga();
+    mostrarToast('⚡ Módulo de generación disponible en Etapa 2', 'exito');
+  }, 1500);
+};
+
+window.eliminarCliente = async (id, nombre) => {
+  if (!confirm(`¿Eliminar el cliente "${nombre}"? Esta acción no se puede deshacer.`)) return;
+  try {
+    await deleteDoc(doc(db, 'clientes', id));
+    mostrarToast('Cliente eliminado', 'exito');
+    cargarListaClientes();
+    cargarDashboard();
+  } catch(e) {
+    mostrarToast('Error al eliminar: ' + e.message, 'error');
+  }
+};
+
+// ── HELPERS ─────────────────────────────────────────────────
+function limpiarFormulario() {
+  document.getElementById('titulo-form-cliente').textContent = 'Nuevo cliente';
+  document.getElementById('cliente-id-editar').value = '';
+  document.querySelectorAll('#vista-nuevo-cliente input:not([type=color]):not([type=checkbox])').forEach(i => i.value = '');
+  document.querySelectorAll('#vista-nuevo-cliente select').forEach(s => s.selectedIndex = 0);
+  document.querySelectorAll('#vista-nuevo-cliente textarea').forEach(t => t.value = '');
+  document.querySelectorAll('#vista-nuevo-cliente input[type=checkbox]').forEach(c => c.checked = false);
+  document.querySelectorAll('.opcion-check').forEach(l => l.classList.remove('seleccionado'));
+  document.getElementById('f-hex1').value = '#1B2E6E';
+  document.getElementById('f-color1').value = '#1B2E6E';
+  document.getElementById('f-hex2').value = '#E87722';
+  document.getElementById('f-color2').value = '#E87722';
+}
+
+function etiquetaRubro(rubro) {
+  const mapa = {
+    construccion: 'Construcción',
+    montaje: 'Montaje Industrial',
+    mineria: 'Minería',
+    retail: 'Retail / Comercio',
+    manufactura: 'Manufactura',
+    logistica: 'Logística',
+    servicios: 'Servicios',
+    salud: 'Salud',
+    educacion: 'Educación',
+    agricola: 'Agrícola',
+    hoteleria: 'Hotelería',
+    otro: 'Otro'
+  };
+  return mapa[rubro] || rubro || '—';
+}
+
+function etiquetaTrabajadores(t) {
+  const mapa = {
+    'menos10':'< 10','10-25':'10–25','26-50':'26–50',
+    '51-100':'51–100','101-200':'101–200','mas200':'> 200'
+  };
+  return mapa[t] || t || '—';
+}
+
+function fila(label, valor) {
+  return `<div style="display:flex; gap:8px;">
+    <span style="color:var(--texto-suave); font-size:0.82rem; min-width:110px;">${label}</span>
+    <span style="font-weight:500;">${valor}</span>
+  </div>`;
+}
+
+function formatearFecha(f) {
+  if (!f) return '—';
+  const d = f?.toDate?.() || new Date(f);
+  return d.toLocaleDateString('es-CL', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function mostrarCarga(texto='Procesando...', sub='Por favor espera') {
+  document.getElementById('carga-texto').textContent = texto;
+  document.getElementById('carga-sub').textContent = sub;
+  document.getElementById('pantalla-carga').classList.add('visible');
+}
+
+function ocultarCarga() {
+  document.getElementById('pantalla-carga').classList.remove('visible');
+}
+
+function mostrarToast(msg, tipo='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `visible ${tipo}`;
+  setTimeout(() => t.className = '', 3500);
+}
+
+function mostrarError(el, msg) {
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+window.toggleCheck = (label) => {
+  label.classList.toggle('seleccionado');
+};
+
+window.actualizarHex = (colorId, hexId) => {
+  document.getElementById(hexId).value = document.getElementById(colorId).value;
+};
+
+window.actualizarColor = (hexId, colorId) => {
+  const val = document.getElementById(hexId).value;
+  if (/^#[0-9A-Fa-f]{6}$/.test(val)) document.getElementById(colorId).value = val;
+};
+
+window.actualizarSubrubros = () => {
+  // Auto-seleccionar protocolos típicos según rubro
+  const rubro = document.getElementById('f-rubro').value;
+  const presets = {
+    montaje: ['altura','espacios','loto','caliente','izaje','prexor','electrico','incendio'],
+    construccion: ['altura','espacios','loto','caliente','izaje','prexor','tmert','caidas','incendio'],
+    mineria: ['altura','espacios','loto','caliente','izaje','quimicos','prexor','tmert','calor','uv','electrico','vehiculos','incendio'],
+    retail: ['tmert','caidas','incendio'],
+    logistica: ['tmert','vehiculos','caidas','incendio'],
+    manufactura: ['prexor','tmert','quimicos','caidas','incendio','loto'],
+    agricola: ['uv','calor','quimicos','vehiculos'],
+  };
+
+  if (presets[rubro]) {
+    // Reset primero
+    document.querySelectorAll('[id^="p-"]').forEach(el => {
+      el.checked = false;
+      el.closest('.opcion-check')?.classList.remove('seleccionado');
+    });
+    // Activar los del preset
+    presets[rubro].forEach(p => {
+      const el = document.getElementById(`p-${p}`);
+      if (el) {
+        el.checked = true;
+        el.closest('.opcion-check')?.classList.add('seleccionado');
+      }
+    });
+    mostrarToast(`Protocolos típicos de ${etiquetaRubro(rubro)} preseleccionados`, 'exito');
+  }
+};
+
+// Enter en login
+document.getElementById('login-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') window.iniciarSesion();
+});
+
+</script>
+</body>
+</html>
