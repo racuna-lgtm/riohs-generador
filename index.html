@@ -1080,12 +1080,12 @@ import { getFirestore, collection, addDoc, getDocs, getDoc, doc,
 // ⚠️ RAFAEL: Reemplaza estos valores con los de tu proyecto Firebase
 // Los encuentras en Firebase Console → Configuración del proyecto → SDK
 const firebaseConfig = {
-  apiKey: "AIzaSyDuw-kfJ9Xph5M1XGRSYdqvcs0eMHtdiZw",
-  authDomain: "mas-prevencion-riohs.firebaseapp.com",
-  projectId: "mas-prevencion-riohs",
-  storageBucket: "mas-prevencion-riohs.firebasestorage.app",
-  messagingSenderId: "89226607512",
-  appId: "1:89226607512:web:b1c0f6af3326744d0909ed"
+  apiKey: "TU_API_KEY_AQUI",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  projectId: "TU_PROYECTO_ID",
+  storageBucket: "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -1459,9 +1459,7 @@ window.generarRIOHSDesdeId = async (id) => {
 };
 
 window.generarRIOHS = async (datos, clienteId) => {
-  const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js');
-  const fns = getFunctions(app, 'us-central1');
-  const generarBloque = httpsCallable(fns, 'generarRIOHS', { timeout: 540000 });
+  const FUNCTION_URL = 'https://us-central1-mas-prevencion-riohs.cloudfunctions.net/generarRIOHS';
 
   const TOTAL_BLOQUES = 8;
   const mensajes = [
@@ -1475,12 +1473,22 @@ window.generarRIOHS = async (datos, clienteId) => {
     'Generando titulos finales: datos personales, IPER y vigencia...',
   ];
 
+  async function generarBloque(bloque) {
+    const resp = await fetch(FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cliente: datos, bloque }),
+    });
+    if (!resp.ok) throw new Error('Error HTTP ' + resp.status);
+    return await resp.json();
+  }
+
   const bloques = [];
   try {
     for (let i = 1; i <= TOTAL_BLOQUES; i++) {
       mostrarCarga(mensajes[i-1], 'Bloque ' + i + ' de ' + TOTAL_BLOQUES + ' — No cierres esta ventana');
-      const resultado = await generarBloque({ cliente: datos, bloque: i });
-      bloques.push(resultado.data.contenido);
+      const resultado = await generarBloque(i);
+      bloques.push(resultado.contenido);
     }
     mostrarCarga('Ensamblando el documento Word...', 'Casi listo...');
     await new Promise(r => setTimeout(r, 800));
