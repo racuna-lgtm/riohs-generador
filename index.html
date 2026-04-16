@@ -1199,7 +1199,7 @@ window.guardarYGenerar = async () => {
       clienteId = ref.id;
     }
     ocultarCarga();
-    generarRIOHS(datos, clienteId);
+    generarRIOHS2(datos, clienteId);
   } catch (e) {
     ocultarCarga();
     mostrarToast('Error al guardar: ' + e.message, 'error');
@@ -1299,7 +1299,7 @@ async function cargarListaClientes() {
               <td>
                 <div class="acciones-td">
                   <button class="btn-mini btn-mini-azul" onclick="verCliente('${c.id}')">Ver</button>
-                  <button class="btn-mini btn-mini-naranja" onclick="generarRIOHSDesdeId('${c.id}')">⚡ RIOHS</button>
+                  <button class="btn-mini btn-mini-naranja" onclick="generarRIOHS2DesdeId('${c.id}')">⚡ RIOHS</button>
                   <button class="btn-mini btn-mini-rojo" onclick="eliminarCliente('${c.id}','${c.razonSocial}')">🗑</button>
                 </div>
               </td>
@@ -1350,7 +1350,7 @@ async function cargarDashboard() {
           <td><div style="font-weight:600;">${c.razonSocial}</div></td>
           <td><span class="tag-rubro">${etiquetaRubro(c.rubro)}</span></td>
           <td><span class="badge ${(c.riohs||[]).length > 0 ? 'badge-verde':'badge-gris'}">${(c.riohs||[]).length}</span></td>
-          <td><button class="btn-mini btn-mini-naranja" onclick="generarRIOHSDesdeId('${c.id}')">⚡ Generar</button></td>
+          <td><button class="btn-mini btn-mini-naranja" onclick="generarRIOHS2DesdeId('${c.id}')">⚡ Generar</button></td>
         </tr>`).join('')}
       </tbody></table>`;
   } catch(e) {
@@ -1392,7 +1392,7 @@ window.verCliente = async (id) => {
           </div>`).join('');
 
     document.getElementById('btn-editar-cliente').onclick = () => editarCliente(c);
-    document.getElementById('btn-generar-desde-detalle').onclick = () => generarRIOHS(c, c.id);
+    document.getElementById('btn-generar-desde-detalle').onclick = () => generarRIOHS2(c, c.id);
 
     mostrarVista('detalle-cliente');
   } catch(e) {
@@ -1447,19 +1447,19 @@ window.editarCliente = (c) => {
   document.getElementById('f-notas').value = c.notas || '';
 };
 
-window.generarRIOHSDesdeId = async (id) => {
+window.generarRIOHS2DesdeId = async (id) => {
   try {
     const snap = await getDoc(doc(db, 'clientes', id));
     if (!snap.exists()) return;
     const c = { id: snap.id, ...snap.data() };
-    generarRIOHS(c, id);
+    generarRIOHS2(c, id);
   } catch(e) {
     mostrarToast('Error al cargar cliente', 'error');
   }
 };
 
-window.generarRIOHS = async (datos, clienteId) => {
-  const FUNCTION_URL = 'https://us-central1-mas-prevencion-riohs.cloudfunctions.net/generarRIOHS';
+window.generarRIOHS2 = async (datos, clienteId) => {
+  const FUNCTION_URL = 'https://us-central1-mas-prevencion-riohs.cloudfunctions.net/generarRIOHS2';
 
   const TOTAL_BLOQUES = 8;
   const mensajes = [
