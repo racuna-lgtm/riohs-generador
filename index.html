@@ -1080,12 +1080,12 @@ import { getFirestore, collection, addDoc, getDocs, getDoc, doc,
 // ⚠️ RAFAEL: Reemplaza estos valores con los de tu proyecto Firebase
 // Los encuentras en Firebase Console → Configuración del proyecto → SDK
 const firebaseConfig = {
-  apiKey: "AIzaSyDuw-kfJ9Xph5M1XGRSYdqvcs0eMHtdiZw",
-  authDomain: "mas-prevencion-riohs.firebaseapp.com",
-  projectId: "mas-prevencion-riohs",
-  storageBucket: "mas-prevencion-riohs.firebasestorage.app",
-  messagingSenderId: "89226607512",
-  appId: "1:89226607512:web:b1c0f6af3326744d0909ed"
+  apiKey: "TU_API_KEY_AQUI",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  projectId: "TU_PROYECTO_ID",
+  storageBucket: "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -1459,14 +1459,175 @@ window.generarRIOHSDesdeId = async (id) => {
 };
 
 window.generarRIOHS = async (datos, clienteId) => {
-  // Esta función será implementada en Etapa 2 con Claude API
-  // Por ahora muestra el estado de preparación
-  mostrarCarga('Preparando generación del RIOHS...');
-  setTimeout(() => {
+  const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js');
+  const fns = getFunctions(app, 'us-central1');
+  const generarBloque = httpsCallable(fns, 'generarRIOHS', { timeout: 540000 });
+
+  const TOTAL_BLOQUES = 8;
+  const mensajes = [
+    'Generando Titulos I-III: Normas generales y contratacion...',
+    'Generando Titulos IV-VII: Jornada, turnos y remuneraciones...',
+    'Generando Titulos VIII-XI: Permisos, licencias y obligaciones...',
+    'Generando Titulos XII-XIV: Prohibiciones y sanciones...',
+    'Generando Titulo XV: Protocolo Ley Karin...',
+    'Generando Titulos XVI-XVIII: Higiene, seguridad y EPP...',
+    'Generando Titulos XIX-XX: CPHS, accidentes y protocolos...',
+    'Generando titulos finales: datos personales, IPER y vigencia...',
+  ];
+
+  const bloques = [];
+  try {
+    for (let i = 1; i <= TOTAL_BLOQUES; i++) {
+      mostrarCarga(mensajes[i-1], 'Bloque ' + i + ' de ' + TOTAL_BLOQUES + ' — No cierres esta ventana');
+      const resultado = await generarBloque({ cliente: datos, bloque: i });
+      bloques.push(resultado.data.contenido);
+    }
+    mostrarCarga('Ensamblando el documento Word...', 'Casi listo...');
+    await new Promise(r => setTimeout(r, 800));
+    const textoCompleto = bloques.join('\n\n');
+    await generarDocxYDescargar(datos, textoCompleto, clienteId);
     ocultarCarga();
-    mostrarToast('⚡ Módulo de generación disponible en Etapa 2', 'exito');
-  }, 1500);
+    mostrarToast('RIOHS generado y descargado correctamente', 'exito');
+  } catch (e) {
+    ocultarCarga();
+    console.error(e);
+    mostrarToast('Error al generar: ' + (e.message || 'Intenta nuevamente'), 'error');
+  }
 };
+
+async function generarDocxYDescargar(datos, contenido, clienteId) {
+  const docx = await import('https://esm.sh/docx@8.5.0');
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
+    BorderStyle, WidthType, ShadingType, Header, Footer, TabStopType,
+    LevelFormat, SimpleField, PageBreak } = docx;
+
+  const COLOR1 = (datos.colorPrimario || '#1B2E6E').replace('#','');
+  const COLOR2 = (datos.colorSecundario || '#E87722').replace('#','');
+  const BLANCO = 'FFFFFF';
+  const lineas = contenido.split('\n');
+  const children = [];
+
+  children.push(
+    new Paragraph({ spacing: { before: 2000, after: 400 }, alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text: datos.razonSocial.toUpperCase(), bold: true, size: 52, font: 'Arial', color: COLOR1 })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 0, after: 200 },
+      children: [new TextRun({ text: 'RUT: ' + datos.rut, size: 24, font: 'Arial', color: '555555' })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 0, after: 200 },
+      children: [new TextRun({ text: datos.actividad || datos.rubro, size: 24, font: 'Arial', color: '555555' })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 200, after: 200 },
+      shading: { fill: COLOR1, type: ShadingType.CLEAR },
+      children: [new TextRun({ text: 'REGLAMENTO INTERNO DE ORDEN, HIGIENE Y SEGURIDAD', bold: true, size: 32, font: 'Arial', color: BLANCO })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 200, after: 100 },
+      children: [new TextRun({ text: 'Version 1.0 — ' + new Date().getFullYear(), size: 22, font: 'Arial', color: '555555' })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text: datos.region + ' — Chile', size: 22, font: 'Arial', color: '555555' })] }),
+    new Paragraph({ children: [new PageBreak()] }),
+  );
+
+  for (const linea of lineas) {
+    const trim = linea.trim();
+    if (!trim) {
+      children.push(new Paragraph({ spacing: { before: 60, after: 60 }, children: [new TextRun('')] }));
+      continue;
+    }
+    if (trim.match(/^TITULO/i) && trim.length < 120) {
+      children.push(new Paragraph({
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 160 },
+        shading: { fill: COLOR1, type: ShadingType.CLEAR },
+        children: [new TextRun({ text: trim, bold: true, size: 28, font: 'Arial', color: BLANCO })],
+      }));
+      continue;
+    }
+    if (trim.match(/^Art[ií]culo\s+\d+/i)) {
+      const idx = trim.indexOf(':');
+      const tit = idx > 0 ? trim.substring(0, idx+1) : trim;
+      const resto = idx > 0 ? trim.substring(idx+1).trim() : '';
+      children.push(new Paragraph({
+        heading: HeadingLevel.HEADING_2,
+        spacing: { before: 240, after: 80 },
+        border: { left: { style: BorderStyle.SINGLE, size: 12, color: COLOR2, space: 8 } },
+        indent: { left: 200 },
+        children: [new TextRun({ text: tit, bold: true, size: 24, font: 'Arial', color: COLOR1 })],
+      }));
+      if (resto) children.push(new Paragraph({
+        spacing: { before: 60, after: 80 }, alignment: AlignmentType.JUSTIFIED,
+        children: [new TextRun({ text: resto, size: 22, font: 'Arial', color: '2A2A2A' })],
+      }));
+      continue;
+    }
+    children.push(new Paragraph({
+      spacing: { before: 60, after: 60 }, alignment: AlignmentType.JUSTIFIED,
+      children: [new TextRun({ text: trim, size: 22, font: 'Arial', color: '2A2A2A' })],
+    }));
+  }
+
+  children.push(
+    new Paragraph({ children: [new PageBreak()] }),
+    new Paragraph({ spacing: { before: 200, after: 200 }, alignment: AlignmentType.CENTER,
+      shading: { fill: COLOR1, type: ShadingType.CLEAR },
+      children: [new TextRun({ text: 'ACUSE DE RECIBO', bold: true, size: 28, font: 'Arial', color: BLANCO })] }),
+    new Paragraph({ spacing: { before: 200, after: 200 }, alignment: AlignmentType.JUSTIFIED,
+      children: [new TextRun({ text: 'Se deja expresa constancia, de acuerdo a lo establecido en el articulo 156 del Codigo del Trabajo y DS N 44 de la Ley 16.744, que he recibido en forma gratuita un ejemplar del Reglamento Interno de Orden, Higiene y Seguridad de ' + datos.razonSocial + '. Declaro bajo mi firma haber recibido, leido y comprendido el presente Reglamento Interno, del cual doy fe de conocer el contenido y me hago responsable de su estricto cumplimiento en cada uno de sus articulos, no pudiendo alegar desconocimiento de su texto a contar de esta fecha.', size: 22, font: 'Arial' })] }),
+  );
+
+  const doc = new Document({
+    numbering: { config: [{ reference: 'bullets', levels: [{ level: 0, format: LevelFormat.BULLET,
+      text: String.fromCharCode(8226), alignment: AlignmentType.LEFT,
+      style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] }] },
+    styles: {
+      default: { document: { run: { font: 'Arial', size: 22 } } },
+      paragraphStyles: [
+        { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true,
+          run: { size: 28, bold: true, font: 'Arial', color: BLANCO },
+          paragraph: { spacing: { before: 400, after: 160 }, outlineLevel: 0 } },
+        { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true,
+          run: { size: 24, bold: true, font: 'Arial', color: COLOR1 },
+          paragraph: { spacing: { before: 240, after: 80 }, outlineLevel: 1 } },
+      ],
+    },
+    sections: [{
+      properties: { page: { size: { width: 11906, height: 16838 },
+        margin: { top: 1440, right: 1260, bottom: 1440, left: 1260 } } },
+      headers: { default: new Header({ children: [new Paragraph({
+        border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: COLOR1, space: 1 } },
+        spacing: { before: 0, after: 120 },
+        children: [new TextRun({ text: datos.razonSocial + '  —  RIOHS', size: 18, font: 'Arial', color: '888888' })],
+      })]}) },
+      footers: { default: new Footer({ children: [new Paragraph({
+        border: { top: { style: BorderStyle.SINGLE, size: 6, color: COLOR2, space: 1 } },
+        spacing: { before: 120, after: 0 },
+        tabStops: [{ type: TabStopType.RIGHT, position: 9026 }],
+        children: [
+          new TextRun({ text: 'Version 1.0 — ' + new Date().getFullYear(), size: 18, font: 'Arial', color: '888888' }),
+          new TextRun({ text: '\tPagina ', size: 18, font: 'Arial', color: '888888' }),
+          new SimpleField({ instruction: 'PAGE', cachedValue: '1', children: [new TextRun({ size: 18, font: 'Arial', color: '888888' })] }),
+        ],
+      })]}) },
+      children,
+    }],
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'RIOHS_' + datos.razonSocial.replace(/[^a-zA-Z0-9]/g,'_') + '_' + new Date().getFullYear() + '.docx';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  if (clienteId) {
+    try {
+      const { getFirestore, doc: fsDoc, updateDoc, arrayUnion, Timestamp } =
+        await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const db2 = getFirestore(app);
+      await updateDoc(fsDoc(db2, 'clientes', clienteId), {
+        riohs: arrayUnion({ fecha: Timestamp.now(), version: 1, nombre: a.download }),
+      });
+    } catch(e) { console.warn('No se pudo registrar historial:', e); }
+  }
+}
 
 window.eliminarCliente = async (id, nombre) => {
   if (!confirm(`¿Eliminar el cliente "${nombre}"? Esta acción no se puede deshacer.`)) return;
