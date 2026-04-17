@@ -584,7 +584,7 @@ Cuándo hacer la próxima auditoría y qué normativa monitorear.
 Busca: "DS 44 2023 Chile ${new Date().getFullYear()}", "Ley Karin vigente Chile", "normativa laboral nueva Chile ${new Date().getFullYear()}", "seguridad ${R} Chile vigente".
 
 EMPRESA: ${ctx}
-DOCUMENTO A AUDITAR: ${(documento_existente||'').substring(0,3000)}
+DOCUMENTO A AUDITAR: ${(documento_existente||'').substring(0,2000)}
 
 Devuelve SOLO este JSON:
 \`\`\`json
