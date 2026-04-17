@@ -262,19 +262,80 @@
 
   async function iniciarAuditoria(){
     if(!textoDoc){mostrarErr('Primero sube el RIOHS existente.');return}
-    document.getElementById('btnAccion').disabled=true;document.getElementById('errMsg').style.display='none';
-    document.getElementById('secsGrid').innerHTML='';document.getElementById('progNota').textContent='';
-    document.getElementById('progTit').textContent='Buscando normativa actualizada y analizando RIOHS...';
-    document.getElementById('progBarra').style.width='30%';document.getElementById('progPct').textContent='Analizando...';
+    document.getElementById('btnAccion').disabled=true;
+    document.getElementById('errMsg').style.display='none';
+    document.getElementById('secsGrid').innerHTML='';
+    document.getElementById('progNota').textContent='⏱ El análisis se realiza en 3 partes para mayor precisión';
     document.getElementById('progreso').style.display='block';
-    try{
-      const data=await api({tipo:'auditoria_analisis'});
-      document.getElementById('progBarra').style.width='100%';document.getElementById('progPct').textContent='✅ Análisis completo';
-      let lista=[];
-      try{const m=data.contenido.match(/```json\n?([\s\S]*?)\n?```/);const parsed=JSON.parse(m?m[1]:data.contenido);lista=parsed.alertas||parsed}
-      catch{mostrarErr('Error al procesar análisis. Intenta nuevamente.');document.getElementById('progreso').style.display='none';document.getElementById('btnAccion').disabled=false;return}
-      alertas=lista;setTimeout(()=>{document.getElementById('progreso').style.display='none';mostrarAlertas(lista)},600);
-    }catch(e){document.getElementById('progreso').style.display='none';document.getElementById('btnAccion').disabled=false;mostrarErr(e.message)}
+
+    // Dividir el documento en 3 partes iguales
+    const largo = textoDoc.length;
+    const tam = Math.ceil(largo / 3);
+    const partes = [
+      textoDoc.substring(0, tam),
+      textoDoc.substring(tam, tam * 2),
+      textoDoc.substring(tam * 2)
+    ];
+
+    const todasLasAlertas = [];
+    let idGlobal = 1;
+
+    for (let i = 0; i < 3; i++) {
+      const pct = Math.round(((i) / 3) * 90);
+      document.getElementById('progTit').textContent = `Analizando parte ${i+1} de 3...`;
+      document.getElementById('progBarra').style.width = `${pct}%`;
+      document.getElementById('progPct').textContent = `${pct}%`;
+
+      try {
+        const r = await fetch('/api/generarRIOHS', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            cliente: buildPayload(),
+            tipo: 'auditoria_analisis',
+            documento_existente: partes[i],
+            parte: i + 1,
+            bloque: {id: 1}
+          })
+        });
+
+        if (!r.ok) throw new Error(`Error ${r.status} en parte ${i+1}`);
+        const data = await r.json();
+
+        let lista = [];
+        try {
+          const m = data.contenido.match(/```json\n?([\s\S]*?)\n?```/);
+          const parsed = JSON.parse(m ? m[1] : data.contenido);
+          lista = parsed.alertas || parsed;
+        } catch { lista = [] }
+
+        // Reasignar IDs únicos para evitar duplicados
+        lista.forEach(a => { a.id = idGlobal++; todasLasAlertas.push(a) });
+
+      } catch(e) {
+        // Si falla una parte, continuar con las demás
+        console.warn(`Parte ${i+1} falló:`, e.message);
+      }
+
+      // Pausa de 10 segundos entre partes para resetear el límite de tokens
+      if (i < 2) await new Promise(resolve => setTimeout(resolve, 10000));
+    }
+
+    document.getElementById('progBarra').style.width = '100%';
+    document.getElementById('progPct').textContent = '✅ Análisis completo';
+
+    if (todasLasAlertas.length === 0) {
+      mostrarErr('No se encontraron alertas. Intenta nuevamente.');
+      document.getElementById('progreso').style.display = 'none';
+      document.getElementById('btnAccion').disabled = false;
+      return;
+    }
+
+    alertas = todasLasAlertas;
+    setTimeout(() => {
+      document.getElementById('progreso').style.display = 'none';
+      mostrarAlertas(todasLasAlertas);
+    }, 600);
   }
 
   function mostrarAlertas(lista){
