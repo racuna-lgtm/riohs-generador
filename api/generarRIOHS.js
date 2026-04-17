@@ -579,12 +579,12 @@ Cuándo hacer la próxima auditoría y qué normativa monitorear.
     // ═══════════════════════════════════════
     } else if (tipo === 'auditoria_analisis') {
       usarWebSearch = true;
-      maxTokens = 4000;
+      maxTokens = 2000;
       prompt = `Eres experto en legislación laboral chilena con acceso a búsqueda web.
 Busca: "DS 44 2023 Chile ${new Date().getFullYear()}", "Ley Karin vigente Chile", "normativa laboral nueva Chile ${new Date().getFullYear()}", "seguridad ${R} Chile vigente".
 
 EMPRESA: ${ctx}
-DOCUMENTO A AUDITAR: ${(documento_existente||'').substring(0,7000)}
+DOCUMENTO A AUDITAR: ${(documento_existente||'').substring(0,3000)}
 
 Devuelve SOLO este JSON:
 \`\`\`json
