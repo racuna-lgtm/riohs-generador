@@ -169,8 +169,8 @@
   </div>
 </main>
 <script>
-   const SUPABASE_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co';
-   const SUPABASE_KEY = 'sb_publishable_JLaCYGFE3fq6b7ecDl0glA_axBuVRZo';
+  const SUPABASE_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_JLaCYGFE3fq6b7ecDl0glA_axBuVRZo';
   const {createClient}=supabase;
   const db=createClient(SUPABASE_URL,SUPABASE_KEY);
   const params=new URLSearchParams(window.location.search);
@@ -245,11 +245,36 @@
       document.getElementById('progBarra').style.width=`${pct}%`;
       document.getElementById('progPct').textContent=`${pct}%`;
       try{
+        // Llamada con streaming para evitar timeout de Vercel
         const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),tipo:'nuevo',seccion:s.n,bloque:{id:1}})});
         if(!r.ok)throw new Error(`Error sección ${s.n}: ${r.status}`);
-        const d=await r.json();partes.push(d.contenido);
+
+        // Leer stream de a pedazos
+        const reader=r.body.getReader();
+        const decoder=new TextDecoder();
+        let sectionText='';
+        let buffer='';
+
+        while(true){
+          const{done,value}=await reader.read();
+          if(done)break;
+          buffer+=decoder.decode(value,{stream:true});
+          const lines=buffer.split('\n');
+          buffer=lines.pop();
+          for(const line of lines){
+            if(!line.startsWith('data: '))continue;
+            const raw=line.slice(6).trim();
+            try{
+              const ev=JSON.parse(raw);
+              if(ev.chunk)sectionText+=ev.chunk;
+            }catch{}
+          }
+        }
+
+        if(!sectionText)throw new Error(`Error sección ${s.n}: respuesta vacía`);
+        partes.push(sectionText);
         document.getElementById(`s${s.n}`).className='sec done';
-       if (i < SECS.length - 1) await new Promise(resolve => setTimeout(resolve, 15000));
+        if (i < SECS.length - 1) await new Promise(resolve => setTimeout(resolve, 6000));
       }catch(e){mostrarErr(`Error en sección ${s.n}: ${e.message}. Intenta nuevamente.`);document.getElementById('progreso').style.display='none';document.getElementById('btnAccion').disabled=false;return}
     }
     document.getElementById('progBarra').style.width='100%';
