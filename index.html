@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Más Prevención - Generador RIOHS</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #1B2E6E, #4A90E2);
@@ -19,38 +16,34 @@
             align-items: center;
             justify-content: center;
             color: #333;
+            padding: 2rem 0;
         }
-        
+
         .container {
             background: white;
             padding: 2rem;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            max-width: 800px;
+            max-width: 900px;
             width: 90%;
         }
-        
+
         h1 {
             color: #1B2E6E;
             margin-bottom: 2rem;
             text-align: center;
+            font-size: 1.6rem;
         }
-        
-        .client-form {
-            margin-bottom: 2rem;
-        }
-        
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        
+
+        .form-group { margin-bottom: 1rem; }
+
         label {
             display: block;
             margin-bottom: 0.5rem;
             color: #555;
             font-weight: bold;
         }
-        
+
         input {
             width: 100%;
             padding: 0.8rem;
@@ -58,8 +51,13 @@
             border-radius: 5px;
             font-size: 1rem;
         }
-        
-        button {
+
+        input:focus {
+            outline: none;
+            border-color: #1B2E6E;
+        }
+
+        .btn-generar {
             background: #E87722;
             color: white;
             padding: 1rem 2rem;
@@ -69,25 +67,110 @@
             cursor: pointer;
             width: 100%;
             margin-top: 1rem;
+            font-weight: bold;
+            transition: background 0.2s;
         }
-        
-        button:hover {
-            background: #d66a1a;
-        }
-        
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        
+
+        .btn-generar:hover { background: #d66a1a; }
+        .btn-generar:disabled { background: #ccc; cursor: not-allowed; }
+
         .result {
             margin-top: 2rem;
-            padding: 1rem;
-            background: #f8f9fa;
-            border-radius: 5px;
             display: none;
         }
-        
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .result-header h3 {
+            color: #1B2E6E;
+            font-size: 1.1rem;
+        }
+
+        .btn-descargar {
+            background: #1B2E6E;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn-descargar:hover { background: #142258; }
+
+        .riohs-content {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 2rem;
+            line-height: 1.7;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .riohs-content h1 {
+            color: #1B2E6E;
+            font-size: 1.4rem;
+            text-align: left;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #E87722;
+            padding-bottom: 0.5rem;
+        }
+
+        .riohs-content h2 {
+            color: #1B2E6E;
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        .riohs-content h3 {
+            color: #E87722;
+            font-size: 1rem;
+            margin: 1rem 0 0.3rem;
+        }
+
+        .riohs-content p { margin-bottom: 0.8rem; }
+
+        .riohs-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .riohs-content th {
+            background: #1B2E6E;
+            color: white;
+            padding: 0.6rem;
+            text-align: left;
+        }
+
+        .riohs-content td {
+            padding: 0.5rem 0.6rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .riohs-content tr:nth-child(even) { background: #f0f4ff; }
+
+        .riohs-content strong { color: #1B2E6E; }
+
+        .riohs-content blockquote {
+            border-left: 4px solid #E87722;
+            padding: 0.5rem 1rem;
+            background: #fff8f3;
+            margin: 0.5rem 0;
+            font-style: italic;
+        }
+
         .error {
             color: #dc3545;
             background: #f8d7da;
@@ -101,72 +184,64 @@
 <body>
     <div class="container">
         <h1>Más Prevención - Generador RIOHS</h1>
-        
-        <form class="client-form" onsubmit="generarRIOHS(event)">
+
+        <form onsubmit="generarRIOHS(event)">
             <div class="form-group">
                 <label for="empresa">Empresa:</label>
                 <input type="text" id="empresa" required placeholder="Nombre de la empresa">
             </div>
-            
             <div class="form-group">
                 <label for="rubro">Rubro:</label>
-                <input type="text" id="rubro" required placeholder="Ej: Retail/Comercio, Construcción, etc.">
+                <input type="text" id="rubro" required placeholder="Ej: Retail, Construcción, Minería...">
             </div>
-            
-            <button type="submit" id="generateBtn">Generar RIOHS</button>
+            <button type="submit" id="generateBtn" class="btn-generar">Generar RIOHS</button>
         </form>
-        
+
         <div class="result" id="result">
-            <h3>RIOHS Generado:</h3>
-            <div id="content"></div>
-            <button onclick="descargarRIOHS()">Descargar Word</button>
+            <div class="result-header">
+                <h3>✅ RIOHS Generado</h3>
+                <button class="btn-descargar" onclick="descargarRIOHS()">⬇ Descargar Word</button>
+            </div>
+            <div class="riohs-content" id="content"></div>
         </div>
-        
+
         <div class="error" id="error"></div>
     </div>
 
     <script>
         let lastContent = '';
-        
+
         async function generarRIOHS(event) {
             event.preventDefault();
-            
             const btn = document.getElementById('generateBtn');
             const errorDiv = document.getElementById('error');
             const resultDiv = document.getElementById('result');
-            
+
             btn.disabled = true;
             btn.textContent = 'Generando...';
             errorDiv.style.display = 'none';
             resultDiv.style.display = 'none';
-            
+
             const empresa = document.getElementById('empresa').value;
             const rubro = document.getElementById('rubro').value;
-            
+
             try {
                 const response = await fetch('/api/generarRIOHS', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        cliente: { empresa, rubro },
-                        bloque: { id: 1, nombre: 'RIOHS Completo' }
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cliente: { empresa, rubro }, bloque: { id: 1 } })
                 });
-                
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
-                
+
+                if (!response.ok) throw new Error(`Error ${response.status}`);
+
                 const data = await response.json();
                 lastContent = data.contenido;
-                
-                document.getElementById('content').innerHTML = `<pre>${data.contenido}</pre>`;
+
+                document.getElementById('content').innerHTML = marked.parse(data.contenido);
                 resultDiv.style.display = 'block';
-                
+                resultDiv.scrollIntoView({ behavior: 'smooth' });
+
             } catch (error) {
-                console.error('Error:', error);
                 errorDiv.textContent = `Error: ${error.message}`;
                 errorDiv.style.display = 'block';
             } finally {
@@ -174,10 +249,9 @@
                 btn.textContent = 'Generar RIOHS';
             }
         }
-        
+
         function descargarRIOHS() {
             if (!lastContent) return;
-            
             const blob = new Blob([lastContent], { type: 'application/msword' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
