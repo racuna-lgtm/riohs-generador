@@ -577,9 +577,9 @@ Cuándo hacer la próxima auditoría y qué normativa monitorear.
     // ═══════════════════════════════════════
     // AUDITORÍA ANÁLISIS (con web search)
     // ═══════════════════════════════════════
-    } else if (tipo === 'auditoria_analisis') {
-      usarWebSearch = true;
-      maxTokens = 2000;
+  } else if (tipo === 'auditoria_analisis') {
+      usarWebSearch = false;
+      maxTokens = 1500;
       prompt = `Eres experto en legislación laboral chilena con acceso a búsqueda web.
 Busca: "DS 44 2023 Chile ${new Date().getFullYear()}", "Ley Karin vigente Chile", "normativa laboral nueva Chile ${new Date().getFullYear()}", "seguridad ${R} Chile vigente".
 
