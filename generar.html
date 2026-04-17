@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generar RIOHS · Portal Más Prevención</title>
+  <title>Generar RIOHS · Más Prevención</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -17,118 +17,111 @@
     .btn-volver:hover{background:rgba(255,255,255,.1)}
     main{max-width:960px;margin:0 auto;padding:2rem 1.5rem}
 
-    .cliente-banner{background:white;border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:1rem;border-left:6px solid var(--cp)}
-    .color-dot{width:40px;height:40px;border-radius:50%;flex-shrink:0}
-    .cliente-info h2{font-size:1.1rem;color:var(--navy)}
-    .cliente-info p{font-size:.85rem;color:var(--muted)}
-    .tipo-badge{margin-left:auto;padding:.4rem 1rem;border-radius:20px;font-size:.85rem;font-weight:700;white-space:nowrap}
-    .badge-nuevo{background:#e8f0ff;color:var(--navy)}
-    .badge-auditoria{background:#fff3e8;color:var(--naranja)}
+    .banner{background:white;border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:1rem;border-left:6px solid var(--cp)}
+    .dot{width:40px;height:40px;border-radius:50%;flex-shrink:0}
+    .banner h2{font-size:1.1rem;color:var(--navy)}
+    .banner p{font-size:.85rem;color:var(--muted)}
+    .badge{margin-left:auto;padding:.4rem 1rem;border-radius:20px;font-size:.85rem;font-weight:700;white-space:nowrap}
+    .badge-n{background:#e8f0ff;color:var(--navy)}
+    .badge-a{background:#fff3e8;color:var(--naranja)}
 
-    .aviso{border-radius:8px;padding:.8rem 1rem;margin-bottom:1.5rem;font-size:.85rem;display:flex;gap:.5rem;align-items:center}
-    .aviso-search{background:#e8f5e9;border:1px solid #a5d6a7;color:#1b5e20}
-    .aviso-campos{background:#fff8e1;border:1px solid #ffcc80;color:#e65100}
+    .aviso{border-radius:8px;padding:.8rem 1rem;margin-bottom:1.2rem;font-size:.85rem;display:flex;gap:.5rem;align-items:center}
+    .av-search{background:#e8f5e9;border:1px solid #a5d6a7;color:#1b5e20}
+    .av-campos{background:#fff8e1;border:1px solid #ffcc80;color:#e65100}
 
     .panel{background:white;border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-
     .upload-area{border:2px dashed #ccc;border-radius:8px;padding:2rem;text-align:center;cursor:pointer;transition:border-color .2s}
     .upload-area:hover{border-color:var(--navy)}
-    .upload-area.tiene-archivo{border-color:#4caf50;background:#f0fff4}
-    .upload-area .icono{font-size:2rem;margin-bottom:.5rem}
+    .upload-area.ok{border-color:#4caf50;background:#f0fff4}
+    .upload-area .ico{font-size:2rem;margin-bottom:.5rem}
     #inputArchivo{display:none}
 
-    .btn-principal{width:100%;padding:1rem;border:none;border-radius:8px;font-size:1.1rem;font-weight:700;cursor:pointer;color:white;transition:opacity .2s}
-    .btn-principal:disabled{opacity:.5;cursor:not-allowed}
-    .btn-principal:hover:not(:disabled){opacity:.88}
+    .btn-main{width:100%;padding:1rem;border:none;border-radius:8px;font-size:1.1rem;font-weight:700;cursor:pointer;color:white;transition:opacity .2s}
+    .btn-main:disabled{opacity:.5;cursor:not-allowed}
+    .btn-main:hover:not(:disabled){opacity:.88}
 
-    /* PROGRESO */
-    .progreso{display:none;background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);padding:2rem;margin-bottom:1.5rem}
-    .progreso-titulo{font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:1.2rem;text-align:center}
-    .progreso-barra-wrap{background:#f0f2f7;border-radius:20px;height:12px;margin-bottom:1rem;overflow:hidden}
-    .progreso-barra{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--navy),var(--naranja));transition:width .5s ease;width:0%}
-    .progreso-pct{text-align:center;font-size:.9rem;color:var(--navy);font-weight:700;margin-bottom:1rem}
-    .secciones-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
-    .sec-item{background:#f0f2f7;border-radius:6px;padding:.5rem;text-align:center;font-size:.72rem;color:var(--muted);transition:all .3s}
-    .sec-item.en-progreso{background:#fff3e0;color:#e65100;font-weight:700}
-    .sec-item.completada{background:#e8f5e9;color:#2e7d32;font-weight:700}
-    .sec-item .ico{font-size:1rem;display:block;margin-bottom:.2rem}
-    .progreso-nota{text-align:center;font-size:.8rem;color:var(--muted);margin-top:1rem}
+    /* PROGRESO 15 SECCIONES */
+    .progreso{display:none;background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);padding:1.5rem 2rem;margin-bottom:1.5rem}
+    .prog-titulo{font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:1rem;text-align:center}
+    .prog-barra-wrap{background:#f0f2f7;border-radius:20px;height:14px;margin-bottom:.6rem;overflow:hidden}
+    .prog-barra{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--navy),var(--naranja));transition:width .5s ease;width:0%}
+    .prog-pct{text-align:center;font-size:.9rem;color:var(--navy);font-weight:700;margin-bottom:1rem}
+    .secs-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin-bottom:1rem}
+    .sec{background:#f0f2f7;border-radius:6px;padding:.4rem;text-align:center;font-size:.68rem;color:var(--muted);transition:all .3s}
+    .sec.activa{background:#fff3e0;color:#e65100;font-weight:700;transform:scale(1.05)}
+    .sec.done{background:#e8f5e9;color:#2e7d32;font-weight:700}
+    .sec .ico-s{font-size:.9rem;display:block;margin-bottom:.15rem}
+    .prog-nota{text-align:center;font-size:.78rem;color:var(--muted)}
 
     /* ALERTAS */
     .panel-alertas{display:none}
-    .alertas-header{background:white;border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
-    .alertas-header h3{color:var(--navy);font-size:1.1rem}
-    .resumen-badges{display:flex;gap:.5rem;flex-wrap:wrap}
-    .resumen-badge{padding:.3rem .8rem;border-radius:20px;font-size:.8rem;font-weight:700}
-    .badge-falta{background:#fff3e0;color:#e65100;border:1px solid #ffcc80}
-    .badge-cambio{background:#e3f2fd;color:#1565c0;border:1px solid #90caf9}
-    .badge-sobra{background:#fce4ec;color:#c62828;border:1px solid #f48fb1}
-    .badge-error{background:#f3e5f5;color:#6a1b9a;border:1px solid #ce93d8}
+    .al-header{background:white;border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
+    .al-header h3{color:var(--navy);font-size:1.1rem}
+    .badges{display:flex;gap:.5rem;flex-wrap:wrap}
+    .rb{padding:.3rem .8rem;border-radius:20px;font-size:.8rem;font-weight:700}
+    .rb-f{background:#fff3e0;color:#e65100;border:1px solid #ffcc80}
+    .rb-c{background:#e3f2fd;color:#1565c0;border:1px solid #90caf9}
+    .rb-s{background:#fce4ec;color:#c62828;border:1px solid #f48fb1}
+    .rb-e{background:#f3e5f5;color:#6a1b9a;border:1px solid #ce93d8}
 
-    .acciones-masivas{background:white;border-radius:10px;padding:1rem 1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
-    .btn-sel{padding:.4rem .9rem;border-radius:5px;font-size:.82rem;font-weight:600;cursor:pointer;border:2px solid var(--navy);background:transparent;color:var(--navy);transition:all .2s}
-    .btn-sel:hover{background:var(--navy);color:white}
-    .btn-aplicar-sel{margin-left:auto;padding:.65rem 1.4rem;background:var(--naranja);color:white;border:none;border-radius:6px;font-size:.95rem;font-weight:700;cursor:pointer}
-    .btn-aplicar-sel:hover{opacity:.85}
-    .btn-aplicar-sel:disabled{opacity:.4;cursor:not-allowed}
-    .contador-sel{font-size:.85rem;color:var(--navy);font-weight:700}
+    .acciones{background:white;border-radius:10px;padding:1rem 1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+    .btn-s{padding:.4rem .9rem;border-radius:5px;font-size:.82rem;font-weight:600;cursor:pointer;border:2px solid var(--navy);background:transparent;color:var(--navy);transition:all .2s}
+    .btn-s:hover{background:var(--navy);color:white}
+    .btn-ap{margin-left:auto;padding:.65rem 1.4rem;background:var(--naranja);color:white;border:none;border-radius:6px;font-size:.95rem;font-weight:700;cursor:pointer}
+    .btn-ap:hover{opacity:.85}
+    .btn-ap:disabled{opacity:.4;cursor:not-allowed}
+    .cnt-sel{font-size:.85rem;color:var(--navy);font-weight:700}
 
-    .cat{background:white;border-radius:10px;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden}
-    .cat-header{padding:.9rem 1.5rem;display:flex;align-items:center;gap:.75rem;cursor:pointer}
-    .cat-falta .cat-header{background:#fff3e0;border-left:5px solid #ff9800}
-    .cat-cambio .cat-header{background:#e3f2fd;border-left:5px solid #2196f3}
-    .cat-sobra .cat-header{background:#fce4ec;border-left:5px solid #f44336}
-    .cat-error .cat-header{background:#f3e5f5;border-left:5px solid #9c27b0}
-    .cat-titulo{font-weight:700;font-size:.95rem}
-    .cat-count{margin-left:auto;background:rgba(0,0,0,.1);padding:.2rem .6rem;border-radius:20px;font-size:.8rem;font-weight:700}
-    .cat-toggle{font-size:.8rem;color:#999}
+    .cat-box{background:white;border-radius:10px;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden}
+    .cat-h{padding:.9rem 1.5rem;display:flex;align-items:center;gap:.75rem;cursor:pointer}
+    .cat-f .cat-h{background:#fff3e0;border-left:5px solid #ff9800}
+    .cat-c .cat-h{background:#e3f2fd;border-left:5px solid #2196f3}
+    .cat-s .cat-h{background:#fce4ec;border-left:5px solid #f44336}
+    .cat-e .cat-h{background:#f3e5f5;border-left:5px solid #9c27b0}
+    .cat-tit{font-weight:700;font-size:.95rem}
+    .cat-cnt{margin-left:auto;background:rgba(0,0,0,.1);padding:.2rem .6rem;border-radius:20px;font-size:.8rem;font-weight:700}
+    .cat-tog{font-size:.8rem;color:#999}
 
-    .alerta-item{padding:1rem 1.5rem;border-bottom:1px solid #f0f0f0;display:flex;gap:1rem;align-items:flex-start;transition:background .15s}
-    .alerta-item:last-child{border-bottom:none}
-    .alerta-item:hover{background:#fafbfc}
-    .alerta-item.sel{background:#f0f7ff}
-    .alerta-check{width:20px;height:20px;cursor:pointer;flex-shrink:0;margin-top:2px;accent-color:var(--navy)}
-    .alerta-body{flex:1}
-    .alerta-titulo{font-weight:700;font-size:.95rem;margin-bottom:.25rem}
-    .alerta-desc{font-size:.88rem;color:var(--muted);line-height:1.5;margin-bottom:.4rem}
-    .alerta-meta{display:flex;gap:.5rem;flex-wrap:wrap}
-    .meta-tag{font-size:.75rem;padding:.15rem .5rem;border-radius:3px;background:#f0f2f7;color:#555}
-    .prio-alta{background:#fff0f0;color:#c62828}
-    .prio-media{background:#fff8e1;color:#f57f17}
-    .prio-baja{background:#e8f5e9;color:#2e7d32}
+    .al-item{padding:1rem 1.5rem;border-bottom:1px solid #f0f0f0;display:flex;gap:1rem;align-items:flex-start;transition:background .15s}
+    .al-item:last-child{border-bottom:none}
+    .al-item:hover{background:#fafbfc}
+    .al-item.sel{background:#f0f7ff}
+    .al-chk{width:20px;height:20px;cursor:pointer;flex-shrink:0;margin-top:2px;accent-color:var(--navy)}
+    .al-bod{flex:1}
+    .al-tit{font-weight:700;font-size:.95rem;margin-bottom:.25rem}
+    .al-desc{font-size:.88rem;color:var(--muted);line-height:1.5;margin-bottom:.4rem}
+    .al-meta{display:flex;gap:.5rem;flex-wrap:wrap}
+    .mtag{font-size:.75rem;padding:.15rem .5rem;border-radius:3px;background:#f0f2f7;color:#555}
+    .p-a{background:#fff0f0;color:#c62828}
+    .p-m{background:#fff8e1;color:#f57f17}
+    .p-b{background:#e8f5e9;color:#2e7d32}
 
     /* RESULTADO */
     .resultado{display:none;background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;margin-bottom:1.5rem}
-    .resultado-header{padding:1rem 1.5rem;background:var(--cp);color:white;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
-    .resultado-header h3{font-size:1rem}
-    .btns-desc{display:flex;gap:.5rem;flex-wrap:wrap}
-    .btn-desc{padding:.5rem 1rem;border:none;border-radius:5px;font-size:.82rem;font-weight:700;cursor:pointer;transition:opacity .2s}
-    .btn-desc:hover{opacity:.85}
-    .btn-word{background:#2b579a;color:white}
-    .btn-resumen{background:#4caf50;color:white}
-    .btn-informe{background:#ff9800;color:white}
-    .btn-reiniciar{background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.4)}
+    .res-hdr{padding:1rem 1.5rem;background:var(--cp);color:white;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
+    .res-hdr h3{font-size:1rem}
+    .btns-r{display:flex;gap:.5rem;flex-wrap:wrap}
+    .btn-d{padding:.5rem 1rem;border:none;border-radius:5px;font-size:.82rem;font-weight:700;cursor:pointer}
+    .btn-d:hover{opacity:.85}
+    .btn-d:disabled{opacity:.5;cursor:not-allowed}
+    .bd-word{background:#2b579a;color:white}
+    .bd-res{background:#4caf50;color:white}
+    .bd-inf{background:#ff9800;color:white}
+    .bd-new{background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.4)}
 
-    .riohs-content{padding:2rem;max-height:65vh;overflow-y:auto;line-height:1.7}
-    .riohs-content h1{color:var(--cp);font-size:1.4rem;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:3px solid var(--cs);text-align:left}
-    .riohs-content h2{color:var(--cp);font-size:1.15rem;margin:1.5rem 0 .5rem}
-    .riohs-content h3{color:var(--cs);font-size:1rem;margin:1rem 0 .3rem}
-    .riohs-content p{margin-bottom:.8rem;color:#333}
-    .riohs-content table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.9rem}
-    .riohs-content th{padding:.6rem;color:white;background:var(--cp);text-align:left}
-    .riohs-content td{padding:.5rem;border:1px solid #ddd}
-    .riohs-content tr:nth-child(even) td{background:#f8f9fa}
-    .riohs-content blockquote{border-left:4px solid var(--cs);padding:.5rem 1rem;background:#fafafa;margin:.5rem 0}
-    .riohs-content strong{color:var(--cp)}
+    .riohs-c{padding:2rem;max-height:65vh;overflow-y:auto;line-height:1.7}
+    .riohs-c h1{color:var(--cp);font-size:1.4rem;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:3px solid var(--cs);text-align:left}
+    .riohs-c h2{color:var(--cp);font-size:1.15rem;margin:1.5rem 0 .5rem}
+    .riohs-c h3{color:var(--cs);font-size:1rem;margin:1rem 0 .3rem}
+    .riohs-c p{margin-bottom:.8rem;color:#333}
+    .riohs-c table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.9rem}
+    .riohs-c th{padding:.6rem;color:white;background:var(--cp);text-align:left}
+    .riohs-c td{padding:.5rem;border:1px solid #ddd}
+    .riohs-c tr:nth-child(even) td{background:#f8f9fa}
+    .riohs-c blockquote{border-left:4px solid var(--cs);padding:.5rem 1rem;background:#fafafa;margin:.5rem 0}
+    .riohs-c strong{color:var(--cp)}
 
-    /* Marcadores de campos pendientes */
-    .riohs-content p:has([data-pendiente]),
-    .pendiente-highlight{background:#fff3cd;border-left:4px solid #ffc107;padding:.3rem .6rem;border-radius:4px;color:#856404;font-weight:700}
-
-    .error-msg{background:#fff0f0;border:1px solid #ffcccc;color:#cc0000;padding:1rem;border-radius:8px;margin-top:1rem;display:none}
-
-    /* MINI SPINNER para botones de reportes */
-    .btn-loading{opacity:.6;cursor:not-allowed !important}
+    .err-msg{background:#fff0f0;border:1px solid #ffcccc;color:#cc0000;padding:1rem;border-radius:8px;margin-top:1rem;display:none}
   </style>
 </head>
 <body>
@@ -138,84 +131,73 @@
 </header>
 
 <main>
-  <div class="cliente-banner" id="clienteBanner">
-    <div class="color-dot" id="colorDot"></div>
-    <div class="cliente-info">
-      <h2 id="nombreCliente">Cargando...</h2>
-      <p id="infoCliente">—</p>
-    </div>
-    <span class="tipo-badge" id="tipoBadge">—</span>
+  <div class="banner" id="banner">
+    <div class="dot" id="dot"></div>
+    <div><h2 id="nomCliente">Cargando...</h2><p id="infoCliente">—</p></div>
+    <span class="badge" id="tipoBadge">—</span>
   </div>
 
-  <div class="aviso aviso-search">
-    🌐 <strong>Búsqueda legal en tiempo real activada</strong> — Claude consulta fuentes actualizadas de normativa chilena antes de generar o auditar.
-  </div>
-
-  <div class="aviso aviso-campos" id="avisoCampos" style="display:none">
-    ⚠️ <strong>Hay campos incompletos en la ficha del cliente.</strong> El documento se generará con marcadores <strong>[⚠️ PENDIENTE]</strong> que Rafael debe completar antes de entregar al cliente.
-  </div>
+  <div class="aviso av-search">🌐 <strong>Búsqueda legal en tiempo real activada</strong> — Claude consulta normativa actualizada en auditorías.</div>
+  <div class="aviso av-campos" id="avisoCampos" style="display:none">⚠️ <strong>Hay campos incompletos en la ficha.</strong> El documento se generará con marcadores <strong>[⚠️ PENDIENTE]</strong> en los campos que faltan.</div>
 
   <div class="panel" id="panelUpload" style="display:none">
     <h3 style="color:var(--navy);margin-bottom:.5rem">📄 Sube el RIOHS existente</h3>
-    <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">El sistema buscará normativa actualizada y detectará brechas legales.</p>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">El sistema detectará brechas legales comparando con normativa vigente actualizada.</p>
     <div class="upload-area" id="uploadArea" onclick="document.getElementById('inputArchivo').click()">
-      <div class="icono">📂</div>
-      <p id="uploadTexto">Haz clic para seleccionar el archivo<br><small>Formatos: .docx, .txt</small></p>
+      <div class="ico">📂</div>
+      <p id="uploadTxt">Haz clic para seleccionar el archivo<br><small>Formatos: .docx, .txt</small></p>
     </div>
-    <input type="file" id="inputArchivo" accept=".docx,.txt" onchange="archivoSeleccionado(this)">
+    <input type="file" id="inputArchivo" accept=".docx,.txt" onchange="archivoSel(this)">
   </div>
 
-  <div class="panel" id="panelBoton">
-    <button class="btn-principal" id="btnAccion" onclick="iniciarAccion()">⚡ Generar RIOHS</button>
-    <div class="error-msg" id="errorMsg"></div>
+  <div class="panel" id="panelBtn">
+    <button class="btn-main" id="btnAccion" onclick="iniciar()">⚡ Generar RIOHS</button>
+    <div class="err-msg" id="errMsg"></div>
   </div>
 
   <!-- PROGRESO -->
   <div class="progreso" id="progreso">
-    <div class="progreso-titulo" id="progresoTitulo">Generando...</div>
-    <div class="progreso-barra-wrap"><div class="progreso-barra" id="progresoBarra"></div></div>
-    <div class="progreso-pct" id="progresoPct">0%</div>
-    <div class="secciones-grid" id="seccionesGrid"></div>
-    <p class="progreso-nota" id="progresoNota">⏱ Tiempo estimado: 8-12 minutos. El documento se construye sección por sección.</p>
+    <div class="prog-titulo" id="progTit">Generando...</div>
+    <div class="prog-barra-wrap"><div class="prog-barra" id="progBarra"></div></div>
+    <div class="prog-pct" id="progPct">0%</div>
+    <div class="secs-grid" id="secsGrid"></div>
+    <p class="prog-nota" id="progNota">⏱ Tiempo estimado: 14-18 minutos — El documento se construye sección por sección para alcanzar ~100 páginas</p>
   </div>
 
-  <!-- ALERTAS -->
+  <!-- ALERTAS AUDITORÍA -->
   <div class="panel-alertas" id="panelAlertas">
-    <div class="alertas-header">
-      <h3>🔍 Resultado de la Auditoría</h3>
-      <div class="resumen-badges" id="resumenBadges"></div>
-    </div>
-    <div class="acciones-masivas">
+    <div class="al-header"><h3>🔍 Resultado de la Auditoría</h3><div class="badges" id="resBadges"></div></div>
+    <div class="acciones">
       <span>Seleccionar:</span>
-      <button class="btn-sel" onclick="selTodas()">Todas</button>
-      <button class="btn-sel" onclick="selTipo('falta')">⚠️ Faltantes</button>
-      <button class="btn-sel" onclick="selTipo('cambio')">🔄 Cambios</button>
-      <button class="btn-sel" onclick="selTipo('sobra')">🗑️ Obsoletos</button>
-      <button class="btn-sel" onclick="deselTodas()">Ninguna</button>
-      <span class="contador-sel" id="contSel">0 seleccionadas</span>
-      <button class="btn-aplicar-sel" id="btnAplicar" onclick="aplicarSel()" disabled>✅ Aplicar al documento</button>
+      <button class="btn-s" onclick="selT()">Todas</button>
+      <button class="btn-s" onclick="selP('falta')">⚠️ Faltantes</button>
+      <button class="btn-s" onclick="selP('cambio')">🔄 Cambios</button>
+      <button class="btn-s" onclick="selP('sobra')">🗑️ Obsoletos</button>
+      <button class="btn-s" onclick="deselT()">Ninguna</button>
+      <span class="cnt-sel" id="cntSel">0 seleccionadas</span>
+      <button class="btn-ap" id="btnAplicar" onclick="aplicar()" disabled>✅ Aplicar al documento</button>
     </div>
     <div id="listaAlertas"></div>
   </div>
 
   <!-- RESULTADO -->
   <div class="resultado" id="resultado">
-    <div class="resultado-header" id="resultHeader">
-      <h3 id="resultTitulo">✅ RIOHS Generado</h3>
-      <div class="btns-desc" id="botonesResultado">
-        <button class="btn-desc btn-word" onclick="descargarWord('riohs')">📄 Descargar RIOHS (.docx)</button>
-        <button class="btn-desc btn-resumen" id="btnResumen" onclick="generarResumenEjecutivo()">📋 Resumen Ejecutivo</button>
-        <button class="btn-desc btn-reiniciar" onclick="reiniciar()">🔄 Nuevo</button>
+    <div class="res-hdr" id="resHdr">
+      <h3 id="resTit">✅ RIOHS Generado</h3>
+      <div class="btns-r" id="btnsR">
+        <button class="btn-d bd-word" onclick="descargar(contenido,'riohs')">📄 Descargar RIOHS (.docx)</button>
+        <button class="btn-d bd-res" id="btnRes" onclick="genResumen()">📋 Resumen Ejecutivo</button>
+        <button class="btn-d bd-new" onclick="reiniciar()">🔄 Nuevo</button>
       </div>
     </div>
-    <div class="riohs-content" id="riohsContent"></div>
+    <div class="riohs-c" id="riohsC"></div>
   </div>
 </main>
 
 <script>
   const SUPABASE_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_JLaCYGFE3fq6b7ecDl0glA_axBuVRZo';
-  const { createClient } = supabase;
+  const {createClient} = supabase;
   const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   const params = new URLSearchParams(window.location.search);
@@ -229,323 +211,283 @@
   let seleccionadas = new Set();
   let alertasAplicadas = [];
 
-  const SECCIONES = [
-    {num:1,label:'Portada e Índice',ico:'📋'},
-    {num:2,label:'Jornada y Remuneraciones',ico:'⏰'},
-    {num:3,label:'Obligaciones y Disciplina',ico:'📝'},
-    {num:4,label:'Higiene y Seguridad',ico:'⛑️'},
-    {num:5,label:'Ley Karin',ico:'⚖️'},
-    {num:6,label:'TEMER e ISTAS21',ico:'🏥'},
-    {num:7,label:'Maternidad y Datos',ico:'👶'},
-    {num:8,label:'Cierre y Anexos',ico:'✅'},
+  const SECS = [
+    {n:1,l:'Portada e Índice',i:'📋'},
+    {n:2,l:'Ingreso y Contrato',i:'📝'},
+    {n:3,l:'Jornada Parte 1',i:'⏰'},
+    {n:4,l:'Horas Extra y Descansos',i:'🏖️'},
+    {n:5,l:'Remuneraciones',i:'💰'},
+    {n:6,l:'Obligaciones',i:'✅'},
+    {n:7,l:'Prohibiciones',i:'🚫'},
+    {n:8,l:'Disciplina',i:'⚖️'},
+    {n:9,l:'Higiene y Seguridad 1',i:'⛑️'},
+    {n:10,l:'Higiene y Seguridad 2',i:'🔥'},
+    {n:11,l:'Accidentes',i:'🏥'},
+    {n:12,l:'Ley Karin 1',i:'🚨'},
+    {n:13,l:'Ley Karin 2',i:'🔍'},
+    {n:14,l:'TEMER · ISTAS · Cargas',i:'💪'},
+    {n:15,l:'Maternidad · Datos · Cierre',i:'🌟'},
   ];
 
-  const CAMPOS_OBLIGATORIOS = ['rut','region','organismo_administrador','representante_legal','num_trabajadores'];
+  const CAMPOS_OBL = ['rut','region','organismo_administrador','representante_legal','num_trabajadores'];
 
   async function init() {
     const {data:{session}} = await db.auth.getSession();
-    if (!session){window.location.href='index.html';return}
-    if (!clienteId){window.location.href='dashboard.html';return}
-    document.getElementById('btnVolver').onclick = () => window.location.href=`ficha-cliente.html?id=${clienteId}`;
+    if(!session){window.location.href='index.html';return}
+    if(!clienteId){window.location.href='dashboard.html';return}
+    document.getElementById('btnVolver').onclick = ()=>window.location.href=`ficha-cliente.html?id=${clienteId}`;
     await cargarCliente();
-    configurarModo();
-    verificarCampos();
+    configurar();
+    checkCampos();
   }
 
   async function cargarCliente() {
     const {data} = await db.from('clientes').select('*').eq('id',clienteId).single();
-    if (!data){window.location.href='dashboard.html';return}
+    if(!data){window.location.href='dashboard.html';return}
     cliente = data;
-    const cp = data.color_primario||'#1B2E6E';
-    const cs = data.color_secundario||'#E87722';
+    const cp=data.color_primario||'#1B2E6E', cs=data.color_secundario||'#E87722';
     document.documentElement.style.setProperty('--cp',cp);
     document.documentElement.style.setProperty('--cs',cs);
-    document.getElementById('nombreCliente').textContent = data.razon_social;
-    document.getElementById('infoCliente').textContent = `${data.rubro} · ${data.region||'Sin región'} · ${data.num_trabajadores||'?'} trabajadores`;
-    document.getElementById('colorDot').style.background = `linear-gradient(135deg,${cp},${cs})`;
-    document.getElementById('clienteBanner').style.borderLeftColor = cp;
-    document.getElementById('resultHeader').style.background = cp;
+    document.getElementById('nomCliente').textContent=data.razon_social;
+    document.getElementById('infoCliente').textContent=`${data.rubro} · ${data.region||'Sin región'} · ${data.num_trabajadores||'?'} trabajadores`;
+    document.getElementById('dot').style.background=`linear-gradient(135deg,${cp},${cs})`;
+    document.getElementById('banner').style.borderLeftColor=cp;
+    document.getElementById('resHdr').style.background=cp;
   }
 
-  function verificarCampos() {
-    const faltantes = CAMPOS_OBLIGATORIOS.filter(c => !cliente[c]);
-    if (faltantes.length > 0) {
-      document.getElementById('avisoCampos').style.display = 'flex';
-    }
+  function checkCampos() {
+    if(CAMPOS_OBL.some(c=>!cliente[c])) document.getElementById('avisoCampos').style.display='flex';
   }
 
-  function configurarModo() {
-    const badge = document.getElementById('tipoBadge');
-    const btn = document.getElementById('btnAccion');
-    if (tipo==='auditoria') {
-      badge.textContent='🔍 Auditoría';badge.className='tipo-badge badge-auditoria';
+  function configurar() {
+    const badge=document.getElementById('tipoBadge'), btn=document.getElementById('btnAccion');
+    if(tipo==='auditoria'){
+      badge.textContent='🔍 Auditoría';badge.className='badge badge-a';
       document.getElementById('panelUpload').style.display='block';
       btn.textContent='🔍 Analizar RIOHS existente';btn.style.background='#1B2E6E';
     } else {
-      badge.textContent='➕ RIOHS Nuevo';badge.className='tipo-badge badge-nuevo';
+      badge.textContent='➕ RIOHS Nuevo';badge.className='badge badge-n';
       btn.textContent='⚡ Generar RIOHS Completo (~100 páginas)';btn.style.background='var(--naranja)';
     }
   }
 
-  function archivoSeleccionado(input) {
-    const archivo = input.files[0];if(!archivo)return;
-    document.getElementById('uploadArea').classList.add('tiene-archivo');
-    document.getElementById('uploadTexto').innerHTML=`✅ <strong>${archivo.name}</strong><br><small>Haz clic para cambiar</small>`;
-    if(archivo.name.endsWith('.docx')) {
+  function archivoSel(input) {
+    const f=input.files[0];if(!f)return;
+    document.getElementById('uploadArea').classList.add('ok');
+    document.getElementById('uploadTxt').innerHTML=`✅ <strong>${f.name}</strong><br><small>Haz clic para cambiar</small>`;
+    if(f.name.endsWith('.docx')){
       const r=new FileReader();
       r.onload=async(e)=>{const res=await mammoth.extractRawText({arrayBuffer:e.target.result});textoDoc=res.value};
-      r.readAsArrayBuffer(archivo);
-    } else {const r=new FileReader();r.onload=(e)=>{textoDoc=e.target.result};r.readAsText(archivo)}
+      r.readAsArrayBuffer(f);
+    } else {const r=new FileReader();r.onload=(e)=>{textoDoc=e.target.result};r.readAsText(f)}
   }
 
-  function iniciarAccion(){tipo==='auditoria'?iniciarAuditoria():iniciarGeneracionCompleta()}
+  function iniciar(){tipo==='auditoria'?iniciarAuditoria():iniciarGeneracion()}
 
-  // ═══ GENERACIÓN 8 SECCIONES ════════════
-  async function iniciarGeneracionCompleta() {
+  async function iniciarGeneracion() {
     document.getElementById('btnAccion').disabled=true;
-    document.getElementById('errorMsg').style.display='none';
-
-    const grid=document.getElementById('seccionesGrid');
-    grid.innerHTML=SECCIONES.map(s=>`<div class="sec-item" id="sec-${s.num}"><span class="ico">${s.ico}</span>${s.label}</div>`).join('');
-    document.getElementById('progresoNota').textContent='⏱ Tiempo estimado: 8-12 minutos. El documento se construye sección por sección.';
+    document.getElementById('errMsg').style.display='none';
+    const grid=document.getElementById('secsGrid');
+    grid.innerHTML=SECS.map(s=>`<div class="sec" id="s${s.n}"><span class="ico-s">${s.i}</span>${s.l}</div>`).join('');
+    document.getElementById('progNota').textContent='⏱ Tiempo estimado: 14-18 minutos — 15 secciones para ~100 páginas';
     document.getElementById('progreso').style.display='block';
 
     const partes=[];
-    const clientePayload=buildClientePayload();
-
-    for(let i=0;i<SECCIONES.length;i++) {
-      const sec=SECCIONES[i];
-      const pct=Math.round((i/SECCIONES.length)*100);
-      document.getElementById(`sec-${sec.num}`).className='sec-item en-progreso';
-      document.getElementById('progresoTitulo').textContent=`Generando: ${sec.label}... (${i+1} de 8)`;
-      document.getElementById('progresoBarra').style.width=`${pct}%`;
-      document.getElementById('progresoPct').textContent=`${pct}%`;
-
+    for(let i=0;i<SECS.length;i++){
+      const s=SECS[i];
+      const pct=Math.round((i/SECS.length)*100);
+      document.getElementById(`s${s.n}`).className='sec activa';
+      document.getElementById('progTit').textContent=`Generando: ${s.l} (${i+1} de ${SECS.length})`;
+      document.getElementById('progBarra').style.width=`${pct}%`;
+      document.getElementById('progPct').textContent=`${pct}%`;
       try {
-        const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:clientePayload,tipo:'nuevo',seccion:sec.num,bloque:{id:1}})});
-        if(!r.ok)throw new Error(`Error sección ${sec.num}: ${r.status}`);
+        const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),tipo:'nuevo',seccion:s.n,bloque:{id:1}})});
+        if(!r.ok)throw new Error(`Error sección ${s.n}: ${r.status}`);
         const d=await r.json();
         partes.push(d.contenido);
-        document.getElementById(`sec-${sec.num}`).className='sec-item completada';
-      } catch(e) {
-        mostrarError(`Error en sección ${sec.num}: ${e.message}`);
+        document.getElementById(`s${s.n}`).className='sec done';
+      } catch(e){
+        mostrarErr(`Error en sección ${s.n}: ${e.message}. Intenta nuevamente.`);
         document.getElementById('progreso').style.display='none';
         document.getElementById('btnAccion').disabled=false;
         return;
       }
     }
 
-    document.getElementById('progresoBarra').style.width='100%';
-    document.getElementById('progresoPct').textContent='100%';
-    document.getElementById('progresoTitulo').textContent='✅ RIOHS completo generado';
+    document.getElementById('progBarra').style.width='100%';
+    document.getElementById('progPct').textContent='100% ✅';
+    document.getElementById('progTit').textContent='✅ RIOHS completo generado';
     contenido=partes.join('\n\n---\n\n');
     await guardarDoc(contenido,'nuevo');
     setTimeout(()=>{
       document.getElementById('progreso').style.display='none';
-      // Mostrar botón informe de cambios solo en auditoría
-      document.getElementById('btnResumen').style.display='inline-block';
-      mostrarResultado(contenido,'RIOHS Completo Generado');
-    },800);
+      mostrarResultado(contenido,'RIOHS Completo (~100 páginas)');
+    },1000);
   }
 
-  // ═══ AUDITORÍA ════════════════════════
   async function iniciarAuditoria() {
-    if(!textoDoc){mostrarError('Primero sube el RIOHS existente.');return}
+    if(!textoDoc){mostrarErr('Primero sube el RIOHS existente.');return}
     document.getElementById('btnAccion').disabled=true;
-    document.getElementById('errorMsg').style.display='none';
-    document.getElementById('seccionesGrid').innerHTML='';
-    document.getElementById('progresoNota').textContent='';
-    document.getElementById('progresoTitulo').textContent='Buscando normativa actualizada y analizando RIOHS...';
-    document.getElementById('progresoBarra').style.width='30%';
-    document.getElementById('progresoPct').textContent='Analizando...';
+    document.getElementById('errMsg').style.display='none';
+    document.getElementById('secsGrid').innerHTML='';
+    document.getElementById('progNota').textContent='';
+    document.getElementById('progTit').textContent='Buscando normativa actualizada y analizando RIOHS...';
+    document.getElementById('progBarra').style.width='30%';
+    document.getElementById('progPct').textContent='Analizando...';
     document.getElementById('progreso').style.display='block';
 
     try {
-      const data=await llamarAPI({tipo:'auditoria_analisis'});
-      document.getElementById('progresoBarra').style.width='100%';
-      document.getElementById('progresoPct').textContent='✅ Análisis completo';
+      const data=await api({tipo:'auditoria_analisis'});
+      document.getElementById('progBarra').style.width='100%';
+      document.getElementById('progPct').textContent='✅ Análisis completo';
       let lista=[];
       try {
         const m=data.contenido.match(/```json\n?([\s\S]*?)\n?```/);
         const parsed=JSON.parse(m?m[1]:data.contenido);
         lista=parsed.alertas||parsed;
-      } catch{mostrarError('Error al procesar el análisis. Intenta nuevamente.');document.getElementById('progreso').style.display='none';document.getElementById('btnAccion').disabled=false;return}
+      } catch{mostrarErr('Error al procesar análisis. Intenta nuevamente.');document.getElementById('progreso').style.display='none';document.getElementById('btnAccion').disabled=false;return}
       alertas=lista;
-      setTimeout(()=>{document.getElementById('progreso').style.display='none';mostrarAlertas(lista)},800);
-    } catch(e){document.getElementById('progreso').style.display='none';document.getElementById('btnAccion').disabled=false;mostrarError(e.message)}
+      setTimeout(()=>{document.getElementById('progreso').style.display='none';mostrarAlertas(lista)},600);
+    } catch(e){document.getElementById('progreso').style.display='none';document.getElementById('btnAccion').disabled=false;mostrarErr(e.message)}
   }
 
   function mostrarAlertas(lista) {
     document.getElementById('panelAlertas').style.display='block';
-    const conteos={falta:0,cambio:0,sobra:0,error:0};
-    lista.forEach(a=>{if(conteos[a.tipo]!==undefined)conteos[a.tipo]++});
-    const etiq={falta:['⚠️ Faltantes','badge-falta'],cambio:['🔄 Cambios','badge-cambio'],sobra:['🗑️ Obsoletos','badge-sobra'],error:['❌ Errores','badge-error']};
-    document.getElementById('resumenBadges').innerHTML=Object.entries(conteos).filter(([,c])=>c>0).map(([t,c])=>`<span class="resumen-badge ${etiq[t][1]}">${etiq[t][0]}: ${c}</span>`).join('');
-    const grupos={falta:[],cambio:[],sobra:[],error:[]};
-    lista.forEach(a=>{if(grupos[a.tipo])grupos[a.tipo].push(a)});
-    const cfgs={falta:['⚠️ Artículos FALTANTES','cat-falta'],cambio:['🔄 Artículos que requieren CAMBIO','cat-cambio'],sobra:['🗑️ Artículos OBSOLETOS','cat-sobra'],error:['❌ Errores formales','cat-error']};
-    const container=document.getElementById('listaAlertas');
-    container.innerHTML='';
-    Object.entries(grupos).forEach(([t,items])=>{
+    const cnt={falta:0,cambio:0,sobra:0,error:0};
+    lista.forEach(a=>{if(cnt[a.tipo]!==undefined)cnt[a.tipo]++});
+    const et={falta:['⚠️ Faltantes','rb-f'],cambio:['🔄 Cambios','rb-c'],sobra:['🗑️ Obsoletos','rb-s'],error:['❌ Errores','rb-e']};
+    document.getElementById('resBadges').innerHTML=Object.entries(cnt).filter(([,c])=>c>0).map(([t,c])=>`<span class="rb ${et[t][1]}">${et[t][0]}: ${c}</span>`).join('');
+    const g={falta:[],cambio:[],sobra:[],error:[]};
+    lista.forEach(a=>{if(g[a.tipo])g[a.tipo].push(a)});
+    const cf={falta:['⚠️ Artículos FALTANTES','cat-f'],cambio:['🔄 Artículos que requieren CAMBIO','cat-c'],sobra:['🗑️ Artículos OBSOLETOS','cat-s'],error:['❌ Errores formales','cat-e']};
+    const cont=document.getElementById('listaAlertas');
+    cont.innerHTML='';
+    Object.entries(g).forEach(([t,items])=>{
       if(!items.length)return;
       const div=document.createElement('div');
-      div.className=`cat cat-${t}`;
-      div.innerHTML=`<div class="cat-header" onclick="toggleCat(this)"><span class="cat-titulo">${cfgs[t][0]}</span><span class="cat-count">${items.length}</span><span class="cat-toggle">▼</span></div><div class="cat-items">${items.map(a=>renderAlerta(a)).join('')}</div>`;
-      container.appendChild(div);
+      div.className=`cat-box ${cf[t][1]}`;
+      div.innerHTML=`<div class="cat-h" onclick="togCat(this)"><span class="cat-tit">${cf[t][0]}</span><span class="cat-cnt">${items.length}</span><span class="cat-tog">▼</span></div><div class="cat-items">${items.map(a=>renderAl(a)).join('')}</div>`;
+      cont.appendChild(div);
     });
-    actualizarContador();
+    updCnt();
     document.getElementById('panelAlertas').scrollIntoView({behavior:'smooth'});
   }
 
-  function renderAlerta(a) {
-    const pc={alta:'prio-alta',media:'prio-media',baja:'prio-baja'};
-    return `<div class="alerta-item" id="al-${a.id}"><input type="checkbox" class="alerta-check" onchange="toggleAlerta(${a.id},this.checked)"><div class="alerta-body"><div class="alerta-titulo">${a.titulo}</div><div class="alerta-desc">${a.descripcion}</div><div class="alerta-meta">${a.prioridad?`<span class="meta-tag ${pc[a.prioridad]||''}">Prioridad: ${a.prioridad}</span>`:''}${a.seccion?`<span class="meta-tag">📌 ${a.seccion}</span>`:''}${a.normativa?`<span class="meta-tag">📋 ${a.normativa}</span>`:''}</div></div></div>`;
+  function renderAl(a){
+    const pc={alta:'p-a',media:'p-m',baja:'p-b'};
+    return `<div class="al-item" id="al${a.id}"><input type="checkbox" class="al-chk" onchange="togAl(${a.id},this.checked)"><div class="al-bod"><div class="al-tit">${a.titulo}</div><div class="al-desc">${a.descripcion}</div><div class="al-meta">${a.prioridad?`<span class="mtag ${pc[a.prioridad]||''}">Prioridad: ${a.prioridad}</span>`:''}${a.seccion?`<span class="mtag">📌 ${a.seccion}</span>`:''}${a.normativa?`<span class="mtag">📋 ${a.normativa}</span>`:''}</div></div></div>`;
   }
 
-  function toggleAlerta(id,checked){checked?seleccionadas.add(id):seleccionadas.delete(id);document.getElementById(`al-${id}`)?.classList.toggle('sel',checked);actualizarContador()}
-  function selTodas(){alertas.forEach(a=>{seleccionadas.add(a.id);const el=document.getElementById(`al-${a.id}`);if(el){el.classList.add('sel');el.querySelector('input').checked=true}});actualizarContador()}
-  function deselTodas(){seleccionadas.clear();document.querySelectorAll('.alerta-item').forEach(el=>{el.classList.remove('sel');el.querySelector('input').checked=false});actualizarContador()}
-  function selTipo(t){alertas.filter(a=>a.tipo===t).forEach(a=>{seleccionadas.add(a.id);const el=document.getElementById(`al-${a.id}`);if(el){el.classList.add('sel');el.querySelector('input').checked=true}});actualizarContador()}
-  function actualizarContador(){const n=seleccionadas.size;document.getElementById('contSel').textContent=`${n} seleccionada${n!==1?'s':''}`;document.getElementById('btnAplicar').disabled=n===0}
-  function toggleCat(h){const items=h.nextElementSibling;const v=items.style.display!=='none';items.style.display=v?'none':'block';h.querySelector('.cat-toggle').textContent=v?'▶':'▼'}
+  function togAl(id,c){c?seleccionadas.add(id):seleccionadas.delete(id);document.getElementById(`al${id}`)?.classList.toggle('sel',c);updCnt()}
+  function selT(){alertas.forEach(a=>{seleccionadas.add(a.id);const el=document.getElementById(`al${a.id}`);if(el){el.classList.add('sel');el.querySelector('input').checked=true}});updCnt()}
+  function deselT(){seleccionadas.clear();document.querySelectorAll('.al-item').forEach(el=>{el.classList.remove('sel');el.querySelector('input').checked=false});updCnt()}
+  function selP(t){alertas.filter(a=>a.tipo===t).forEach(a=>{seleccionadas.add(a.id);const el=document.getElementById(`al${a.id}`);if(el){el.classList.add('sel');el.querySelector('input').checked=true}});updCnt()}
+  function updCnt(){const n=seleccionadas.size;document.getElementById('cntSel').textContent=`${n} seleccionada${n!==1?'s':''}`;document.getElementById('btnAplicar').disabled=n===0}
+  function togCat(h){const it=h.nextElementSibling;const v=it.style.display!=='none';it.style.display=v?'none':'block';h.querySelector('.cat-tog').textContent=v?'▶':'▼'}
 
-  async function aplicarSel() {
+  async function aplicar() {
     const selec=alertas.filter(a=>seleccionadas.has(a.id));
     alertasAplicadas=selec;
     document.getElementById('panelAlertas').style.display='none';
-    document.getElementById('seccionesGrid').innerHTML='';
-    document.getElementById('progresoNota').textContent='';
-    document.getElementById('progresoTitulo').textContent='Aplicando cambios y generando documento actualizado...';
-    document.getElementById('progresoBarra').style.width='40%';
-    document.getElementById('progresoPct').textContent='Buscando normativa y aplicando cambios...';
+    document.getElementById('secsGrid').innerHTML='';
+    document.getElementById('progNota').textContent='';
+    document.getElementById('progTit').textContent='Aplicando cambios seleccionados...';
+    document.getElementById('progBarra').style.width='40%';
+    document.getElementById('progPct').textContent='Procesando...';
     document.getElementById('progreso').style.display='block';
 
     try {
-      const data=await llamarAPI({tipo:'auditoria_aplicar',alertas_seleccionadas:selec});
+      const data=await api({tipo:'auditoria_aplicar',alertas_seleccionadas:selec});
       contenido=data.contenido;
       await guardarDoc(contenido,'auditoria');
-      document.getElementById('progresoBarra').style.width='100%';
-      document.getElementById('progresoPct').textContent='✅ Documento actualizado';
-
+      document.getElementById('progBarra').style.width='100%';
+      document.getElementById('progPct').textContent='✅ Documento actualizado';
       setTimeout(()=>{
         document.getElementById('progreso').style.display='none';
-        // Agregar botón informe de cambios solo para auditoría
-        const botonesDiv=document.getElementById('botonesResultado');
-        botonesDiv.innerHTML=`
-          <button class="btn-desc btn-word" onclick="descargarWord('riohs')">📄 Descargar RIOHS (.docx)</button>
-          <button class="btn-desc btn-resumen" id="btnResumen" onclick="generarResumenEjecutivo()">📋 Resumen Ejecutivo</button>
-          <button class="btn-desc btn-informe" id="btnInforme" onclick="generarInformeCambios()">📊 Informe de Cambios</button>
-          <button class="btn-desc btn-reiniciar" onclick="reiniciar()">🔄 Nuevo</button>`;
+        document.getElementById('btnsR').innerHTML=`
+          <button class="btn-d bd-word" onclick="descargar(contenido,'riohs')">📄 RIOHS (.docx)</button>
+          <button class="btn-d bd-res" id="btnRes" onclick="genResumen()">📋 Resumen Ejecutivo</button>
+          <button class="btn-d bd-inf" id="btnInf" onclick="genInforme()">📊 Informe de Cambios</button>
+          <button class="btn-d bd-new" onclick="reiniciar()">🔄 Nuevo</button>`;
         mostrarResultado(contenido,`RIOHS Actualizado · ${selec.length} cambio${selec.length!==1?'s':''} aplicado${selec.length!==1?'s':''}`);
-      },800);
-    } catch(e){document.getElementById('progreso').style.display='none';document.getElementById('btnAccion').disabled=false;mostrarError(e.message)}
+      },600);
+    } catch(e){document.getElementById('progreso').style.display='none';document.getElementById('btnAccion').disabled=false;mostrarErr(e.message)}
   }
 
-  // ═══ RESUMEN EJECUTIVO ════════════════
-  async function generarResumenEjecutivo() {
-    const btn=document.getElementById('btnResumen');
-    btn.textContent='⏳ Generando...';btn.disabled=true;btn.classList.add('btn-loading');
+  async function genResumen() {
+    const btn=document.getElementById('btnRes');
+    btn.textContent='⏳ Generando...';btn.disabled=true;
     try {
-      const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildClientePayload(),tipo:'resumen_empleador',bloque:{id:1}})});
+      const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),tipo:'resumen_empleador',bloque:{id:1}})});
       if(!r.ok)throw new Error(`Error ${r.status}`);
-      const data=await r.json();
-      descargarWordContenido(data.contenido,`Resumen-Ejecutivo-${cliente.razon_social.replace(/[^a-zA-Z0-9]/g,'-')}`,'Resumen Ejecutivo RIOHS');
-    } catch(e){alert(`Error al generar el resumen: ${e.message}`)}
-    finally{btn.textContent='📋 Resumen Ejecutivo';btn.disabled=false;btn.classList.remove('btn-loading')}
+      const d=await r.json();
+      descargar(d.contenido,`Resumen-Ejecutivo-${cliente.razon_social.replace(/[^a-zA-Z0-9]/g,'-')}`);
+    } catch(e){alert(`Error: ${e.message}`)}
+    finally{btn.textContent='📋 Resumen Ejecutivo';btn.disabled=false}
   }
 
-  // ═══ INFORME DE CAMBIOS ═══════════════
-  async function generarInformeCambios() {
-    const btn=document.getElementById('btnInforme');
-    btn.textContent='⏳ Generando...';btn.disabled=true;btn.classList.add('btn-loading');
+  async function genInforme() {
+    const btn=document.getElementById('btnInf');
+    btn.textContent='⏳ Generando...';btn.disabled=true;
     try {
-      const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildClientePayload(),tipo:'informe_cambios',alertas_seleccionadas:alertasAplicadas,bloque:{id:1}})});
+      const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),tipo:'informe_cambios',alertas_seleccionadas:alertasAplicadas,bloque:{id:1}})});
       if(!r.ok)throw new Error(`Error ${r.status}`);
-      const data=await r.json();
-      descargarWordContenido(data.contenido,`Informe-Cambios-${cliente.razon_social.replace(/[^a-zA-Z0-9]/g,'-')}`,'Informe de Cambios RIOHS');
-    } catch(e){alert(`Error al generar el informe: ${e.message}`)}
-    finally{btn.textContent='📊 Informe de Cambios';btn.disabled=false;btn.classList.remove('btn-loading')}
+      const d=await r.json();
+      descargar(d.contenido,`Informe-Cambios-${cliente.razon_social.replace(/[^a-zA-Z0-9]/g,'-')}`);
+    } catch(e){alert(`Error: ${e.message}`)}
+    finally{btn.textContent='📊 Informe de Cambios';btn.disabled=false}
   }
 
-  // ═══ HELPERS ═════════════════════════
-  function buildClientePayload() {
-    let normativas_activas='Todas las obligatorias';
-    if(cliente.normativas_json){try{normativas_activas=JSON.parse(cliente.normativas_json).join(', ')}catch{}}
-    return {empresa:cliente.razon_social,rut:cliente.rut,rubro:cliente.rubro,actividad_economica:cliente.actividad_economica,region:cliente.region,num_trabajadores:cliente.num_trabajadores,turnos:cliente.turnos,tiene_sindicato:cliente.tiene_sindicato,organismo_administrador:cliente.organismo_administrador,representante_legal:cliente.representante_legal,direccion:cliente.direccion,normativas_activas};
+  function buildPayload(){
+    let n='Todas las obligatorias';
+    if(cliente.normativas_json){try{n=JSON.parse(cliente.normativas_json).join(', ')}catch{}}
+    return{empresa:cliente.razon_social,rut:cliente.rut,rubro:cliente.rubro,actividad_economica:cliente.actividad_economica,region:cliente.region,num_trabajadores:cliente.num_trabajadores,turnos:cliente.turnos,tiene_sindicato:cliente.tiene_sindicato,organismo_administrador:cliente.organismo_administrador,representante_legal:cliente.representante_legal,direccion:cliente.direccion,normativas_activas:n};
   }
 
-  async function llamarAPI(extra={}) {
-    const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildClientePayload(),documento_existente:textoDoc||null,bloque:{id:1},...extra})});
+  async function api(extra={}){
+    const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),documento_existente:textoDoc||null,bloque:{id:1},...extra})});
     if(!r.ok)throw new Error(`Error ${r.status}`);
     return r.json();
   }
 
-  async function guardarDoc(cont,tipoDoc) {
-    const {data:docs}=await db.from('documentos_riohs').select('version').eq('cliente_id',clienteId).order('version',{ascending:false}).limit(1);
-    const version=docs?.length?docs[0].version+1:1;
-    await db.from('documentos_riohs').insert({cliente_id:clienteId,tipo:tipoDoc,contenido:cont.substring(0,50000),version,nombre_archivo:`RIOHS-${cliente.razon_social}-v${version}.docx`});
+  async function guardarDoc(cont,tipoDoc){
+    const{data:docs}=await db.from('documentos_riohs').select('version').eq('cliente_id',clienteId).order('version',{ascending:false}).limit(1);
+    const v=docs?.length?docs[0].version+1:1;
+    await db.from('documentos_riohs').insert({cliente_id:clienteId,tipo:tipoDoc,contenido:cont.substring(0,50000),version:v,nombre_archivo:`RIOHS-${cliente.razon_social}-v${v}.docx`});
   }
 
-  function mostrarResultado(cont,titulo) {
-    document.getElementById('resultTitulo').textContent=`✅ ${titulo}`;
+  function mostrarResultado(cont,titulo){
+    document.getElementById('resTit').textContent=`✅ ${titulo}`;
     const html=marked.parse(cont);
-    // Resaltar marcadores PENDIENTE
-    document.getElementById('riohsContent').innerHTML=html.replace(/\[⚠️ PENDIENTE[^\]]*\]/g,'<mark style="background:#fff3cd;padding:2px 6px;border-radius:3px;color:#856404;font-weight:700">$&</mark>');
+    document.getElementById('riohsC').innerHTML=html.replace(/\[⚠️ PENDIENTE[^\]]*\]/g,'<mark style="background:#fff3cd;padding:2px 6px;border-radius:3px;color:#856404;font-weight:700">$&</mark>');
     document.getElementById('resultado').style.display='block';
     document.getElementById('resultado').scrollIntoView({behavior:'smooth'});
   }
 
-  function descargarWord(tipo='riohs') {
-    descargarWordContenido(contenido,`RIOHS-${cliente.razon_social.replace(/[^a-zA-Z0-9]/g,'-')}`,'RIOHS');
-  }
-
-  function descargarWordContenido(cont,nombreArchivo,tituloPDF) {
+  function descargar(cont,nombre='RIOHS'){
     if(!cont)return;
-    const cp=cliente.color_primario||'#1B2E6E';
-    const cs=cliente.color_secundario||'#E87722';
-    const htmlContenido=marked.parse(cont);
-    const htmlCompleto=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.6;color:#333;margin:2cm}
-h1{color:${cp};font-size:18pt;border-bottom:3pt solid ${cs};padding-bottom:6pt;margin-bottom:12pt}
-h2{color:${cp};font-size:14pt;margin-top:18pt;margin-bottom:6pt;page-break-before:always}
-h2:first-of-type{page-break-before:auto}
-h3{color:${cs};font-size:12pt;margin-top:12pt;margin-bottom:4pt}
-p{margin-bottom:8pt;text-align:justify}
-table{width:100%;border-collapse:collapse;margin:10pt 0;font-size:10pt}
-th{background:${cp};color:white;padding:6pt 8pt;text-align:left;font-weight:bold}
-td{padding:5pt 8pt;border:1pt solid #ccc}
-tr:nth-child(even) td{background:#f5f5f5}
-blockquote{border-left:4pt solid ${cs};padding:4pt 10pt;background:#fafafa;margin:8pt 0}
-strong{color:${cp}}
-ul,ol{margin:6pt 0 6pt 20pt}
-li{margin-bottom:3pt}
-hr{border:none;border-top:2pt solid ${cs};margin:12pt 0}
-mark{background:#fff3cd;padding:2px 6px;color:#856404;font-weight:bold}
-</style></head><body>${htmlContenido}</body></html>`;
-
+    const cp=cliente.color_primario||'#1B2E6E', cs=cliente.color_secundario||'#E87722';
+    const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.6;color:#333;margin:2cm}h1{color:${cp};font-size:18pt;border-bottom:3pt solid ${cs};padding-bottom:6pt;margin-bottom:12pt}h2{color:${cp};font-size:14pt;margin-top:18pt;margin-bottom:6pt}h3{color:${cs};font-size:12pt;margin-top:12pt;margin-bottom:4pt}p{margin-bottom:8pt;text-align:justify}table{width:100%;border-collapse:collapse;margin:10pt 0;font-size:10pt}th{background:${cp};color:white;padding:6pt 8pt;text-align:left;font-weight:bold}td{padding:5pt 8pt;border:1pt solid #ccc}tr:nth-child(even) td{background:#f5f5f5}blockquote{border-left:4pt solid ${cs};padding:4pt 10pt;background:#fafafa;margin:8pt 0}strong{color:${cp}}ul,ol{margin:6pt 0 6pt 20pt}li{margin-bottom:3pt}hr{border:none;border-top:2pt solid ${cs};margin:12pt 0}mark{background:#fff3cd;padding:2px 6px;color:#856404;font-weight:bold}</style></head><body>${marked.parse(cont)}</body></html>`;
     try {
-      const blob=htmlDocx.asBlob(htmlCompleto,{orientation:'portrait',margins:{top:1440,right:1440,bottom:1440,left:1440}});
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);a.download=`${nombreArchivo}.docx`;a.click();
+      const blob=htmlDocx.asBlob(html,{orientation:'portrait',margins:{top:1440,right:1440,bottom:1440,left:1440}});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${nombre}.docx`;a.click();
     } catch(e) {
-      const blob=new Blob(['\ufeff',htmlCompleto],{type:'application/msword'});
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);a.download=`${nombreArchivo}.doc`;a.click();
+      const blob=new Blob(['\ufeff',html],{type:'application/msword'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${nombre}.doc`;a.click();
     }
   }
 
-  function reiniciar() {
+  function reiniciar(){
     contenido='';textoDoc='';seleccionadas.clear();alertas=[];alertasAplicadas=[];
     document.getElementById('resultado').style.display='none';
     document.getElementById('panelAlertas').style.display='none';
     document.getElementById('btnAccion').disabled=false;
-    // Restaurar botones originales
-    document.getElementById('botonesResultado').innerHTML=`<button class="btn-desc btn-word" onclick="descargarWord('riohs')">📄 Descargar RIOHS (.docx)</button><button class="btn-desc btn-resumen" id="btnResumen" onclick="generarResumenEjecutivo()">📋 Resumen Ejecutivo</button><button class="btn-desc btn-reiniciar" onclick="reiniciar()">🔄 Nuevo</button>`;
-    if(tipo==='auditoria'){document.getElementById('uploadArea').classList.remove('tiene-archivo');document.getElementById('uploadTexto').innerHTML='Haz clic para seleccionar el archivo<br><small>Formatos: .docx, .txt</small>';document.getElementById('inputArchivo').value=''}
+    document.getElementById('btnsR').innerHTML=`<button class="btn-d bd-word" onclick="descargar(contenido,'riohs')">📄 Descargar RIOHS (.docx)</button><button class="btn-d bd-res" id="btnRes" onclick="genResumen()">📋 Resumen Ejecutivo</button><button class="btn-d bd-new" onclick="reiniciar()">🔄 Nuevo</button>`;
+    if(tipo==='auditoria'){document.getElementById('uploadArea').classList.remove('ok');document.getElementById('uploadTxt').innerHTML='Haz clic para seleccionar el archivo<br><small>Formatos: .docx, .txt</small>';document.getElementById('inputArchivo').value=''}
     window.scrollTo({top:0,behavior:'smooth'});
   }
 
-  function mostrarError(msg){const el=document.getElementById('errorMsg');el.textContent=msg;el.style.display='block'}
+  function mostrarErr(msg){const el=document.getElementById('errMsg');el.textContent=msg;el.style.display='block'}
 
   init();
 </script>
