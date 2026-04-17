@@ -13,13 +13,24 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { cliente, bloque } = req.body;
+    const { cliente, bloque } = req.body || {};
     
     if (!cliente || !bloque) {
       return res.status(400).json({ error: "Faltan datos del cliente o bloque." });
     }
 
-    const prompt = `Genera un RIOHS completo para la empresa ${cliente.empresa} del rubro ${cliente.rubro}`;
+    const prompt = `Genera un RIOHS (Reglamento Interno de Orden, Higiene y Seguridad) completo para la empresa ${cliente.empresa} del rubro ${cliente.rubro}. 
+
+El RIOHS debe incluir:
+1. Disposiciones generales
+2. Organización de la prevención de riesgos
+3. Obligaciones y prohibiciones
+4. Protección personal
+5. Capacitación
+6. Investigación de accidentes
+7. Sanciones
+
+Genera un documento profesional y detallado de al menos 50 páginas.`;
     
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -35,15 +46,22 @@ export default async function handler(req, res) {
       })
     });
 
+    if (!response.ok) {
+      throw new Error(`Anthropic API error: ${response.status}`);
+    }
+
     const data = await response.json();
     
-    res.status(200).json({ 
+    return res.status(200).json({ 
       contenido: data.content[0].text,
       bloque 
     });
 
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: "Error al generar: " + error.message });
+    console.error('Error detallado:', error);
+    return res.status(500).json({ 
+      error: "Error al generar RIOHS", 
+      detalle: error.message 
+    });
   }
 }
