@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/generarRIOHS.js": {
+      "maxDuration": 300
+    }
+  }
+}
