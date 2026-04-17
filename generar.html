@@ -169,8 +169,8 @@
   </div>
 </main>
 <script>
-  const SUPABASE_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_JLaCYGFE3fq6b7ecDl0glA_axBuVRZo';
+   const SUPABASE_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co';
+   const SUPABASE_KEY = 'sb_publishable_JLaCYGFE3fq6b7ecDl0glA_axBuVRZo';
   const {createClient}=supabase;
   const db=createClient(SUPABASE_URL,SUPABASE_KEY);
   const params=new URLSearchParams(window.location.search);
@@ -313,7 +313,13 @@
         lista.forEach(a => { a.id = idGlobal++; todasLasAlertas.push(a) });
 
       } catch(e) {
-        // Si falla una parte, continuar con las demás
+        // Si error de créditos o auth, detener todo
+        if (e.message.includes('400') || e.message.includes('401') || e.message.includes('credit')) {
+          mostrarErr('Sin créditos en la API. Ve a console.anthropic.com → Plans & Billing para recargar.');
+          document.getElementById('progreso').style.display = 'none';
+          document.getElementById('btnAccion').disabled = false;
+          return;
+        }
         console.warn(`Parte ${i+1} falló:`, e.message);
       }
 
