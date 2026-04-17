@@ -248,8 +248,8 @@
         const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),tipo:'nuevo',seccion:s.n,bloque:{id:1}})});
         if(!r.ok)throw new Error(`Error sección ${s.n}: ${r.status}`);
         const d=await r.json();partes.push(d.contenido);
-        document.getElementById(`s${s.n}`).document.getElementById(`s${s.n}`).className='sec done';
-        if (i < SECS.length - 1) await new Promise(resolve => setTimeout(resolve, 5000));
+        document.getElementById(`s${s.n}`).className='sec done';
+        if (i < SECS.length - 1) await new Promise(resolve => setTimeout(resolve, 6000));
       }catch(e){mostrarErr(`Error en sección ${s.n}: ${e.message}. Intenta nuevamente.`);document.getElementById('progreso').style.display='none';document.getElementById('btnAccion').disabled=false;return}
     }
     document.getElementById('progBarra').style.width='100%';
