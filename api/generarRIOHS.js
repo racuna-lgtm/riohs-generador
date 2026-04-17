@@ -1,357 +1,454 @@
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
-
-  try {
-    const { cliente, tipo, seccion, documento_existente, alertas_seleccionadas } = req.body || {};
-    if (!cliente?.empresa || !cliente?.rubro) return res.status(400).json({ error: 'Faltan datos' });
-
-    const P = '[⚠️ PENDIENTE]';
-    const E = cliente.empresa;
-    const R = cliente.rubro;
-    const OA = cliente.organismo_administrador || P;
-    const RL = cliente.representante_legal || P;
-    const DIR = cliente.direccion || P;
-    const RUT = cliente.rut || P;
-    const REG = cliente.region || P;
-    const TRAB = cliente.num_trabajadores || P;
-    const TURN = cliente.turnos || 'jornada diurna estándar';
-    const SIN = cliente.tiene_sindicato ? 'Sí tiene sindicato' : 'No tiene sindicato';
-
-    const BASE = `Eres experto en legislación laboral chilena. Empresa: ${E} | RUT: ${RUT} | Rubro: ${R} | Región: ${REG} | Trabajadores: ${TRAB} | Turnos: ${TURN} | Sindicato: ${SIN} | Organismo Administrador: ${OA} | Representante Legal: ${RL} | Dirección: ${DIR}.
-
-REGLAS: mínimo 6 líneas por artículo, lenguaje formal-legal chileno, cita artículos del Código del Trabajo, usa datos reales de ${E}, escribe "${P}" donde faltan datos del cliente, NUNCA uses [COMPLETAR].`;
-
-    let prompt = '';
-    let usarWebSearch = false;
-    const maxTokens = 4000;
-
-    if (tipo === 'nuevo' && seccion) {
-
-      const INDICE = `## ÍNDICE GENERAL
-| N° | TÍTULO | ARTÍCULOS |
-|----|--------|-----------|
-| I | Disposiciones Generales | 1–8 |
-| II | Del Ingreso y Contratación | 9–18 |
-| III | Jornada de Trabajo Parte 1 | 19–26 |
-| IV | Jornada: Horas Extra y Descansos | 27–34 |
-| V | De las Remuneraciones | 35–44 |
-| VI | Obligaciones del Trabajador | 45–54 |
-| VII | Prohibiciones del Trabajador | 55–62 |
-| VIII | Orden y Disciplina | 63–72 |
-| IX | Higiene y Seguridad Parte 1 | 73–82 |
-| X | Higiene y Seguridad Parte 2 | 83–90 |
-| XI | Accidentes del Trabajo y EEPP | 91–100 |
-| XII | Ley Karin Parte 1 | 101–107 |
-| XIII | Ley Karin Parte 2 | 108–114 |
-| XIV | TEMER · ISTAS21 · Cargas | 115–128 |
-| XV | Maternidad y Datos Personales | 129–139 |
-| XVI | Disposiciones Finales | 140–142 |`;
-
-      if (seccion === 1) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 1 del RIOHS con portada, índice y Título I (Arts. 1-8).
-
-PORTADA:
-# REGLAMENTO INTERNO DE ORDEN, HIGIENE Y SEGURIDAD
-# ${E.toUpperCase()}
-RUT: ${RUT} | Rubro: ${R} | Región: ${REG}
-Dirección: ${DIR} | Organismo Administrador: ${OA}
-Representante Legal: ${RL} | Versión 01 — ${new Date().getFullYear()}
-
-Párrafo introductorio sobre el cumplimiento del Art. 153 CT.
-
-${INDICE}
-
-## TÍTULO I: DISPOSICIONES GENERALES
-Redacta los Artículos 1° al 8° completamente. Incluye: objeto y ámbito (Art. 1°), definición del reglamento (Art. 2°), definiciones de empleador/trabajador/empresa referenciando Arts. 3° y 7° CT (Art. 3°), jefe inmediato y estructura jerárquica (Art. 4°), definiciones económicas como remuneración/sueldo/gratificación (Art. 5°), definiciones operativas como jornada/turno/hora extra/feriado/licencia médica (Art. 6°), entrega y recepción del reglamento con firma (Art. 7°), procedimiento de modificación (Art. 8°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 2) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 2 — TÍTULO II: DEL INGRESO Y CONTRATACIÓN (Arts. 9-18).
-
-Redacta los artículos 9° al 18° completamente. Incluye: requisitos de ingreso con lista de 12+ documentos (Art. 9°), exámenes preocupacionales coordinados con ${OA} (Art. 10°), período de prueba (Art. 11°), celebración del contrato con plazos 15 días / 5 días Art. 9° CT (Art. 12°), contenido mínimo del contrato literales a) hasta i) Art. 10 CT (Art. 13°), modificaciones al contrato (Art. 14°), contrato de menores con restricciones Art. 13 CT (Art. 15°), documentos falsos como causal Art. 160 N°1 CT (Art. 16°), actualización de antecedentes en 5 días hábiles (Art. 17°), inclusión laboral Ley 21.015 cuota 1% para 100+ trabajadores (Art. 18°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 3) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 3 — TÍTULO III: JORNADA DE TRABAJO PARTE 1 (Arts. 19-26).
-
-Redacta los artículos 19° al 26° completamente. Incluye: jornada 42 horas semanales Ley 21.561 vigente abril 2026 con horarios de ${E} según turnos ${TURN} y tabla de horarios por área (Art. 19°), sistema de control de asistencia y consecuencias de no marcar (Art. 20°), ausentismo aviso 24 horas y Art. 160 N°3 CT (Art. 21°), atrasos reiterados y descuentos (Art. 22°), permisos durante jornada solicitud escrita (Art. 23°), colación no computable Art. 34 CT (Art. 24°), teletrabajo Ley 21.220 desconexión digital 12 horas (Art. 25°), cambios de turno con 30 días de anticipación (Art. 26°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 4) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 4 — TÍTULO IV: HORAS EXTRAORDINARIAS Y DESCANSOS (Arts. 27-34).
-
-Redacta los artículos 27° al 34° completamente. Incluye: horas extraordinarias definición límite 2h diarias Arts. 30-31 CT (Art. 27°), pago recargo 50% Art. 32 CT (Art. 28°), descanso semanal dominical y Art. 38 CT (Art. 29°), feriado 15 días hábiles irrenunciable Art. 67 CT (Art. 30°), vacaciones progresivas 1 día por cada 3 años Art. 68 CT (Art. 31°), fraccionamiento y acumulación hasta 2 períodos Art. 70 CT (Art. 32°), feriado proporcional Art. 73 CT (Art. 33°), permisos especiales por fallecimiento tabla completa hijo/cónyuge/hijo no nato/padres con fuero laboral 1 mes Art. 66 CT (Art. 34°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 5) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 5 — TÍTULO V: DE LAS REMUNERACIONES (Arts. 35-44).
-
-Redacta los artículos 35° al 44° completamente. Incluye: definición remuneración y componentes Arts. 41-42 CT (Art. 35°), fecha y forma de pago día 30 depósito bancario anticipo 25% (Art. 36°), ingreso mínimo y proporcionalidad (Art. 37°), gratificaciones modalidades 30% utilidades o 25% remuneración Arts. 46-49 CT (Art. 38°), descuentos legales cotizaciones impuesto cuotas límite 30% Art. 58 CT (Art. 39°), liquidación de sueldo entrega y componentes (Art. 40°), igualdad de remuneraciones Art. 62 bis CT (Art. 41°), procedimiento de reclamo 30 días (Art. 42°), asignaciones no remuneracionales viáticos colación movilización (Art. 43°), finiquito ratificación ministro de fe 5 días hábiles Art. 163 CT (Art. 44°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 6) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 6 — TÍTULO VI: OBLIGACIONES DEL TRABAJADOR (Arts. 45-54).
-
-Redacta los artículos 45° al 54° completamente. Incluye: obligaciones generales de conducta con literales a) hasta n) mínimo: puntualidad, registrar asistencia, avisar ausencias en 24h, buena fe, respeto a superiores, cortesía, cuidar bienes, mantener orden, denunciar irregularidades, actualizar antecedentes (Art. 45°), obligaciones de seguridad literales a) hasta j) uso EPP reportar condiciones inseguras (Art. 46°), cuidado y conservación de bienes responsabilidad por negligencia (Art. 47°), confidencialidad 2 años post contrato (Art. 48°), comunicar cambios en 5 días hábiles (Art. 49°), procedimiento ante accidente paso a paso con ${OA} (Art. 50°), trato y convivencia (Art. 51°), obligaciones específicas del rubro ${R} con 5-7 ítems propios del rubro (Art. 52°), asistir a capacitaciones SENCE (Art. 53°), uso tecnología corporativa solo fines laborales (Art. 54°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 7) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 7 — TÍTULO VII: PROHIBICIONES DEL TRABAJADOR (Arts. 55-62).
-
-Redacta los artículos 55° al 62° completamente. Incluye: prohibiciones laborales literales a) hasta h) horas extra sin autorización abandonar puesto asuntos personales empresas competidoras revelar información (Art. 55°), prohibiciones de seguridad literales a) hasta h) no usar EPP operar sin autorización desactivar sistemas alcohol drogas fumar fuera de zonas (Art. 56°), prohibiciones sobre bienes de la empresa Art. 160 N°6 CT (Art. 57°), prohibiciones control de asistencia marcar tarjeta ajena como falta grave Art. 160 N°1 CT (Art. 58°), sustancias prohibidas con facultad de control aleatorio (Art. 59°), prohibición de acoso y violencia remisión al Título XII (Art. 60°), otras prohibiciones armas juegos de azar propaganda (Art. 61°), prohibiciones específicas del rubro ${R} con 4-6 ítems propios (Art. 62°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 8) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 8 — TÍTULO VIII: ORDEN Y DISCIPLINA (Arts. 63-72).
-
-Redacta los artículos 63° al 72° completamente. Incluye: sistema de sanciones gradual verbal/escrita/con copia Inspección/multa Art. 154 N°10 CT (Art. 63°), multas 10%-25% remuneración diaria destino bienestar Art. 157 CT (Art. 64°), derecho a reclamo 3er día hábil Inspección del Trabajo (Art. 65°), causales Art. 160 CT las 7 causales con ejemplos para ${R} (Art. 66°), causal Art. 161 CT preaviso 30 días indemnizaciones (Art. 67°), causales Art. 159 CT mutuo acuerdo renuncia muerte vencimiento (Art. 68°), finiquito y certificado de trabajo Art. 162 CT (Art. 69°), peticiones y reclamos internos 5 días hábiles (Art. 70°), investigación disciplinaria interna 15 días hábiles (Art. 71°), relaciones laborales armónicas y mediación (Art. 72°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 9) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 9 — TÍTULO IX: HIGIENE Y SEGURIDAD PARTE 1 (Arts. 73-82).
-
-Redacta los artículos 73° al 82° completamente. Incluye: marco normativo Ley 16.744 DS 44/2023 Art. 184 CT (Art. 73°), obligaciones del empleador garantizar condiciones EPP IPER capacitación DS 44/2023 (Art. 74°), obligaciones del trabajador en seguridad lista completa (Art. 75°), identificación y control de riesgos matriz IPER con 5-7 riesgos principales del rubro ${R} y medidas de control jerarquía eliminación/sustitución/ingeniería/administrativo/EPP (Art. 76°), EPP obligatorio para ${R} lista completa características entrega reposición prohibición de prestar (Art. 77°), señalización de seguridad (Art. 78°), orden y limpieza pasillos despejados (Art. 79°), CPHS para 25+ trabajadores composición funciones reunión mensual DS 54/1969 (Art. 80°), Departamento de Prevención para 100+ trabajadores (Art. 81°), política alcohol y drogas tolerancia cero control aleatorio (Art. 82°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 10) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 10 — TÍTULO X: HIGIENE Y SEGURIDAD PARTE 2 (Arts. 83-90).
-
-Redacta los artículos 83° al 90° completamente. Incluye: prevención de incendios extintores simulacros anuales brigada de emergencia procedimiento evacuación paso a paso (Art. 83°), primeros auxilios botiquines trabajador certificado por turno procedimiento ante accidente (Art. 84°), higiene industrial iluminación ruido límite 85dB temperatura ventilación ergonomía (Art. 85°), capacitaciones obligatorias inducción al ingreso anual uso EPP primeros auxilios registro (Art. 86°), riesgos específicos del rubro ${R} identificar y desarrollar 6-8 riesgos propios con descripción situación y medida preventiva (Art. 87°), procedimientos de trabajo seguro PTS para tareas de mayor riesgo del rubro ${R} (Art. 88°), inspecciones periódicas CPHS y derecho de fiscalizadores (Art. 89°), derecho a saber sobre riesgos sustancias EPP emergencias Art. 21 DS 44/2023 (Art. 90°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 11) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 11 — TÍTULO XI: ACCIDENTES DEL TRABAJO Y ENFERMEDADES PROFESIONALES (Arts. 91-100).
-
-Redacta los artículos 91° al 100° completamente. Incluye: definiciones accidente del trabajo trayecto enfermedad profesional Art. 5° Ley 16.744 (Art. 91°), procedimiento inmediato ante accidente 7 pasos con traslado a ${OA} (Art. 92°), DIAT denuncia a ${OA} dentro de 24 horas (Art. 93°), accidente de trayecto acreditación parte policial declaración jurada (Art. 94°), investigación de accidentes 24-48h causas inmediatas básicas y raíz DS 44/2023 (Art. 95°), accidentes graves y fatales notificación Inspección del Trabajo SEREMI de Salud 24h suspensión faenas (Art. 96°), enfermedades profesionales DIEP vigilancia médica rubro ${R} (Art. 97°), prestaciones médicas y económicas subsidio 100% atención gratuita rehabilitación prótesis Ley 16.744 (Art. 98°), estadísticas tasa frecuencia gravedad accidentabilidad reporte mensual (Art. 99°), rehabilitación y reincorporación gradual con restricciones médicas coordinada con ${OA} (Art. 100°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 12) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 12 — TÍTULO XII: PROTOCOLO LEY KARIN PARTE 1 (Arts. 101-107). Ley 21.643 vigente agosto 2024, Arts. 211-A al 211-I CT, DS 2/2024.
-
-Redacta los artículos 101° al 107° completamente. Incluye: fundamento legal y objetivo Ley 21.643 perspectiva de género compromiso de ${E} (Art. 101°), ámbito aplica a todos los trabajadores de ${E} más contratistas proveedores visitas practicantes (Art. 102°), definición acoso sexual con ejemplos verbales físicos digitales visuales característica es no consentido Art. 2° CT (Art. 103°), definición acoso laboral conductas reiteradas o únicas que causen menoscabo humillación con ejemplos aislamiento humillación pública tareas degradantes acoso digital Art. 2° CT (Art. 104°), violencia por terceros clientes proveedores visitas con ejemplos (Art. 105°), principios confidencialidad no represalia perspectiva de género buena fe imparcialidad celeridad (Art. 106°), canal de denuncia correo designado formulario físico RRHH Inspección del Trabajo opción de anonimato (Art. 107°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 13) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 13 — TÍTULO XII: PROTOCOLO LEY KARIN PARTE 2 (Arts. 108-114). Arts. 211-A al 211-I CT.
-
-Redacta los artículos 108° al 114° completamente. Incluye: procedimiento de denuncia contenido mínimo constancia de recepción inicio en 5 días hábiles opción derivar a Inspección del Trabajo (Art. 108°), medidas de resguardo inmediatas separación física redistribución jornada teletrabajo derivación psicológica a ${OA} sin prejuzgamiento (Art. 109°), procedimiento investigación interna investigador imparcial capacitado notificación cargos audiencias análisis pruebas informe final 30 días hábiles máximo derecho a defensa Arts. 211-A al 211-I CT (Art. 110°), investigación por Inspección del Trabajo cooperación plena adoptar medidas del informe 30 días hábiles (Art. 111°), sanciones según gravedad amonestación multa traslado despido Art. 160 N°1 b) y f) CT represalias también sancionadas (Art. 112°), capacitación anual obligatoria contenido mínimo registro CPHS supervisa (Art. 113°), conductas que NO constituyen acoso evaluaciones objetivas instrucciones cambios disciplina facultades directivas (Art. 114°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 14) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 14 — TÍTULO XIV: TEMER, ISTAS21 Y MANEJO DE CARGAS (Arts. 115-128).
-
-Redacta los artículos 115° al 128° completamente.
-
-TEMER (Arts. 115-118): marco legal SUSESO obligatorio para ${R} (115°), factores de riesgo trabajo repetitivo posturas forzadas fuerza vibración evaluación RULA/OCRA anual (116°), medidas preventivas rotación pausas activas 2 veces por jornada rediseño ergonómico herramientas adecuadas (117°), vigilancia médica exámenes periódicos coordinados con ${OA} (118°).
-
-ISTAS21 (Arts. 119-121): marco legal SUSESO/ISTAS21 obligatorio 10+ trabajadores DS 44/2023 (119°), 5 dimensiones del riesgo psicosocial exigencias psicológicas trabajo activo apoyo social compensaciones doble presencia (120°), aplicación cuestionario cada 2 años anónimo plan de acción por nivel riesgo CPHS participa (121°).
-
-MANEJO MANUAL DE CARGAS (Arts. 122-128): marco legal Ley 20.001 DS 63/2005 (122°), límites de peso hombres 25kg mujeres y menores 20kg embarazadas 5kg (123°), técnica correcta de levantamiento 7 pasos (124°), medidas de control equipos mecánicos restricciones especiales embarazadas (125°), capacitación anual práctica (126°), pausas de recuperación DS 63/2005 (127°), seguimiento CPHS (128°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 15) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 15 — TÍTULOS XV Y XVI: MATERNIDAD/PATERNIDAD Y DATOS PERSONALES (Arts. 129-139).
-
-MATERNIDAD Y PATERNIDAD (Arts. 129-136): marco legal Arts. 194-208 CT Ley 20.545 (129°), fuero maternal desde embarazo hasta 1 año post posnatal extensión adopción Ley 19.620 (130°), descansos prenatal 6 semanas posnatal 12 semanas posnatal parental 12 semanas transferibles Arts. 195-197 CT (131°), permiso de paternidad 5 días irrenunciable (132°), sala cuna 20+ trabajadoras amamantamiento 1 hora diaria hasta 2 años Arts. 203-206 CT (133°), trabajo peligroso o nocturno traslado con misma remuneración Art. 202 CT (134°), permiso por enfermedad grave hijo menor 1 año Art. 199 CT (135°), permiso muerte hijo cónyuge fuero laboral 1 mes Art. 66 CT (136°).
-
-DATOS PERSONALES Ley 21.719 (Arts. 137-139): marco legal ámbito tipos de datos que trata ${E} identificación laborales salud financieros imágenes solo fines laborales (137°), principios de tratamiento licitud finalidad proporcionalidad calidad seguridad transparencia (138°), derechos ARCO acceso rectificación cancelación oposición responsable designado en ${E} plazo 15 días hábiles medidas de seguridad técnicas y organizativas (139°). Cada artículo mínimo 6 líneas.`;
-
-      } else if (seccion === 16) {
-        prompt = `${BASE}
-
-Genera la SECCIÓN 16 FINAL — TÍTULO XVII: DISPOSICIONES FINALES, NORMATIVA DE REFERENCIA Y DECLARACIÓN (Arts. 140-142).
-
-## TÍTULO XVII: DISPOSICIONES FINALES
-
-Redacta los artículos 140° al 142° completamente:
-- Art. 140°: Vigencia del reglamento. Entra en vigor 30 días después de ser puesto en conocimiento de los trabajadores salvo objeción de la Inspección del Trabajo Art. 156 CT. Proceso de depósito. Mínimo 8 líneas.
-- Art. 141°: Difusión y entrega. Copia física o digital al ingreso firma de recepción carteleras plataforma digital registro en expediente. Mínimo 7 líneas.
-- Art. 142°: Normativa supletoria y modificaciones. Aplicación del Código del Trabajo jurisprudencia administrativa compromiso de actualización permanente. Mínimo 7 líneas.
-
----
-
-## NORMATIVA DE REFERENCIA
-
-| N° | Norma | Materia | Año |
-|----|-------|---------|-----|
-| 1 | Código del Trabajo DFL N°1/2003 | Marco general laboral | 2003 |
-| 2 | Ley N°16.744 | Accidentes del trabajo y enfermedades profesionales | 1968 |
-| 3 | DS N°44/2023 | Seguridad y Salud Ocupacional | 2023 |
-| 4 | Ley N°21.643 — Ley Karin | Prevención acoso laboral, sexual y violencia | 2024 |
-| 5 | Ley N°21.719 | Protección de datos personales | 2022 |
-| 6 | Ley N°21.561 | Reducción jornada laboral | 2024 |
-| 7 | Ley N°20.001 y DS N°63/2005 | Manejo manual de cargas | 2005 |
-| 8 | Ley N°21.012 | Seguridad y salud en el trabajo | 2017 |
-| 9 | Ley N°21.015 | Inclusión laboral personas con discapacidad | 2017 |
-| 10 | Ley N°21.220 | Teletrabajo y trabajo a distancia | 2020 |
-| 11 | Protocolo TEMER — SUSESO | Trastornos musculoesqueléticos | Vigente |
-| 12 | Protocolo SUSESO/ISTAS21 | Riesgos psicosociales en el trabajo | Vigente |
-| 13 | Ley N°20.545 | Posnatal parental | 2011 |
-| 14 | DS N°2/2024 | Política Nacional de Seguridad y Salud | 2024 |
-| 15 | DS N°54/1969 | Constitución y funcionamiento del CPHS | 1969 |
-
----
-
-## DECLARACIÓN DE VIGENCIA Y APROBACIÓN
-
-El presente Reglamento Interno de Orden, Higiene y Seguridad de **${E}** ha sido elaborado conforme al artículo 153 y siguientes del Código del Trabajo (DFL N°1/2003).
-
-**${RL}**
-Representante Legal — ${E}
-RUT: ${RUT} | ${DIR}
-
-*${new Date().toLocaleDateString('es-CL')} — Versión 01/${new Date().getFullYear()}*`;
-
-      } else {
-        return res.status(400).json({ error: `Sección ${seccion} no válida.` });
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generar RIOHS · Más Prevención</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
+  <style>
+    :root{--navy:#1B2E6E;--naranja:#E87722;--gris:#f0f2f7;--texto:#2a2a2a;--muted:#666;--cp:#1B2E6E;--cs:#E87722}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;background:var(--gris);color:var(--texto);min-height:100vh}
+    header{background:var(--navy);color:white;padding:0 2rem;height:64px;display:flex;align-items:center;justify-content:space-between}
+    .btn-volver{background:transparent;border:1px solid rgba(255,255,255,.3);color:white;padding:.4rem .9rem;border-radius:5px;font-size:.85rem;cursor:pointer}
+    .btn-volver:hover{background:rgba(255,255,255,.1)}
+    main{max-width:960px;margin:0 auto;padding:2rem 1.5rem}
+    .banner{background:white;border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:1rem;border-left:6px solid var(--cp)}
+    .dot{width:40px;height:40px;border-radius:50%;flex-shrink:0}
+    .banner h2{font-size:1.1rem;color:var(--navy)}
+    .banner p{font-size:.85rem;color:var(--muted)}
+    .badge{margin-left:auto;padding:.4rem 1rem;border-radius:20px;font-size:.85rem;font-weight:700;white-space:nowrap}
+    .badge-n{background:#e8f0ff;color:var(--navy)}
+    .badge-a{background:#fff3e8;color:var(--naranja)}
+    .aviso{border-radius:8px;padding:.8rem 1rem;margin-bottom:1.2rem;font-size:.85rem;display:flex;gap:.5rem;align-items:center}
+    .av-search{background:#e8f5e9;border:1px solid #a5d6a7;color:#1b5e20}
+    .av-campos{background:#fff8e1;border:1px solid #ffcc80;color:#e65100}
+    .panel{background:white;border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .upload-area{border:2px dashed #ccc;border-radius:8px;padding:2rem;text-align:center;cursor:pointer;transition:border-color .2s}
+    .upload-area:hover{border-color:var(--navy)}
+    .upload-area.ok{border-color:#4caf50;background:#f0fff4}
+    .upload-area .ico{font-size:2rem;margin-bottom:.5rem}
+    #inputArchivo{display:none}
+    .btn-main{width:100%;padding:1rem;border:none;border-radius:8px;font-size:1.1rem;font-weight:700;cursor:pointer;color:white;transition:opacity .2s}
+    .btn-main:disabled{opacity:.5;cursor:not-allowed}
+    .btn-main:hover:not(:disabled){opacity:.88}
+    .progreso{display:none;background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);padding:1.5rem 2rem;margin-bottom:1.5rem}
+    .prog-titulo{font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:1rem;text-align:center}
+    .prog-barra-wrap{background:#f0f2f7;border-radius:20px;height:14px;margin-bottom:.6rem;overflow:hidden}
+    .prog-barra{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--navy),var(--naranja));transition:width .5s ease;width:0%}
+    .prog-pct{text-align:center;font-size:.9rem;color:var(--navy);font-weight:700;margin-bottom:1rem}
+    .secs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:1rem}
+    .sec{background:#f0f2f7;border-radius:6px;padding:.4rem;text-align:center;font-size:.66rem;color:var(--muted);transition:all .3s}
+    .sec.activa{background:#fff3e0;color:#e65100;font-weight:700;transform:scale(1.05)}
+    .sec.done{background:#e8f5e9;color:#2e7d32;font-weight:700}
+    .sec .ico-s{font-size:.9rem;display:block;margin-bottom:.15rem}
+    .prog-nota{text-align:center;font-size:.78rem;color:var(--muted)}
+    .panel-alertas{display:none}
+    .al-header{background:white;border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
+    .al-header h3{color:var(--navy);font-size:1.1rem}
+    .badges{display:flex;gap:.5rem;flex-wrap:wrap}
+    .rb{padding:.3rem .8rem;border-radius:20px;font-size:.8rem;font-weight:700}
+    .rb-f{background:#fff3e0;color:#e65100;border:1px solid #ffcc80}
+    .rb-c{background:#e3f2fd;color:#1565c0;border:1px solid #90caf9}
+    .rb-s{background:#fce4ec;color:#c62828;border:1px solid #f48fb1}
+    .rb-e{background:#f3e5f5;color:#6a1b9a;border:1px solid #ce93d8}
+    .acciones{background:white;border-radius:10px;padding:1rem 1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+    .btn-s{padding:.4rem .9rem;border-radius:5px;font-size:.82rem;font-weight:600;cursor:pointer;border:2px solid var(--navy);background:transparent;color:var(--navy);transition:all .2s}
+    .btn-s:hover{background:var(--navy);color:white}
+    .btn-ap{margin-left:auto;padding:.65rem 1.4rem;background:var(--naranja);color:white;border:none;border-radius:6px;font-size:.95rem;font-weight:700;cursor:pointer}
+    .btn-ap:hover{opacity:.85}
+    .btn-ap:disabled{opacity:.4;cursor:not-allowed}
+    .cnt-sel{font-size:.85rem;color:var(--navy);font-weight:700}
+    .cat-box{background:white;border-radius:10px;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden}
+    .cat-h{padding:.9rem 1.5rem;display:flex;align-items:center;gap:.75rem;cursor:pointer}
+    .cat-f .cat-h{background:#fff3e0;border-left:5px solid #ff9800}
+    .cat-c .cat-h{background:#e3f2fd;border-left:5px solid #2196f3}
+    .cat-s .cat-h{background:#fce4ec;border-left:5px solid #f44336}
+    .cat-e .cat-h{background:#f3e5f5;border-left:5px solid #9c27b0}
+    .cat-tit{font-weight:700;font-size:.95rem}
+    .cat-cnt{margin-left:auto;background:rgba(0,0,0,.1);padding:.2rem .6rem;border-radius:20px;font-size:.8rem;font-weight:700}
+    .cat-tog{font-size:.8rem;color:#999}
+    .al-item{padding:1rem 1.5rem;border-bottom:1px solid #f0f0f0;display:flex;gap:1rem;align-items:flex-start;transition:background .15s}
+    .al-item:last-child{border-bottom:none}
+    .al-item:hover{background:#fafbfc}
+    .al-item.sel{background:#f0f7ff}
+    .al-chk{width:20px;height:20px;cursor:pointer;flex-shrink:0;margin-top:2px;accent-color:var(--navy)}
+    .al-bod{flex:1}
+    .al-tit{font-weight:700;font-size:.95rem;margin-bottom:.25rem}
+    .al-desc{font-size:.88rem;color:var(--muted);line-height:1.5;margin-bottom:.4rem}
+    .al-meta{display:flex;gap:.5rem;flex-wrap:wrap}
+    .mtag{font-size:.75rem;padding:.15rem .5rem;border-radius:3px;background:#f0f2f7;color:#555}
+    .p-a{background:#fff0f0;color:#c62828}
+    .p-m{background:#fff8e1;color:#f57f17}
+    .p-b{background:#e8f5e9;color:#2e7d32}
+    .resultado{display:none;background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;margin-bottom:1.5rem}
+    .res-hdr{padding:1rem 1.5rem;background:var(--cp);color:white;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
+    .res-hdr h3{font-size:1rem}
+    .btns-r{display:flex;gap:.5rem;flex-wrap:wrap}
+    .btn-d{padding:.5rem 1rem;border:none;border-radius:5px;font-size:.82rem;font-weight:700;cursor:pointer}
+    .btn-d:hover{opacity:.85}
+    .btn-d:disabled{opacity:.5;cursor:not-allowed}
+    .bd-word{background:#2b579a;color:white}
+    .bd-res{background:#4caf50;color:white}
+    .bd-inf{background:#ff9800;color:white}
+    .bd-new{background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.4)}
+    .riohs-c{padding:2rem;max-height:65vh;overflow-y:auto;line-height:1.7}
+    .riohs-c h1{color:var(--cp);font-size:1.4rem;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:3px solid var(--cs);text-align:left}
+    .riohs-c h2{color:var(--cp);font-size:1.15rem;margin:1.5rem 0 .5rem}
+    .riohs-c h3{color:var(--cs);font-size:1rem;margin:1rem 0 .3rem}
+    .riohs-c p{margin-bottom:.8rem;color:#333}
+    .riohs-c table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.9rem}
+    .riohs-c th{padding:.6rem;color:white;background:var(--cp);text-align:left}
+    .riohs-c td{padding:.5rem;border:1px solid #ddd}
+    .riohs-c tr:nth-child(even) td{background:#f8f9fa}
+    .riohs-c blockquote{border-left:4px solid var(--cs);padding:.5rem 1rem;background:#fafafa;margin:.5rem 0}
+    .riohs-c strong{color:var(--cp)}
+    .err-msg{background:#fff0f0;border:1px solid #ffcccc;color:#cc0000;padding:1rem;border-radius:8px;margin-top:1rem;display:none}
+  </style>
+</head>
+<body>
+<header>
+  <div style="display:flex;align-items:center;gap:.75rem"><span>🛡️</span><strong>Portal RIOHS</strong></div>
+  <button class="btn-volver" id="btnVolver">← Volver</button>
+</header>
+<main>
+  <div class="banner" id="banner">
+    <div class="dot" id="dot"></div>
+    <div><h2 id="nomCliente">Cargando...</h2><p id="infoCliente">—</p></div>
+    <span class="badge" id="tipoBadge">—</span>
+  </div>
+  <div class="aviso av-search">🌐 <strong>Búsqueda legal en tiempo real activada</strong> — Claude consulta normativa actualizada en auditorías.</div>
+  <div class="aviso av-campos" id="avisoCampos" style="display:none">⚠️ <strong>Hay campos incompletos en la ficha.</strong> El documento incluirá marcadores <strong>[⚠️ PENDIENTE]</strong> que deben completarse antes de entregar al cliente.</div>
+  <div class="panel" id="panelUpload" style="display:none">
+    <h3 style="color:var(--navy);margin-bottom:.5rem">📄 Sube el RIOHS existente</h3>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">El sistema detectará brechas legales comparando con normativa vigente actualizada.</p>
+    <div class="upload-area" id="uploadArea" onclick="document.getElementById('inputArchivo').click()">
+      <div class="ico">📂</div>
+      <p id="uploadTxt">Haz clic para seleccionar el archivo<br><small>Formatos: .docx, .txt</small></p>
+    </div>
+    <input type="file" id="inputArchivo" accept=".docx,.txt" onchange="archivoSel(this)">
+  </div>
+  <div class="panel" id="panelBtn">
+    <button class="btn-main" id="btnAccion" onclick="iniciar()">⚡ Generar RIOHS</button>
+    <div class="err-msg" id="errMsg"></div>
+  </div>
+  <div class="progreso" id="progreso">
+    <div class="prog-titulo" id="progTit">Generando...</div>
+    <div class="prog-barra-wrap"><div class="prog-barra" id="progBarra"></div></div>
+    <div class="prog-pct" id="progPct">0%</div>
+    <div class="secs-grid" id="secsGrid"></div>
+    <p class="prog-nota" id="progNota">⏱ Tiempo estimado: 16-20 minutos — 16 secciones para ~107 páginas</p>
+  </div>
+  <div class="panel-alertas" id="panelAlertas">
+    <div class="al-header"><h3>🔍 Resultado de la Auditoría</h3><div class="badges" id="resBadges"></div></div>
+    <div class="acciones">
+      <span>Seleccionar:</span>
+      <button class="btn-s" onclick="selT()">Todas</button>
+      <button class="btn-s" onclick="selP('falta')">⚠️ Faltantes</button>
+      <button class="btn-s" onclick="selP('cambio')">🔄 Cambios</button>
+      <button class="btn-s" onclick="selP('sobra')">🗑️ Obsoletos</button>
+      <button class="btn-s" onclick="deselT()">Ninguna</button>
+      <span class="cnt-sel" id="cntSel">0 seleccionadas</span>
+      <button class="btn-ap" id="btnAplicar" onclick="aplicar()" disabled>✅ Aplicar al documento</button>
+    </div>
+    <div id="listaAlertas"></div>
+  </div>
+  <div class="resultado" id="resultado">
+    <div class="res-hdr" id="resHdr">
+      <h3 id="resTit">✅ RIOHS Generado</h3>
+      <div class="btns-r" id="btnsR">
+        <button class="btn-d bd-word" onclick="descargar(contenido,'riohs')">📄 RIOHS (.docx)</button>
+        <button class="btn-d bd-res" id="btnRes" onclick="genResumen()">📋 Resumen Ejecutivo</button>
+        <button class="btn-d bd-new" onclick="reiniciar()">🔄 Nuevo</button>
+      </div>
+    </div>
+    <div class="riohs-c" id="riohsC"></div>
+  </div>
+</main>
+<script>
+  const SUPABASE_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_JLaCYGFE3fq6b7ecDl0glA_axBuVRZo';
+  const {createClient}=supabase;
+  const db=createClient(SUPABASE_URL,SUPABASE_KEY);
+  const params=new URLSearchParams(window.location.search);
+  const clienteId=params.get('cliente');
+  const tipo=params.get('tipo')||'nuevo';
+  let cliente=null,contenido='',textoDoc='',alertas=[],seleccionadas=new Set(),alertasAplicadas=[];
+
+  const SECS=[
+    {n:1,l:'Portada e Índice',i:'📋'},{n:2,l:'Ingreso y Contrato',i:'📝'},
+    {n:3,l:'Jornada Parte 1',i:'⏰'},{n:4,l:'Horas Extra y Descansos',i:'🏖️'},
+    {n:5,l:'Remuneraciones',i:'💰'},{n:6,l:'Obligaciones',i:'✅'},
+    {n:7,l:'Prohibiciones',i:'🚫'},{n:8,l:'Disciplina',i:'⚖️'},
+    {n:9,l:'Higiene y Seg. 1',i:'⛑️'},{n:10,l:'Higiene y Seg. 2',i:'🔥'},
+    {n:11,l:'Accidentes',i:'🏥'},{n:12,l:'Ley Karin 1',i:'🚨'},
+    {n:13,l:'Ley Karin 2',i:'🔍'},{n:14,l:'TEMER·ISTAS·Cargas',i:'💪'},
+    {n:15,l:'Maternidad y Datos',i:'👶'},{n:16,l:'Cierre y Normativa',i:'🌟'},
+  ];
+  const CAMPOS_OBL=['rut','region','organismo_administrador','representante_legal','num_trabajadores'];
+
+  async function init(){
+    const{data:{session}}=await db.auth.getSession();
+    if(!session){window.location.href='index.html';return}
+    if(!clienteId){window.location.href='dashboard.html';return}
+    document.getElementById('btnVolver').onclick=()=>window.location.href=`ficha-cliente.html?id=${clienteId}`;
+    await cargarCliente();configurar();checkCampos();
+  }
+
+  async function cargarCliente(){
+    const{data}=await db.from('clientes').select('*').eq('id',clienteId).single();
+    if(!data){window.location.href='dashboard.html';return}
+    cliente=data;
+    const cp=data.color_primario||'#1B2E6E',cs=data.color_secundario||'#E87722';
+    document.documentElement.style.setProperty('--cp',cp);
+    document.documentElement.style.setProperty('--cs',cs);
+    document.getElementById('nomCliente').textContent=data.razon_social;
+    document.getElementById('infoCliente').textContent=`${data.rubro} · ${data.region||'Sin región'} · ${data.num_trabajadores||'?'} trabajadores`;
+    document.getElementById('dot').style.background=`linear-gradient(135deg,${cp},${cs})`;
+    document.getElementById('banner').style.borderLeftColor=cp;
+    document.getElementById('resHdr').style.background=cp;
+  }
+
+  function checkCampos(){if(CAMPOS_OBL.some(c=>!cliente[c]))document.getElementById('avisoCampos').style.display='flex'}
+
+  function configurar(){
+    const badge=document.getElementById('tipoBadge'),btn=document.getElementById('btnAccion');
+    if(tipo==='auditoria'){badge.textContent='🔍 Auditoría';badge.className='badge badge-a';document.getElementById('panelUpload').style.display='block';btn.textContent='🔍 Analizar RIOHS existente';btn.style.background='#1B2E6E'}
+    else{badge.textContent='➕ RIOHS Nuevo';badge.className='badge badge-n';btn.textContent='⚡ Generar RIOHS Completo (~107 páginas)';btn.style.background='var(--naranja)'}
+  }
+
+  function archivoSel(input){
+    const f=input.files[0];if(!f)return;
+    document.getElementById('uploadArea').classList.add('ok');
+    document.getElementById('uploadTxt').innerHTML=`✅ <strong>${f.name}</strong><br><small>Haz clic para cambiar</small>`;
+    if(f.name.endsWith('.docx')){const r=new FileReader();r.onload=async(e)=>{const res=await mammoth.extractRawText({arrayBuffer:e.target.result});textoDoc=res.value};r.readAsArrayBuffer(f)}
+    else{const r=new FileReader();r.onload=(e)=>{textoDoc=e.target.result};r.readAsText(f)}
+  }
+
+  function iniciar(){tipo==='auditoria'?iniciarAuditoria():iniciarGeneracion()}
+
+  async function iniciarGeneracion(){
+    document.getElementById('btnAccion').disabled=true;
+    document.getElementById('errMsg').style.display='none';
+    document.getElementById('secsGrid').innerHTML=SECS.map(s=>`<div class="sec" id="s${s.n}"><span class="ico-s">${s.i}</span>${s.l}</div>`).join('');
+    document.getElementById('progNota').textContent='⏱ Tiempo estimado: 16-20 minutos — 16 secciones para ~107 páginas';
+    document.getElementById('progreso').style.display='block';
+    const partes=[];
+    for(let i=0;i<SECS.length;i++){
+      const s=SECS[i];
+      const pct=Math.round((i/SECS.length)*100);
+      document.getElementById(`s${s.n}`).className='sec activa';
+      document.getElementById('progTit').textContent=`Generando: ${s.l} (${i+1} de ${SECS.length})`;
+      document.getElementById('progBarra').style.width=`${pct}%`;
+      document.getElementById('progPct').textContent=`${pct}%`;
+      try{
+        const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),tipo:'nuevo',seccion:s.n,bloque:{id:1}})});
+        if(!r.ok)throw new Error(`Error sección ${s.n}: ${r.status}`);
+        const d=await r.json();partes.push(d.contenido);
+        document.getElementById(`s${s.n}`).className='sec done';
+        if (i < SECS.length - 1) await new Promise(resolve => setTimeout(resolve, 6000));
+      }catch(e){mostrarErr(`Error en sección ${s.n}: ${e.message}. Intenta nuevamente.`);document.getElementById('progreso').style.display='none';document.getElementById('btnAccion').disabled=false;return}
+    }
+    document.getElementById('progBarra').style.width='100%';
+    document.getElementById('progPct').textContent='100% ✅';
+    document.getElementById('progTit').textContent='✅ RIOHS completo generado';
+    contenido=partes.join('\n\n---\n\n');
+    await guardarDoc(contenido,'nuevo');
+    setTimeout(()=>{document.getElementById('progreso').style.display='none';mostrarResultado(contenido,'RIOHS Completo (~107 páginas)')},800);
+  }
+
+  async function iniciarAuditoria(){
+    if(!textoDoc){mostrarErr('Primero sube el RIOHS existente.');return}
+    document.getElementById('btnAccion').disabled=true;
+    document.getElementById('errMsg').style.display='none';
+    document.getElementById('secsGrid').innerHTML='';
+    document.getElementById('progNota').textContent='⏱ El análisis se realiza en 3 partes para mayor precisión';
+    document.getElementById('progreso').style.display='block';
+
+    // Dividir el documento en 3 partes iguales
+    const largo = textoDoc.length;
+    const tam = Math.ceil(largo / 3);
+    const partes = [
+      textoDoc.substring(0, tam),
+      textoDoc.substring(tam, tam * 2),
+      textoDoc.substring(tam * 2)
+    ];
+
+    const todasLasAlertas = [];
+    let idGlobal = 1;
+
+    for (let i = 0; i < 3; i++) {
+      const pct = Math.round(((i) / 3) * 90);
+      document.getElementById('progTit').textContent = `Analizando parte ${i+1} de 3...`;
+      document.getElementById('progBarra').style.width = `${pct}%`;
+      document.getElementById('progPct').textContent = `${pct}%`;
+
+      try {
+        const r = await fetch('/api/generarRIOHS', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            cliente: buildPayload(),
+            tipo: 'auditoria_analisis',
+            documento_existente: partes[i],
+            parte: i + 1,
+            bloque: {id: 1}
+          })
+        });
+
+        if (!r.ok) throw new Error(`Error ${r.status} en parte ${i+1}`);
+        const data = await r.json();
+
+        let lista = [];
+        try {
+          const m = data.contenido.match(/```json\n?([\s\S]*?)\n?```/);
+          const parsed = JSON.parse(m ? m[1] : data.contenido);
+          lista = parsed.alertas || parsed;
+        } catch { lista = [] }
+
+        // Reasignar IDs únicos para evitar duplicados
+        lista.forEach(a => { a.id = idGlobal++; todasLasAlertas.push(a) });
+
+      } catch(e) {
+        // Si error de créditos o auth, detener todo
+        if (e.message.includes('400') || e.message.includes('401') || e.message.includes('credit')) {
+          mostrarErr('Sin créditos en la API. Ve a console.anthropic.com → Plans & Billing para recargar.');
+          document.getElementById('progreso').style.display = 'none';
+          document.getElementById('btnAccion').disabled = false;
+          return;
+        }
+        console.warn(`Parte ${i+1} falló:`, e.message);
       }
 
-    // RESUMEN EJECUTIVO
-    } else if (tipo === 'resumen_empleador') {
-      prompt = `${BASE}
-
-Genera un RESUMEN EJECUTIVO del RIOHS para Gerencia y RRHH de ${E}. Directo, claro, accionable.
-
-# RESUMEN EJECUTIVO — RIOHS ${new Date().getFullYear()}
-## ${E} | Rubro: ${R}
-
-## ¿Por qué existe el RIOHS?
-Art. 153 CT obligatorio. Consecuencias de no tenerlo o tenerlo desactualizado. 5 líneas.
-
-## 12 obligaciones críticas del empleador
-Lista numerada. Por cada obligación: qué es, ley que la sustenta, consecuencia de incumplimiento. Incluir: entrega del RIOHS al trabajador, condiciones seguras Art. 184 CT, Protocolo Ley Karin, CPHS 25+ trabajadores, capacitaciones de seguridad, investigar accidentes 24-48h, ISTAS21 cada 2 años, TEMER, igualdad de remuneraciones, finiquito 5 días hábiles, datos personales Ley 21.719, Organismo Administrador ${OA}.
-
-## Plazos clave
-Tabla: | Obligación | Plazo | Consecuencia |
-
-## Los 5 riesgos legales más importantes para ${E}
-5 riesgos específicos del rubro ${R} con multa o consecuencia legal.
-
-## Normativa reciente — asegúrese de tenerla incorporada
-Ley Karin agosto 2024, DS 44/2023, Ley 21.719, Ley 21.561. Una línea por norma.
-
-*Este resumen no reemplaza el RIOHS completo.*`;
-
-    // INFORME DE CAMBIOS
-    } else if (tipo === 'informe_cambios') {
-      const lista = (alertas_seleccionadas||[]).map((a,i)=>
-        `${i+1}. [${a.tipo.toUpperCase()}] ${a.titulo} — ${a.normativa||''}`
-      ).join('\n');
-
-      prompt = `${BASE}
-
-Genera un INFORME DE CAMBIOS para la auditoría del RIOHS de ${E}.
-
-# INFORME DE ACTUALIZACIÓN DEL RIOHS
-## ${E} — ${new Date().toLocaleDateString('es-CL')}
-
-## Resumen (5 líneas)
-Cuántos cambios, de qué tipo, impacto legal, estado actual del reglamento.
-
-## Cambios aplicados por categoría
-Organiza en 4 tablas: AGREGADOS ⚠️ | ACTUALIZADOS 🔄 | ELIMINADOS 🗑️ | CORREGIDOS ❌
-Columnas: N° | Descripción del cambio | Normativa aplicada
-
-Cambios aplicados (${(alertas_seleccionadas||[]).length}):
-${lista}
-
-## Estado del RIOHS actualizado
-🟢 Áreas completamente actualizadas
-🟡 Áreas que requieren revisión periódica
-🔴 Cambios pendientes
-
-## Próxima revisión recomendada
-Fecha y normativa a monitorear.
-
-*Generado el ${new Date().toLocaleDateString('es-CL')} — Sistema Más Prevención*`;
-
-    // AUDITORÍA ANÁLISIS
-    } else if (tipo === 'auditoria_analisis') {
-      usarWebSearch = false;
-      maxTokens = 1500;
-    let parte = req.body.parte || 1;
-      prompt = `Eres experto en legislación laboral chilena. Normativa vigente: DS 44/2023, Ley Karin 21.643, Ley 21.719, Ley 21.561, Ley 16.744.
-
-Empresa: ${E} | Rubro: ${R} | Analizando parte ${parte} de 3.
-
-FRAGMENTO DEL RIOHS:
-${(documento_existente||'').substring(0,2500)}
-
-Devuelve SOLO este JSON:
-\`\`\`json
-{"alertas":[{"id":1,"tipo":"falta","prioridad":"alta","titulo":"Titulo","descripcion":"Descripcion en 1-2 oraciones.","seccion":"Seccion","normativa":"Ley con año"}]}
-\`\`\`
-TIPOS: falta o cambio o sobra o error. PRIORIDADES: alta o media o baja.
-Genera 5-10 alertas para este fragmento.`;
-
-    // AUDITORÍA APLICAR
-    } else if (tipo === 'auditoria_aplicar') {
-      usarWebSearch = true;
-      const cambios = (alertas_seleccionadas||[]).map((a,i)=>
-        `${i+1}. [${a.tipo.toUpperCase()}] ${a.titulo}: ${a.descripcion} — ${a.normativa||''}`
-      ).join('\n');
-
-      prompt = `Eres experto en legislación laboral chilena con búsqueda web. Empresa: ${E} | Rubro: ${R}.
-
-DOCUMENTO ORIGINAL:
-${(documento_existente||'').substring(0,4000)}
-
-CAMBIOS A APLICAR (${(alertas_seleccionadas||[]).length}):
-${cambios}
-
-Aplica SOLO estos cambios al documento original. FALTA: agrega el artículo completo. CAMBIO: reescribe con normativa actualizada. SOBRA: marca [DEROGADO]. ERROR: corrígelo. Cada artículo modificado mínimo 6 líneas. Entrega el documento COMPLETO en Markdown.`;
-
-    } else {
-      return res.status(400).json({ error: 'Tipo no válido' });
+      // Pausa de 10 segundos entre partes para resetear el límite de tokens
+      if (i < 2) await new Promise(resolve => setTimeout(resolve, 10000));
     }
 
-    const requestBody = {
-      model: 'claude-sonnet-4-6',
-      max_tokens: maxTokens,
-      messages: [{ role: 'user', content: prompt }]
-    };
-    const headers = {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01'
-    };
-    if (usarWebSearch) {
-      requestBody.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
-      headers['anthropic-beta'] = 'web-search-2025-03-05';
+    document.getElementById('progBarra').style.width = '100%';
+    document.getElementById('progPct').textContent = '✅ Análisis completo';
+
+    if (todasLasAlertas.length === 0) {
+      mostrarErr('No se encontraron alertas. Intenta nuevamente.');
+      document.getElementById('progreso').style.display = 'none';
+      document.getElementById('btnAccion').disabled = false;
+      return;
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers, body: JSON.stringify(requestBody)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(`API error: ${response.status} — ${JSON.stringify(data)}`);
-
-    const texto = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
-    if (!texto) throw new Error('Sin respuesta de texto');
-    return res.status(200).json({ contenido: texto, tipo, seccion });
-
-  } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: error.message });
+    alertas = todasLasAlertas;
+    setTimeout(() => {
+      document.getElementById('progreso').style.display = 'none';
+      mostrarAlertas(todasLasAlertas);
+    }, 600);
   }
-}
+
+  function mostrarAlertas(lista){
+    document.getElementById('panelAlertas').style.display='block';
+    const cnt={falta:0,cambio:0,sobra:0,error:0};lista.forEach(a=>{if(cnt[a.tipo]!==undefined)cnt[a.tipo]++});
+    const et={falta:['⚠️ Faltantes','rb-f'],cambio:['🔄 Cambios','rb-c'],sobra:['🗑️ Obsoletos','rb-s'],error:['❌ Errores','rb-e']};
+    document.getElementById('resBadges').innerHTML=Object.entries(cnt).filter(([,c])=>c>0).map(([t,c])=>`<span class="rb ${et[t][1]}">${et[t][0]}: ${c}</span>`).join('');
+    const g={falta:[],cambio:[],sobra:[],error:[]};lista.forEach(a=>{if(g[a.tipo])g[a.tipo].push(a)});
+    const cf={falta:['⚠️ Artículos FALTANTES','cat-f'],cambio:['🔄 Artículos que requieren CAMBIO','cat-c'],sobra:['🗑️ Artículos OBSOLETOS','cat-s'],error:['❌ Errores formales','cat-e']};
+    const cont=document.getElementById('listaAlertas');cont.innerHTML='';
+    Object.entries(g).forEach(([t,items])=>{
+      if(!items.length)return;
+      const div=document.createElement('div');div.className=`cat-box ${cf[t][1]}`;
+      div.innerHTML=`<div class="cat-h" onclick="togCat(this)"><span class="cat-tit">${cf[t][0]}</span><span class="cat-cnt">${items.length}</span><span class="cat-tog">▼</span></div><div class="cat-items">${items.map(a=>renderAl(a)).join('')}</div>`;
+      cont.appendChild(div);
+    });
+    updCnt();document.getElementById('panelAlertas').scrollIntoView({behavior:'smooth'});
+  }
+
+  function renderAl(a){
+    const pc={alta:'p-a',media:'p-m',baja:'p-b'};
+    return `<div class="al-item" id="al${a.id}"><input type="checkbox" class="al-chk" onchange="togAl(${a.id},this.checked)"><div class="al-bod"><div class="al-tit">${a.titulo}</div><div class="al-desc">${a.descripcion}</div><div class="al-meta">${a.prioridad?`<span class="mtag ${pc[a.prioridad]||''}">Prioridad: ${a.prioridad}</span>`:''}${a.seccion?`<span class="mtag">📌 ${a.seccion}</span>`:''}${a.normativa?`<span class="mtag">📋 ${a.normativa}</span>`:''}</div></div></div>`;
+  }
+
+  function togAl(id,c){c?seleccionadas.add(id):seleccionadas.delete(id);document.getElementById(`al${id}`)?.classList.toggle('sel',c);updCnt()}
+  function selT(){alertas.forEach(a=>{seleccionadas.add(a.id);const el=document.getElementById(`al${a.id}`);if(el){el.classList.add('sel');el.querySelector('input').checked=true}});updCnt()}
+  function deselT(){seleccionadas.clear();document.querySelectorAll('.al-item').forEach(el=>{el.classList.remove('sel');el.querySelector('input').checked=false});updCnt()}
+  function selP(t){alertas.filter(a=>a.tipo===t).forEach(a=>{seleccionadas.add(a.id);const el=document.getElementById(`al${a.id}`);if(el){el.classList.add('sel');el.querySelector('input').checked=true}});updCnt()}
+  function updCnt(){const n=seleccionadas.size;document.getElementById('cntSel').textContent=`${n} seleccionada${n!==1?'s':''}`;document.getElementById('btnAplicar').disabled=n===0}
+  function togCat(h){const it=h.nextElementSibling;const v=it.style.display!=='none';it.style.display=v?'none':'block';h.querySelector('.cat-tog').textContent=v?'▶':'▼'}
+
+  async function aplicar(){
+    const selec=alertas.filter(a=>seleccionadas.has(a.id));alertasAplicadas=selec;
+    document.getElementById('panelAlertas').style.display='none';document.getElementById('secsGrid').innerHTML='';
+    document.getElementById('progNota').textContent='';document.getElementById('progTit').textContent='Aplicando cambios y generando documento actualizado...';
+    document.getElementById('progBarra').style.width='40%';document.getElementById('progPct').textContent='Procesando...';
+    document.getElementById('progreso').style.display='block';
+    try{
+      const data=await api({tipo:'auditoria_aplicar',alertas_seleccionadas:selec});
+      contenido=data.contenido;await guardarDoc(contenido,'auditoria');
+      document.getElementById('progBarra').style.width='100%';document.getElementById('progPct').textContent='✅ Documento actualizado';
+      setTimeout(()=>{
+        document.getElementById('progreso').style.display='none';
+        document.getElementById('btnsR').innerHTML=`
+          <button class="btn-d bd-word" onclick="descargar(contenido,'riohs')">📄 RIOHS (.docx)</button>
+          <button class="btn-d bd-res" id="btnRes" onclick="genResumen()">📋 Resumen Ejecutivo</button>
+          <button class="btn-d bd-inf" id="btnInf" onclick="genInforme()">📊 Informe de Cambios</button>
+          <button class="btn-d bd-new" onclick="reiniciar()">🔄 Nuevo</button>`;
+        mostrarResultado(contenido,`RIOHS Actualizado · ${selec.length} cambio${selec.length!==1?'s':''} aplicado${selec.length!==1?'s':''}`);
+      },600);
+    }catch(e){document.getElementById('progreso').style.display='none';document.getElementById('btnAccion').disabled=false;mostrarErr(e.message)}
+  }
+
+  async function genResumen(){
+    const btn=document.getElementById('btnRes');btn.textContent='⏳ Generando...';btn.disabled=true;
+    try{const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),tipo:'resumen_empleador',bloque:{id:1}})});if(!r.ok)throw new Error(`Error ${r.status}`);const d=await r.json();descargar(d.contenido,`Resumen-Ejecutivo-${cliente.razon_social.replace(/[^a-zA-Z0-9]/g,'-')}`);}
+    catch(e){alert(`Error: ${e.message}`)}finally{btn.textContent='📋 Resumen Ejecutivo';btn.disabled=false}
+  }
+
+  async function genInforme(){
+    const btn=document.getElementById('btnInf');btn.textContent='⏳ Generando...';btn.disabled=true;
+    try{const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),tipo:'informe_cambios',alertas_seleccionadas:alertasAplicadas,bloque:{id:1}})});if(!r.ok)throw new Error(`Error ${r.status}`);const d=await r.json();descargar(d.contenido,`Informe-Cambios-${cliente.razon_social.replace(/[^a-zA-Z0-9]/g,'-')}`);}
+    catch(e){alert(`Error: ${e.message}`)}finally{btn.textContent='📊 Informe de Cambios';btn.disabled=false}
+  }
+
+  function buildPayload(){
+    let n='Todas las obligatorias';
+    if(cliente.normativas_json){try{n=JSON.parse(cliente.normativas_json).join(', ')}catch{}}
+    return{empresa:cliente.razon_social,rut:cliente.rut,rubro:cliente.rubro,actividad_economica:cliente.actividad_economica,region:cliente.region,num_trabajadores:cliente.num_trabajadores,turnos:cliente.turnos,tiene_sindicato:cliente.tiene_sindicato,organismo_administrador:cliente.organismo_administrador,representante_legal:cliente.representante_legal,direccion:cliente.direccion,normativas_activas:n};
+  }
+
+  async function api(extra={}){
+    const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),documento_existente:textoDoc||null,bloque:{id:1},...extra})});
+    if(!r.ok)throw new Error(`Error ${r.status}`);return r.json();
+  }
+
+  async function guardarDoc(cont,tipoDoc){
+    const{data:docs}=await db.from('documentos_riohs').select('version').eq('cliente_id',clienteId).order('version',{ascending:false}).limit(1);
+    const v=docs?.length?docs[0].version+1:1;
+    await db.from('documentos_riohs').insert({cliente_id:clienteId,tipo:tipoDoc,contenido:cont.substring(0,50000),version:v,nombre_archivo:`RIOHS-${cliente.razon_social}-v${v}.docx`});
+  }
+
+  function mostrarResultado(cont,titulo){
+    document.getElementById('resTit').textContent=`✅ ${titulo}`;
+    document.getElementById('riohsC').innerHTML=marked.parse(cont).replace(/\[⚠️ PENDIENTE[^\]]*\]/g,'<mark style="background:#fff3cd;padding:2px 6px;border-radius:3px;color:#856404;font-weight:700">$&</mark>');
+    document.getElementById('resultado').style.display='block';
+    document.getElementById('resultado').scrollIntoView({behavior:'smooth'});
+  }
+
+  function descargar(cont,nombre='RIOHS'){
+    if(!cont)return;
+    const cp=cliente.color_primario||'#1B2E6E',cs=cliente.color_secundario||'#E87722';
+    const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.6;color:#333;margin:2cm}h1{color:${cp};font-size:18pt;border-bottom:3pt solid ${cs};padding-bottom:6pt;margin-bottom:12pt}h2{color:${cp};font-size:14pt;margin-top:18pt;margin-bottom:6pt}h3{color:${cs};font-size:12pt;margin-top:12pt;margin-bottom:4pt}p{margin-bottom:8pt;text-align:justify}table{width:100%;border-collapse:collapse;margin:10pt 0;font-size:10pt}th{background:${cp};color:white;padding:6pt 8pt;text-align:left;font-weight:bold}td{padding:5pt 8pt;border:1pt solid #ccc}tr:nth-child(even) td{background:#f5f5f5}blockquote{border-left:4pt solid ${cs};padding:4pt 10pt;background:#fafafa;margin:8pt 0}strong{color:${cp}}ul,ol{margin:6pt 0 6pt 20pt}li{margin-bottom:3pt}hr{border:none;border-top:2pt solid ${cs};margin:12pt 0}mark{background:#fff3cd;padding:2px 6px;color:#856404;font-weight:bold}</style></head><body>${marked.parse(cont)}</body></html>`;
+    try{const blob=htmlDocx.asBlob(html,{orientation:'portrait',margins:{top:1440,right:1440,bottom:1440,left:1440}});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${nombre}.docx`;a.click()}
+    catch(e){const blob=new Blob(['\ufeff',html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${nombre}.doc`;a.click()}
+  }
+
+  function reiniciar(){
+    contenido='';textoDoc='';seleccionadas.clear();alertas=[];alertasAplicadas=[];
+    document.getElementById('resultado').style.display='none';document.getElementById('panelAlertas').style.display='none';document.getElementById('btnAccion').disabled=false;
+    document.getElementById('btnsR').innerHTML=`<button class="btn-d bd-word" onclick="descargar(contenido,'riohs')">📄 RIOHS (.docx)</button><button class="btn-d bd-res" id="btnRes" onclick="genResumen()">📋 Resumen Ejecutivo</button><button class="btn-d bd-new" onclick="reiniciar()">🔄 Nuevo</button>`;
+    if(tipo==='auditoria'){document.getElementById('uploadArea').classList.remove('ok');document.getElementById('uploadTxt').innerHTML='Haz clic para seleccionar el archivo<br><small>Formatos: .docx, .txt</small>';document.getElementById('inputArchivo').value=''}
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function mostrarErr(msg){const el=document.getElementById('errMsg');el.textContent=msg;el.style.display='block'}
+  init();
+</script>
+</body>
+</html>
