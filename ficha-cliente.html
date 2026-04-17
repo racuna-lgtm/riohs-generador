@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha de Cliente · Portal RIOHS</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --navy: #1B2E6E;
+      --naranja: #E87722;
+      --gris-fondo: #f0f2f7;
+      --texto: #2a2a2a;
+      --texto-muted: #666;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--gris-fondo);
+      color: var(--texto);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--navy);
+      color: white;
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-volver {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 0.4rem 0.9rem;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .btn-volver:hover { background: rgba(255,255,255,0.1); }
+
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .page-title {
+      font-size: 1.4rem;
+      color: var(--navy);
+      margin-bottom: 0.3rem;
+    }
+
+    .page-subtitle {
+      color: var(--texto-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+
+    /* SECCIÓN DEL FORMULARIO */
+    .seccion {
+      background: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .seccion-titulo {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--naranja);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #f0f2f7;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-grid.una-col {
+      grid-template-columns: 1fr;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group.span-2 {
+      grid-column: span 2;
+    }
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--texto-muted);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, select, textarea {
+      padding: 0.7rem 0.9rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-family: Arial, sans-serif;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--navy);
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* COLORES CORPORATIVOS */
+    .color-row {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .color-picker-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .color-picker-group label {
+      font-size: 0.8rem;
+    }
+
+    .color-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    input[type="color"] {
+      width: 48px;
+      height: 38px;
+      padding: 2px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .color-hex {
+      font-family: monospace;
+      font-size: 0.9rem;
+      width: 90px;
+    }
+
+    .preview-colores {
+      flex: 1;
+      min-width: 180px;
+      border-radius: 8px;
+      overflow: hidden;
+      height: 60px;
+      display: flex;
+    }
+
+    .preview-colores .banda-1 { flex: 2; }
+    .preview-colores .banda-2 { flex: 1; }
+
+    /* TOGGLE SINDICATO */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.5rem 0;
+    }
+
+    .toggle {
+      position: relative;
+      width: 48px;
+      height: 26px;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #ccc;
+      border-radius: 26px;
+      transition: 0.3s;
+    }
+
+    .toggle-slider:before {
+      content: '';
+      position: absolute;
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle input:checked + .toggle-slider { background: var(--navy); }
+    .toggle input:checked + .toggle-slider:before { transform: translateX(22px); }
+
+    .toggle-label { font-size: 0.95rem; }
+
+    /* HISTORIAL */
+    .historial-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.8rem;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+    }
+
+    .historial-item .tipo-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+    }
+
+    .tipo-nuevo { background: #e8f0ff; color: var(--navy); }
+    .tipo-auditoria { background: #fff3e8; color: var(--naranja); }
+
+    .historial-fecha {
+      font-size: 0.8rem;
+      color: var(--texto-muted);
+    }
+
+    /* BOTONES PRINCIPALES */
+    .botones-principales {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.8rem 1.4rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-guardar { background: var(--navy); color: white; }
+    .btn-generar { background: var(--naranja); color: white; }
+    .btn-auditar { background: #f0f2f7; color: var(--navy); }
+
+    .success-msg {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      color: #2e7d32;
+      padding: 0.8rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .error-msg {
+      background: #fff0f0;
+      border: 1px solid #ffcccc;
+      color: #cc0000;
+      padding: 0.8rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.span-2 { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <span>🛡️</span>
+      <strong>Portal RIOHS</strong>
+    </div>
+    <button class="btn-volver" onclick="window.location.href='dashboard.html'">
+      ← Volver al Dashboard
+    </button>
+  </header>
+
+  <main>
+    <h1 class="page-title" id="pageTitle">Nuevo Cliente</h1>
+    <p class="page-subtitle">Completa los datos del cliente para generar su RIOHS</p>
+
+    <div class="success-msg" id="successMsg"></div>
+    <div class="error-msg" id="errorMsg"></div>
+
+    <!-- DATOS GENERALES -->
+    <div class="seccion">
+      <div class="seccion-titulo">📋 Datos de la empresa</div>
+      <div class="form-grid">
+        <div class="form-group span-2">
+          <label>Razón Social *</label>
+          <input type="text" id="razon_social" placeholder="Ej: Servicios Industriales JAVER S.A.">
+        </div>
+        <div class="form-group">
+          <label>RUT Empresa</label>
+          <input type="text" id="rut" placeholder="Ej: 76.123.456-7">
+        </div>
+        <div class="form-group">
+          <label>Región</label>
+          <select id="region">
+            <option value="">Seleccionar...</option>
+            <option>Región de Arica y Parinacota</option>
+            <option>Región de Tarapacá</option>
+            <option>Región de Antofagasta</option>
+            <option>Región de Atacama</option>
+            <option>Región de Coquimbo</option>
+            <option>Región de Valparaíso</option>
+            <option>Región Metropolitana de Santiago</option>
+            <option>Región del Libertador Bernardo O'Higgins</option>
+            <option>Región del Maule</option>
+            <option>Región de Ñuble</option>
+            <option>Región del Biobío</option>
+            <option>Región de La Araucanía</option>
+            <option>Región de Los Ríos</option>
+            <option>Región de Los Lagos</option>
+            <option>Región de Aysén</option>
+            <option>Región de Magallanes</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Rubro / Industria *</label>
+          <select id="rubro">
+            <option value="">Seleccionar...</option>
+            <option>Construcción</option>
+            <option>Minería</option>
+            <option>Retail / Comercio al por menor</option>
+            <option>Servicios financieros</option>
+            <option>Salud</option>
+            <option>Educación</option>
+            <option>Transporte y logística</option>
+            <option>Manufactura / Industria</option>
+            <option>Agroindustria</option>
+            <option>Tecnología / TI</option>
+            <option>Hotelería y turismo</option>
+            <option>Seguridad privada</option>
+            <option>Servicios generales</option>
+            <option>Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Dirección</label>
+          <input type="text" id="direccion" placeholder="Calle, número, ciudad">
+        </div>
+        <div class="form-group">
+          <label>Representante Legal</label>
+          <input type="text" id="representante_legal" placeholder="Nombre completo">
+        </div>
+      </div>
+    </div>
+
+    <!-- DATOS LABORALES -->
+    <div class="seccion">
+      <div class="seccion-titulo">👷 Datos laborales</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>N° de Trabajadores</label>
+          <input type="number" id="num_trabajadores" placeholder="Ej: 45" min="1">
+        </div>
+        <div class="form-group">
+          <label>Sistema de Turnos</label>
+          <select id="turnos">
+            <option value="">Sin turnos definidos</option>
+            <option>Jornada diurna estándar (8h)</option>
+            <option>Turnos rotativos (mañana/tarde/noche)</option>
+            <option>Turno continuo 12x12</option>
+            <option>Turno minero 4x3 o 7x7</option>
+            <option>Mixto (oficina + terreno)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Contacto SSOMA</label>
+          <input type="text" id="contacto_ssoma" placeholder="Nombre del encargado">
+        </div>
+        <div class="form-group">
+          <label>Email de contacto</label>
+          <input type="email" id="email_contacto" placeholder="ssoma@empresa.cl">
+        </div>
+        <div class="form-group span-2">
+          <div class="toggle-row">
+            <label class="toggle">
+              <input type="checkbox" id="tiene_sindicato">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">La empresa tiene sindicato activo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IDENTIDAD VISUAL -->
+    <div class="seccion">
+      <div class="seccion-titulo">🎨 Identidad visual del cliente</div>
+      <p style="font-size:0.85rem; color:var(--texto-muted); margin-bottom:1rem;">
+        Estos colores se usarán en el PDF del RIOHS que se entrega al cliente.
+      </p>
+      <div class="color-row">
+        <div class="color-picker-group">
+          <label>Color Primario</label>
+          <div class="color-input-wrap">
+            <input type="color" id="color_primario" value="#1B2E6E"
+              oninput="actualizarColor('primario', this.value)">
+            <input type="text" class="color-hex" id="hex_primario" value="#1B2E6E"
+              oninput="actualizarColorDesdeHex('primario', this.value)">
+          </div>
+        </div>
+        <div class="color-picker-group">
+          <label>Color Secundario</label>
+          <div class="color-input-wrap">
+            <input type="color" id="color_secundario" value="#E87722"
+              oninput="actualizarColor('secundario', this.value)">
+            <input type="text" class="color-hex" id="hex_secundario" value="#E87722"
+              oninput="actualizarColorDesdeHex('secundario', this.value)">
+          </div>
+        </div>
+        <div class="preview-colores" id="previewColores">
+          <div class="banda-1" style="background:#1B2E6E"></div>
+          <div class="banda-2" style="background:#E87722"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORIAL (solo si es cliente existente) -->
+    <div class="seccion" id="seccionHistorial" style="display:none">
+      <div class="seccion-titulo">📁 Historial de documentos</div>
+      <div id="historialLista">
+        <p style="color:var(--texto-muted); font-size:0.9rem;">Sin documentos generados aún.</p>
+      </div>
+    </div>
+
+    <!-- BOTONES -->
+    <div class="seccion">
+      <div class="botones-principales">
+        <button class="btn btn-guardar" onclick="guardarCliente()">
+          💾 Guardar ficha
+        </button>
+        <button class="btn btn-generar" id="btnGenerar"
+          onclick="irAGenerar('nuevo')" disabled>
+          ➕ Generar RIOHS Nuevo
+        </button>
+        <button class="btn btn-auditar" id="btnAuditar"
+          onclick="irAGenerar('auditoria')" disabled>
+          🔍 Auditar RIOHS Existente
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ⚙️ CONFIGURACIÓN SUPABASE
+const SUPABASE_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_JLaCYGFE3fq6b7ecDl0glA_axBuVRZo';
+
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let clienteId = null;
+
+    async function init() {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) { window.location.href = 'index.html'; return; }
+
+      const params = new URLSearchParams(window.location.search);
+      clienteId = params.get('id');
+
+      if (clienteId) {
+        document.getElementById('pageTitle').textContent = 'Editar Cliente';
+        await cargarCliente();
+        await cargarHistorial();
+        document.getElementById('btnGenerar').disabled = false;
+        document.getElementById('btnAuditar').disabled = false;
+        document.getElementById('seccionHistorial').style.display = 'block';
+      }
+    }
+
+    async function cargarCliente() {
+      const { data, error } = await db
+        .from('clientes')
+        .select('*')
+        .eq('id', clienteId)
+        .single();
+
+      if (error || !data) return;
+
+      document.getElementById('razon_social').value = data.razon_social || '';
+      document.getElementById('rut').value = data.rut || '';
+      document.getElementById('region').value = data.region || '';
+      document.getElementById('rubro').value = data.rubro || '';
+      document.getElementById('direccion').value = data.direccion || '';
+      document.getElementById('representante_legal').value = data.representante_legal || '';
+      document.getElementById('num_trabajadores').value = data.num_trabajadores || '';
+      document.getElementById('turnos').value = data.turnos || '';
+      document.getElementById('contacto_ssoma').value = data.contacto_ssoma || '';
+      document.getElementById('email_contacto').value = data.email_contacto || '';
+      document.getElementById('tiene_sindicato').checked = data.tiene_sindicato || false;
+
+      if (data.color_primario) actualizarColor('primario', data.color_primario);
+      if (data.color_secundario) actualizarColor('secundario', data.color_secundario);
+    }
+
+    async function cargarHistorial() {
+      const { data } = await db
+        .from('documentos_riohs')
+        .select('*')
+        .eq('cliente_id', clienteId)
+        .order('created_at', { ascending: false });
+
+      if (!data || data.length === 0) return;
+
+      const lista = document.getElementById('historialLista');
+      lista.innerHTML = data.map(d => `
+        <div class="historial-item">
+          <div>
+            <span class="tipo-badge ${d.tipo === 'nuevo' ? 'tipo-nuevo' : 'tipo-auditoria'}">
+              ${d.tipo === 'nuevo' ? '➕ RIOHS Nuevo' : '🔍 Auditoría'}
+            </span>
+            <span class="historial-fecha" style="margin-left:0.5rem">
+              ${new Date(d.created_at).toLocaleDateString('es-CL')} —
+              versión ${d.version}
+            </span>
+          </div>
+          <button class="btn btn-auditar" style="padding:0.4rem 0.8rem; font-size:0.8rem"
+            onclick="descargarDoc('${d.id}')">
+            ⬇ Descargar
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function guardarCliente() {
+      const razon_social = document.getElementById('razon_social').value.trim();
+      const rubro = document.getElementById('rubro').value;
+
+      if (!razon_social || !rubro) {
+        mostrarError('La razón social y el rubro son obligatorios.');
+        return;
+      }
+
+      const datos = {
+        razon_social,
+        rut: document.getElementById('rut').value.trim(),
+        region: document.getElementById('region').value,
+        rubro,
+        direccion: document.getElementById('direccion').value.trim(),
+        representante_legal: document.getElementById('representante_legal').value.trim(),
+        num_trabajadores: parseInt(document.getElementById('num_trabajadores').value) || null,
+        turnos: document.getElementById('turnos').value,
+        contacto_ssoma: document.getElementById('contacto_ssoma').value.trim(),
+        email_contacto: document.getElementById('email_contacto').value.trim(),
+        tiene_sindicato: document.getElementById('tiene_sindicato').checked,
+        color_primario: document.getElementById('hex_primario').value,
+        color_secundario: document.getElementById('hex_secundario').value,
+      };
+
+      let error;
+      if (clienteId) {
+        ({ error } = await db.from('clientes').update(datos).eq('id', clienteId));
+      } else {
+        const { data, error: err } = await db.from('clientes').insert(datos).select().single();
+        error = err;
+        if (data) {
+          clienteId = data.id;
+          window.history.replaceState({}, '', `?id=${clienteId}`);
+          document.getElementById('btnGenerar').disabled = false;
+          document.getElementById('btnAuditar').disabled = false;
+          document.getElementById('seccionHistorial').style.display = 'block';
+          document.getElementById('pageTitle').textContent = 'Editar Cliente';
+        }
+      }
+
+      if (error) {
+        mostrarError('Error al guardar. Intenta nuevamente.');
+        console.error(error);
+      } else {
+        mostrarExito('✅ Ficha guardada correctamente.');
+      }
+    }
+
+    function irAGenerar(tipo) {
+      if (!clienteId) return;
+      window.location.href = `generar.html?cliente=${clienteId}&tipo=${tipo}`;
+    }
+
+    function actualizarColor(cual, valor) {
+      document.getElementById(`color_${cual}`).value = valor;
+      document.getElementById(`hex_${cual}`).value = valor;
+      actualizarPreview();
+    }
+
+    function actualizarColorDesdeHex(cual, valor) {
+      if (/^#[0-9A-Fa-f]{6}$/.test(valor)) {
+        document.getElementById(`color_${cual}`).value = valor;
+        actualizarPreview();
+      }
+    }
+
+    function actualizarPreview() {
+      const p = document.getElementById('hex_primario').value;
+      const s = document.getElementById('hex_secundario').value;
+      const preview = document.getElementById('previewColores');
+      preview.querySelector('.banda-1').style.background = p;
+      preview.querySelector('.banda-2').style.background = s;
+    }
+
+    function mostrarExito(msg) {
+      const el = document.getElementById('successMsg');
+      el.textContent = msg;
+      el.style.display = 'block';
+      document.getElementById('errorMsg').style.display = 'none';
+      setTimeout(() => el.style.display = 'none', 4000);
+    }
+
+    function mostrarError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.style.display = 'block';
+      document.getElementById('successMsg').style.display = 'none';
+    }
+
+    init();
+  </script>
+</body>
+</html>
