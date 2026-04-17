@@ -6,440 +6,159 @@
   <title>Dashboard · Portal RIOHS</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root {
-      --navy: #1B2E6E;
-      --naranja: #E87722;
-      --gris-fondo: #f0f2f7;
-      --gris-card: #ffffff;
-      --texto: #2a2a2a;
-      --texto-muted: #666;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: Arial, sans-serif;
-      background: var(--gris-fondo);
-      color: var(--texto);
-      min-height: 100vh;
-    }
-
-    /* HEADER */
-    header {
-      background: var(--navy);
-      color: white;
-      padding: 0 2rem;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .header-left .escudo { font-size: 1.5rem; }
-
-    .header-left h1 {
-      font-size: 1.1rem;
-      font-weight: 700;
-    }
-
-    .header-left span {
-      color: var(--naranja);
-      font-size: 0.8rem;
-      display: block;
-      font-weight: 400;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .usuario-label {
-      font-size: 0.85rem;
-      color: #aab;
-    }
-
-    .btn-logout {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.3);
-      color: white;
-      padding: 0.4rem 0.9rem;
-      border-radius: 5px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn-logout:hover { background: rgba(255,255,255,0.1); }
-
-    /* MAIN */
-    main {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem;
-    }
-
-    .top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .top-bar h2 {
-      font-size: 1.3rem;
-      color: var(--navy);
-    }
-
-    .top-bar-right {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .buscador {
-      padding: 0.6rem 1rem;
-      border: 2px solid #ddd;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      width: 220px;
-    }
-
-    .buscador:focus {
-      outline: none;
-      border-color: var(--navy);
-    }
-
-    .btn-nuevo {
-      background: var(--naranja);
-      color: white;
-      border: none;
-      padding: 0.65rem 1.2rem;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s;
-      white-space: nowrap;
-    }
-
-    .btn-nuevo:hover { background: #d06618; }
-
-    /* STATS */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .stat-card {
-      background: white;
-      border-radius: 8px;
-      padding: 1.2rem;
-      text-align: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-      border-top: 3px solid var(--navy);
-    }
-
-    .stat-card .numero {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--navy);
-    }
-
-    .stat-card .etiqueta {
-      font-size: 0.8rem;
-      color: var(--texto-muted);
-      margin-top: 0.2rem;
-    }
-
-    /* GRILLA DE CLIENTES */
-    .clientes-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.2rem;
-    }
-
-    .cliente-card {
-      background: white;
-      border-radius: 10px;
-      padding: 1.5rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-      cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
-      border-left: 5px solid var(--navy);
-      position: relative;
-    }
-
-    .cliente-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-    }
-
-    .cliente-card .color-bar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      border-radius: 10px 10px 0 0;
-    }
-
-    .cliente-card h3 {
-      font-size: 1rem;
-      color: var(--navy);
-      margin-bottom: 0.3rem;
-      margin-top: 0.5rem;
-    }
-
-    .cliente-card .rut {
-      font-size: 0.8rem;
-      color: var(--texto-muted);
-      margin-bottom: 0.75rem;
-    }
-
-    .cliente-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin-bottom: 1rem;
-    }
-
-    .tag {
-      background: #f0f2f7;
-      color: var(--navy);
-      font-size: 0.75rem;
-      padding: 0.2rem 0.6rem;
-      border-radius: 20px;
-      font-weight: 600;
-    }
-
-    .cliente-card .acciones {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .btn-accion {
-      flex: 1;
-      padding: 0.5rem;
-      border: none;
-      border-radius: 5px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-
-    .btn-accion:hover { opacity: 0.85; }
-
-    .btn-accion.primario {
-      background: var(--navy);
-      color: white;
-    }
-
-    .btn-accion.secundario {
-      background: #f0f2f7;
-      color: var(--navy);
-    }
-
-    /* ESTADO VACÍO */
-    .estado-vacio {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: var(--texto-muted);
-      display: none;
-    }
-
-    .estado-vacio .icono { font-size: 3rem; margin-bottom: 1rem; }
-    .estado-vacio h3 { margin-bottom: 0.5rem; color: var(--navy); }
-
-    /* LOADING */
-    .loading {
-      text-align: center;
-      padding: 3rem;
-      color: var(--texto-muted);
-    }
+    :root{--navy:#1B2E6E;--naranja:#E87722;--gris:#f0f2f7;--texto:#2a2a2a;--muted:#666}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;background:var(--gris);color:var(--texto);min-height:100vh}
+    header{background:var(--navy);color:white;padding:0 2rem;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+    .header-left{display:flex;align-items:center;gap:.75rem}
+    .header-left h1{font-size:1.1rem;font-weight:700}
+    .header-left span{color:var(--naranja);font-size:.8rem;display:block;font-weight:400}
+    .header-right{display:flex;align-items:center;gap:1rem}
+    .usuario-label{font-size:.85rem;color:#aab}
+    .btn-logout{background:transparent;border:1px solid rgba(255,255,255,.3);color:white;padding:.4rem .9rem;border-radius:5px;font-size:.85rem;cursor:pointer}
+    .btn-logout:hover{background:rgba(255,255,255,.1)}
+    main{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+    .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+    .top-bar h2{font-size:1.3rem;color:var(--navy)}
+    .top-bar-right{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+    .buscador{padding:.6rem 1rem;border:2px solid #ddd;border-radius:6px;font-size:.95rem;width:220px}
+    .buscador:focus{outline:none;border-color:var(--navy)}
+    .btn-nuevo{background:var(--naranja);color:white;border:none;padding:.65rem 1.2rem;border-radius:6px;font-size:.95rem;font-weight:700;cursor:pointer;white-space:nowrap}
+    .btn-nuevo:hover{background:#d06618}
+    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem}
+    .stat-card{background:white;border-radius:8px;padding:1.2rem;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.06);border-top:3px solid var(--navy)}
+    .stat-card .numero{font-size:2rem;font-weight:700;color:var(--navy)}
+    .stat-card .etiqueta{font-size:.8rem;color:var(--muted);margin-top:.2rem}
+    .clientes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.2rem}
+    .cliente-card{background:white;border-radius:10px;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.07);overflow:hidden;transition:transform .15s,box-shadow .15s}
+    .cliente-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.12)}
+    .card-header{height:6px}
+    .card-body{padding:1.2rem 1.5rem 0}
+    .card-logo{width:48px;height:32px;border:1px solid #eee;border-radius:4px;overflow:hidden;background:#f8f8f8;display:flex;align-items:center;justify-content:center;margin-bottom:.5rem}
+    .card-logo img{width:100%;height:100%;object-fit:contain}
+    .card-logo .sin-logo{font-size:.6rem;color:#bbb;text-align:center}
+    .cliente-card h3{font-size:1rem;color:var(--navy);margin-bottom:.2rem}
+    .cliente-card .rut{font-size:.78rem;color:var(--muted);margin-bottom:.6rem}
+    .cliente-meta{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.8rem}
+    .tag{background:#f0f2f7;color:var(--navy);font-size:.72rem;padding:.2rem .5rem;border-radius:20px;font-weight:600}
+    .card-acciones{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid #f0f0f0;margin-top:.5rem}
+    .card-btn{padding:.7rem;border:none;background:transparent;cursor:pointer;font-size:.78rem;font-weight:700;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:.3rem}
+    .card-btn:hover{background:#f5f5f5}
+    .card-btn.primario{color:var(--navy)}
+    .card-btn.secundario{color:var(--naranja)}
+    .card-btn.editar{color:#555;border-left:1px solid #f0f0f0;border-right:1px solid #f0f0f0}
+    .estado-vacio{text-align:center;padding:4rem 2rem;color:var(--muted);display:none}
+    .estado-vacio .icono{font-size:3rem;margin-bottom:1rem}
+    .estado-vacio h3{margin-bottom:.5rem;color:var(--navy)}
+    .loading{text-align:center;padding:3rem;color:var(--muted)}
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-left">
-      <span class="escudo">🛡️</span>
-      <div>
-        <h1>Más Prevención</h1>
-        <span>Portal RIOHS</span>
-      </div>
+<header>
+  <div class="header-left">
+    <span style="font-size:1.5rem">🛡️</span>
+    <div><h1>Más Prevención</h1><span>Portal RIOHS</span></div>
+  </div>
+  <div class="header-right">
+    <span class="usuario-label" id="usuarioLabel">—</span>
+    <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
+  </div>
+</header>
+
+<main>
+  <div class="top-bar">
+    <h2>Mis Clientes</h2>
+    <div class="top-bar-right">
+      <input class="buscador" type="text" id="buscador" placeholder="🔍 Buscar cliente..." oninput="filtrar()">
+      <button class="btn-nuevo" onclick="irAFicha()">+ Nuevo Cliente</button>
     </div>
-    <div class="header-right">
-      <span class="usuario-label" id="usuarioLabel">—</span>
-      <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
-    </div>
-  </header>
+  </div>
 
-  <main>
-    <div class="top-bar">
-      <h2>Mis Clientes</h2>
-      <div class="top-bar-right">
-        <input class="buscador" type="text" id="buscador"
-          placeholder="🔍 Buscar cliente..." oninput="filtrarClientes()">
-        <button class="btn-nuevo" onclick="irAFicha()">+ Nuevo Cliente</button>
-      </div>
-    </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="numero" id="statTotal">—</div><div class="etiqueta">Clientes activos</div></div>
+    <div class="stat-card"><div class="numero" id="statDocs">—</div><div class="etiqueta">RIOHS generados</div></div>
+    <div class="stat-card"><div class="numero" id="statMes">—</div><div class="etiqueta">Este mes</div></div>
+  </div>
 
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="numero" id="statTotal">—</div>
-        <div class="etiqueta">Clientes activos</div>
-      </div>
-      <div class="stat-card">
-        <div class="numero" id="statDocs">—</div>
-        <div class="etiqueta">RIOHS generados</div>
-      </div>
-      <div class="stat-card">
-        <div class="numero" id="statMes">—</div>
-        <div class="etiqueta">Este mes</div>
-      </div>
-    </div>
+  <div id="loading" class="loading">Cargando clientes...</div>
+  <div class="clientes-grid" id="clientesGrid"></div>
+  <div class="estado-vacio" id="estadoVacio">
+    <div class="icono">📋</div>
+    <h3>Sin clientes todavía</h3>
+    <p>Agrega tu primer cliente para comenzar a generar RIOHS.</p>
+  </div>
+</main>
 
-    <div id="loading" class="loading">Cargando clientes...</div>
-    <div class="clientes-grid" id="clientesGrid"></div>
-    <div class="estado-vacio" id="estadoVacio">
-      <div class="icono">📋</div>
-      <h3>Sin clientes todavía</h3>
-      <p>Agrega tu primer cliente para comenzar a generar RIOHS.</p>
-    </div>
-  </main>
+<script>
+  const SUPABASE_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_JLaCYGFE3fq6b7ecDl0glA_axBuVRZo';
+  const{createClient}=supabase;
+  const db=createClient(SUPABASE_URL,SUPABASE_KEY);
+  let todos=[];
 
-  <script>
-    // ⚙️ CONFIGURACIÓN SUPABASE
-const SUPABASE_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_JLaCYGFE3fq6b7ecDl0glA_axBuVRZo';
+  async function init(){
+    const{data:{session}}=await db.auth.getSession();
+    if(!session){window.location.href='index.html';return}
+    document.getElementById('usuarioLabel').textContent=session.user.email;
+    await cargarClientes();await cargarStats();
+  }
 
-    const { createClient } = supabase;
-    const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+  async function cargarClientes(){
+    const{data,error}=await db.from('clientes').select('*').order('created_at',{ascending:false});
+    document.getElementById('loading').style.display='none';
+    if(error){console.error(error);return}
+    todos=data||[];
+    renderClientes(todos);
+    document.getElementById('statTotal').textContent=todos.length;
+  }
 
-    let todosLosClientes = [];
+  async function cargarStats(){
+    const inicio=new Date();inicio.setDate(1);inicio.setHours(0,0,0,0);
+    const{count:total}=await db.from('documentos_riohs').select('*',{count:'exact',head:true});
+    const{count:mes}=await db.from('documentos_riohs').select('*',{count:'exact',head:true}).gte('created_at',inicio.toISOString());
+    document.getElementById('statDocs').textContent=total||0;
+    document.getElementById('statMes').textContent=mes||0;
+  }
 
-    // Verificar sesión
-    async function init() {
-      const { data: { session } } = await db.auth.getSession();
-      if (!session) {
-        window.location.href = 'index.html';
-        return;
-      }
-      document.getElementById('usuarioLabel').textContent = session.user.email;
-      await cargarClientes();
-      await cargarStats();
-    }
-
-    async function cargarClientes() {
-      const { data, error } = await db
-        .from('clientes')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      document.getElementById('loading').style.display = 'none';
-
-      if (error) {
-        console.error(error);
-        return;
-      }
-
-      todosLosClientes = data || [];
-      renderClientes(todosLosClientes);
-      document.getElementById('statTotal').textContent = todosLosClientes.length;
-    }
-
-    async function cargarStats() {
-      const inicioMes = new Date();
-      inicioMes.setDate(1);
-      inicioMes.setHours(0, 0, 0, 0);
-
-      const { count: totalDocs } = await db
-        .from('documentos_riohs')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: docsMes } = await db
-        .from('documentos_riohs')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', inicioMes.toISOString());
-
-      document.getElementById('statDocs').textContent = totalDocs || 0;
-      document.getElementById('statMes').textContent = docsMes || 0;
-    }
-
-    function renderClientes(clientes) {
-      const grid = document.getElementById('clientesGrid');
-      const vacio = document.getElementById('estadoVacio');
-
-      if (clientes.length === 0) {
-        grid.innerHTML = '';
-        vacio.style.display = 'block';
-        return;
-      }
-
-      vacio.style.display = 'none';
-      grid.innerHTML = clientes.map(c => `
-        <div class="cliente-card" onclick="irAFicha('${c.id}')">
-          <div class="color-bar" style="background: linear-gradient(to right, ${c.color_primario || '#1B2E6E'}, ${c.color_secundario || '#E87722'})"></div>
+  function renderClientes(clientes){
+    const grid=document.getElementById('clientesGrid');
+    const vacio=document.getElementById('estadoVacio');
+    if(!clientes.length){grid.innerHTML='';vacio.style.display='block';return}
+    vacio.style.display='none';
+    grid.innerHTML=clientes.map(c=>`
+      <div class="cliente-card">
+        <div class="card-header" style="background:linear-gradient(to right,${c.color_primario||'#1B2E6E'},${c.color_secundario||'#E87722'})"></div>
+        <div class="card-body">
+          ${c.logo_url
+            ? `<div class="card-logo"><img src="${c.logo_url}" alt="logo"></div>`
+            : `<div class="card-logo"><span class="sin-logo">sin logo</span></div>`
+          }
           <h3>${c.razon_social}</h3>
-          <div class="rut">${c.rut || 'Sin RUT'} · ${c.region || 'Sin región'}</div>
+          <div class="rut">${c.rut||'Sin RUT'} · ${c.region||'Sin región'}</div>
           <div class="cliente-meta">
             <span class="tag">📦 ${c.rubro}</span>
-            ${c.num_trabajadores ? `<span class="tag">👷 ${c.num_trabajadores} trab.</span>` : ''}
-            ${c.tiene_sindicato ? '<span class="tag">🤝 Sindicato</span>' : ''}
-          </div>
-          <div class="acciones" onclick="event.stopPropagation()">
-            <button class="btn-accion primario"
-              onclick="generarRIOHS('${c.id}', 'nuevo')">
-              + RIOHS Nuevo
-            </button>
-            <button class="btn-accion secundario"
-              onclick="generarRIOHS('${c.id}', 'auditoria')">
-              📋 Auditar
-            </button>
+            ${c.num_trabajadores?`<span class="tag">👷 ${c.num_trabajadores} trab.</span>`:''}
+            ${c.tiene_sindicato?'<span class="tag">🤝 Sindicato</span>':''}
           </div>
         </div>
-      `).join('');
-    }
+        <div class="card-acciones">
+          <button class="card-btn primario" onclick="generarRIOHS('${c.id}','nuevo')">➕ RIOHS Nuevo</button>
+          <button class="card-btn editar" onclick="irAFicha('${c.id}')">✏️ Editar ficha</button>
+          <button class="card-btn secundario" onclick="generarRIOHS('${c.id}','auditoria')">🔍 Auditar</button>
+        </div>
+      </div>`).join('');
+  }
 
-    function filtrarClientes() {
-      const q = document.getElementById('buscador').value.toLowerCase();
-      const filtrados = todosLosClientes.filter(c =>
-        c.razon_social.toLowerCase().includes(q) ||
-        (c.rut || '').toLowerCase().includes(q) ||
-        (c.rubro || '').toLowerCase().includes(q)
-      );
-      renderClientes(filtrados);
-    }
+  function filtrar(){
+    const q=document.getElementById('buscador').value.toLowerCase();
+    renderClientes(todos.filter(c=>c.razon_social.toLowerCase().includes(q)||(c.rut||'').toLowerCase().includes(q)||(c.rubro||'').toLowerCase().includes(q)));
+  }
 
-    function irAFicha(id = null) {
-      const url = id ? `ficha-cliente.html?id=${id}` : 'ficha-cliente.html';
-      window.location.href = url;
-    }
+  function irAFicha(id=null){window.location.href=id?`ficha-cliente.html?id=${id}`:'ficha-cliente.html'}
+  function generarRIOHS(id,tipo){window.location.href=`generar.html?cliente=${id}&tipo=${tipo}`}
+  async function cerrarSesion(){await db.auth.signOut();window.location.href='index.html'}
 
-    function generarRIOHS(clienteId, tipo) {
-      window.location.href = `generar.html?cliente=${clienteId}&tipo=${tipo}`;
-    }
-
-    async function cerrarSesion() {
-      await db.auth.signOut();
-      window.location.href = 'index.html';
-    }
-
-    init();
-  </script>
+  init();
+</script>
 </body>
 </html>
