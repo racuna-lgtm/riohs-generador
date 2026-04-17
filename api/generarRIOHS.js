@@ -13,55 +13,53 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Debug: verificar variables
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    
+    if (!apiKey) {
+      return res.status(500).json({ 
+        error: "Variable ANTHROPIC_API_KEY no configurada",
+        debug: "Verifica las environment variables en Vercel"
+      });
+    }
+
     const { cliente, bloque } = req.body || {};
     
     if (!cliente || !bloque) {
-      return res.status(400).json({ error: "Faltan datos del cliente o bloque." });
+      return res.status(400).json({ 
+        error: "Faltan datos del cliente o bloque.",
+        received: { cliente, bloque }
+      });
     }
 
-    const prompt = `Genera un RIOHS (Reglamento Interno de Orden, Higiene y Seguridad) completo para la empresa ${cliente.empresa} del rubro ${cliente.rubro}. 
+    // Por ahora, devolvamos un RIOHS mock para probar
+    const mockRIOHS = `
+REGLAMENTO INTERNO DE ORDEN, HIGIENE Y SEGURIDAD
+EMPRESA: ${cliente.empresa}
+RUBRO: ${cliente.rubro}
 
-El RIOHS debe incluir:
-1. Disposiciones generales
-2. Organización de la prevención de riesgos
-3. Obligaciones y prohibiciones
-4. Protección personal
-5. Capacitación
-6. Investigación de accidentes
-7. Sanciones
+TÍTULO I: DISPOSICIONES GENERALES
 
-Genera un documento profesional y detallado de al menos 50 páginas.`;
-    
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 4000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
+Artículo 1°: El presente reglamento tiene por objeto establecer las normas de orden, higiene y seguridad que deben observarse en la empresa ${cliente.empresa}.
 
-    if (!response.ok) {
-      throw new Error(`Anthropic API error: ${response.status}`);
-    }
+TÍTULO II: ORGANIZACIÓN DE LA PREVENCIÓN
 
-    const data = await response.json();
+Artículo 2°: La empresa mantendrá los servicios de prevención de riesgos que establece la legislación vigente.
+
+[Este es un RIOHS de prueba generado automáticamente]
+    `;
     
     return res.status(200).json({ 
-      contenido: data.content[0].text,
-      bloque 
+      contenido: mockRIOHS,
+      bloque,
+      debug: "Función funcionando correctamente - usando contenido mock"
     });
 
   } catch (error) {
-    console.error('Error detallado:', error);
     return res.status(500).json({ 
-      error: "Error al generar RIOHS", 
-      detalle: error.message 
+      error: "Error interno", 
+      detalle: error.message,
+      stack: error.stack
     });
   }
 }
