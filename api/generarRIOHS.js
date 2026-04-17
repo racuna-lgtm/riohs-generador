@@ -289,7 +289,7 @@ Fecha y normativa a monitorear.
     } else if (tipo === 'auditoria_analisis') {
       usarWebSearch = false;
       maxTokens = 1500;
-      const parte = req.body.parte || 1;
+    let parte = req.body.parte || 1;
       prompt = `Eres experto en legislación laboral chilena. Normativa vigente: DS 44/2023, Ley Karin 21.643, Ley 21.719, Ley 21.561, Ley 16.744.
 
 Empresa: ${E} | Rubro: ${R} | Analizando parte ${parte} de 3.
