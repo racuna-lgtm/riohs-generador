@@ -6,7 +6,7 @@
   <title>Ficha de Cliente · Portal RIOHS</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root{--navy:#1B2E6E;--naranja:#E87722;--gris:#f0f2f7;--texto:#2a2a2a;--muted:#666}
+    :root{--navy:#1B2E6E;--naranja:#E87722;--gris:#f0f2f7;--texto:#2a2a2a;--muted:#666;--rojo:#c62828}
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:Arial,sans-serif;background:var(--gris);color:var(--texto);min-height:100vh}
     header{background:var(--navy);color:white;padding:0 2rem;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.2)}
@@ -16,11 +16,22 @@
     .page-title{font-size:1.4rem;color:var(--navy);margin-bottom:.3rem}
     .page-sub{color:var(--muted);font-size:.9rem;margin-bottom:2rem}
 
-    /* TOAST DE CONFIRMACIÓN */
-    .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#2e7d32;color:white;padding:1rem 2rem;border-radius:10px;font-size:1rem;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:9999;display:none;align-items:center;gap:.75rem;min-width:300px;justify-content:center}
-    .toast.error-toast{background:#c62828}
-    .toast.show{display:flex;animation:slideDown .3s ease}
-    @keyframes slideDown{from{transform:translateX(-50%) translateY(-20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+    /* TOAST */
+    .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);color:white;padding:1rem 2rem;border-radius:10px;font-size:1rem;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:9999;display:none;align-items:center;gap:.75rem;min-width:300px;justify-content:center}
+    .toast-ok{background:#2e7d32}
+    .toast-err{background:#c62828}
+    .toast.show{display:flex;animation:sd .3s ease}
+    @keyframes sd{from{transform:translateX(-50%) translateY(-20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+
+    /* MODAL ELIMINAR */
+    .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+    .modal-overlay.show{display:flex}
+    .modal{background:white;border-radius:12px;padding:2rem;max-width:420px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+    .modal h3{font-size:1.2rem;color:var(--rojo);margin-bottom:.75rem}
+    .modal p{font-size:.9rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.5}
+    .modal-btns{display:flex;gap:1rem;justify-content:center}
+    .btn-cancel{padding:.7rem 1.5rem;border:2px solid #ccc;background:transparent;border-radius:6px;cursor:pointer;font-weight:600}
+    .btn-delete{padding:.7rem 1.5rem;background:var(--rojo);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700}
 
     .seccion{background:white;border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06)}
     .sec-tit{font-size:.82rem;font-weight:700;color:var(--naranja);text-transform:uppercase;letter-spacing:1px;margin-bottom:1.2rem;padding-bottom:.5rem;border-bottom:2px solid #f0f2f7}
@@ -32,6 +43,20 @@
     input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy)}
     textarea{resize:vertical;min-height:70px}
 
+    /* LOGO */
+    .logo-area{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap}
+    .logo-preview{width:120px;height:80px;border:2px dashed #ddd;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8f8f8;cursor:pointer;transition:border-color .2s;flex-shrink:0}
+    .logo-preview:hover{border-color:var(--navy)}
+    .logo-preview img{width:100%;height:100%;object-fit:contain}
+    .logo-preview .logo-placeholder{color:#bbb;font-size:.8rem;text-align:center;padding:.5rem}
+    .logo-info{flex:1}
+    .logo-info p{font-size:.85rem;color:var(--muted);line-height:1.5;margin-bottom:.75rem}
+    .btn-logo{display:inline-block;padding:.5rem 1rem;background:#f0f2f7;border:2px solid var(--navy);color:var(--navy);border-radius:6px;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .2s}
+    .btn-logo:hover{background:var(--navy);color:white}
+    .btn-remove-logo{display:inline-block;padding:.5rem 1rem;background:#fff0f0;border:2px solid #ffcccc;color:#c62828;border-radius:6px;font-size:.85rem;font-weight:700;cursor:pointer;margin-left:.5rem}
+    #inputLogo{display:none}
+    .logo-badge{display:inline-block;font-size:.72rem;padding:.2rem .5rem;background:#e8f5e9;color:#2e7d32;border-radius:4px;font-weight:700;margin-top:.3rem}
+
     /* COLORES */
     .color-row{display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap}
     .cpg{display:flex;flex-direction:column;gap:.4rem}
@@ -40,8 +65,7 @@
     input[type="color"]{width:44px;height:36px;padding:2px;border-radius:6px;cursor:pointer}
     .chex{font-family:monospace;font-size:.9rem;width:90px}
     .prev{flex:1;min-width:160px;border-radius:8px;overflow:hidden;height:52px;display:flex;border:1px solid #eee}
-    .prev .b1{flex:2}
-    .prev .b2{flex:1}
+    .prev .b1{flex:2}.prev .b2{flex:1}
 
     /* TOGGLE */
     .tog-row{display:flex;align-items:center;gap:.75rem;padding:.4rem 0}
@@ -59,9 +83,9 @@
     .norm-item.activa{border-color:var(--navy);background:#eef3ff}
     .norm-item.obl{border-color:#a5d6a7}
     .norm-item.obl.activa{border-color:#2e7d32;background:#e8f5e9}
-    .norm-check{width:20px;height:20px;border:2px solid #ccc;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px;font-size:.75rem;font-weight:700}
-    .norm-item.activa .norm-check{background:var(--navy);border-color:var(--navy);color:white}
-    .norm-item.obl.activa .norm-check{background:#2e7d32;border-color:#2e7d32;color:white}
+    .norm-check{width:20px;height:20px;border:2px solid #ccc;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px;font-size:.75rem;font-weight:700;color:white}
+    .norm-item.activa .norm-check{background:var(--navy);border-color:var(--navy)}
+    .norm-item.obl.activa .norm-check{background:#2e7d32;border-color:#2e7d32}
     .norm-info{flex:1}
     .norm-nombre{font-size:.9rem;font-weight:700;color:var(--texto);margin-bottom:.15rem}
     .norm-desc{font-size:.78rem;color:var(--muted);line-height:1.4}
@@ -75,25 +99,37 @@
     .tb-a{background:#fff3e8;color:var(--naranja)}
 
     /* BOTONES */
-    .btns-p{display:flex;gap:1rem;flex-wrap:wrap}
+    .btns-p{display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
     .btn{padding:.8rem 1.4rem;border:none;border-radius:6px;font-size:.95rem;font-weight:700;cursor:pointer;transition:opacity .2s}
     .btn:hover{opacity:.85}
     .btn:disabled{opacity:.45;cursor:not-allowed}
     .btn-guard{background:var(--navy);color:white}
     .btn-gen{background:var(--naranja);color:white}
     .btn-aud{background:#f0f2f7;color:var(--navy);border:2px solid var(--navy)}
+    .btn-eliminar{background:#fff0f0;color:var(--rojo);border:2px solid #ffcccc;margin-left:auto}
 
     @media(max-width:600px){.grid2,.norm-grid{grid-template-columns:1fr}.fg.span2{grid-column:span 1}}
   </style>
 </head>
 <body>
 
-<!-- TOAST -->
-<div class="toast" id="toast">✅ Ficha guardada correctamente</div>
+<div class="toast" id="toast"></div>
+
+<!-- MODAL ELIMINAR -->
+<div class="modal-overlay" id="modalEliminar">
+  <div class="modal">
+    <h3>⚠️ Eliminar cliente</h3>
+    <p>¿Estás segura de que quieres eliminar este cliente y todos sus documentos? Esta acción <strong>no se puede deshacer</strong>.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-delete" onclick="confirmarEliminar()">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
 
 <header>
   <div style="display:flex;align-items:center;gap:.75rem"><span>🛡️</span><strong>Portal RIOHS</strong></div>
-  <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Volver</button>
+  <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Dashboard</button>
 </header>
 
 <main>
@@ -132,7 +168,7 @@
           <option>Servicios generales</option><option>Otro</option>
         </select>
       </div>
-      <div class="fg"><label>Actividad económica (descripción)</label><input type="text" id="actividad_economica" placeholder="Ej: Extracción y procesamiento de cobre"></div>
+      <div class="fg"><label>Actividad económica</label><input type="text" id="actividad_economica" placeholder="Ej: Extracción y procesamiento de cobre"></div>
       <div class="fg"><label>Representante Legal</label><input type="text" id="representante_legal" placeholder="Nombre completo"></div>
       <div class="fg span2"><label>Dirección</label><input type="text" id="direccion" placeholder="Calle, número, ciudad"></div>
     </div>
@@ -153,7 +189,7 @@
           <option>Mixto (oficina + terreno)</option>
         </select>
       </div>
-      <div class="fg"><label>Organismo Administrador (mutual) *</label>
+      <div class="fg"><label>Organismo Administrador *</label>
         <select id="organismo_administrador">
           <option value="">Seleccionar...</option>
           <option>ACHS — Asociación Chilena de Seguridad</option>
@@ -173,19 +209,27 @@
     </div>
   </div>
 
-  <!-- NORMATIVAS -->
-  <div class="seccion">
-    <div class="sec-tit">⚖️ Normativas y protocolos a incorporar</div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">
-      Selecciona qué normativas debe incluir el RIOHS. Las marcadas en <strong style="color:#1b5e20">verde</strong> son obligatorias para todas las empresas.
-    </p>
-    <div class="norm-grid" id="normGrid"></div>
-  </div>
-
-  <!-- COLORES -->
+  <!-- IDENTIDAD VISUAL (colores + logo) -->
   <div class="seccion">
     <div class="sec-tit">🎨 Identidad visual del cliente</div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Estos colores se aplican al documento Word entregado al cliente.</p>
+
+    <!-- LOGO OPCIONAL -->
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Logo opcional — se incluirá en los documentos generados para este cliente.</p>
+    <div class="logo-area" style="margin-bottom:1.5rem">
+      <div class="logo-preview" id="logoPreview" onclick="document.getElementById('inputLogo').click()">
+        <div class="logo-placeholder" id="logoPlaceholder">📷<br>Subir logo<br><small>(opcional)</small></div>
+      </div>
+      <div class="logo-info">
+        <p>Sube el logo del cliente en formato JPG, PNG o SVG.<br>Se usará en los documentos Word generados.</p>
+        <button class="btn-logo" onclick="document.getElementById('inputLogo').click()">📁 Seleccionar logo</button>
+        <button class="btn-remove-logo" id="btnRemoveLogo" onclick="quitarLogo()" style="display:none">✕ Quitar logo</button>
+        <input type="file" id="inputLogo" accept="image/*" onchange="previewLogo(this)">
+        <div id="logoStatus"></div>
+      </div>
+    </div>
+
+    <!-- COLORES -->
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Colores corporativos — se aplican al documento Word entregado al cliente.</p>
     <div class="color-row">
       <div class="cpg">
         <label>Color Primario</label>
@@ -208,6 +252,15 @@
     </div>
   </div>
 
+  <!-- NORMATIVAS -->
+  <div class="seccion">
+    <div class="sec-tit">⚖️ Normativas y protocolos a incorporar</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">
+      Selecciona qué normativas incluye el RIOHS. Las <strong style="color:#1b5e20">verdes</strong> son obligatorias para todas las empresas.
+    </p>
+    <div class="norm-grid" id="normGrid"></div>
+  </div>
+
   <!-- HISTORIAL -->
   <div class="seccion" id="secHist" style="display:none">
     <div class="sec-tit">📁 Historial de documentos</div>
@@ -220,6 +273,7 @@
       <button class="btn btn-guard" onclick="guardar()">💾 Guardar ficha</button>
       <button class="btn btn-gen" id="btnGen" onclick="irA('nuevo')" disabled>➕ Generar RIOHS Nuevo</button>
       <button class="btn btn-aud" id="btnAud" onclick="irA('auditoria')" disabled>🔍 Auditar RIOHS Existente</button>
+      <button class="btn btn-eliminar" id="btnEliminar" onclick="mostrarModal()" style="display:none">🗑️ Eliminar cliente</button>
     </div>
   </div>
 </main>
@@ -227,50 +281,83 @@
 <script>
   const SUPABASE_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_JLaCYGFE3fq6b7ecDl0glA_axBuVRZo';
-  const {createClient} = supabase;
-  const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const {createClient}=supabase;
+  const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 
-  let clienteId = null;
-  let normsActivas = new Set();
+  let clienteId=null, normsActivas=new Set(), logoFile=null, logoUrl=null;
 
-  const NORMS = [
+  const NORMS=[
     {id:'ley_karin',nombre:'Ley Karin N°21.643',desc:'Protocolo de prevención de acoso laboral y sexual',obl:true},
     {id:'ds44',nombre:'DS 44/2023 — SSO',desc:'Reglamento de Seguridad y Salud Ocupacional (reemplaza DS 40 y DS 54)',obl:true},
     {id:'temer',nombre:'TEMER',desc:'Protocolo de vigilancia de trastornos musculoesqueléticos',obl:true},
-    {id:'psicosocial',nombre:'ISTAS21 / Riesgo Psicosocial',desc:'Protocolo de vigilancia de factores de riesgo psicosocial (obligatorio 10+ trabajadores)',obl:true},
+    {id:'psicosocial',nombre:'ISTAS21 / Riesgo Psicosocial',desc:'Obligatorio para empresas con 10 o más trabajadores',obl:true},
     {id:'mmcargas',nombre:'Manejo Manual de Cargas',desc:'Ley N°20.001 y D.S. N°63 — límites de peso y técnicas seguras',obl:true},
     {id:'ley21719',nombre:'Ley 21.719 — Datos Personales',desc:'Protección de datos personales de trabajadores',obl:true},
-    {id:'planesi',nombre:'PLANESI',desc:'Plan de erradicación de la silicosis (obligatorio si hay exposición a polvo de sílice)',obl:false},
-    {id:'teletrabajo',nombre:'Teletrabajo (Ley 21.220)',desc:'Obligatorio si hay trabajadores en modalidad remota o mixta',obl:false},
+    {id:'planesi',nombre:'PLANESI',desc:'Si hay exposición a polvo de sílice (minería, construcción)',obl:false},
+    {id:'teletrabajo',nombre:'Teletrabajo (Ley 21.220)',desc:'Si hay trabajadores en modalidad remota o mixta',obl:false},
     {id:'alcohol_drogas',nombre:'Alcohol y Drogas',desc:'Muy recomendado en transporte, construcción y minería',obl:false},
-    {id:'radiacion_uv',nombre:'Radiación UV Solar',desc:'Obligatorio en trabajos al aire libre con exposición solar directa',obl:false},
+    {id:'radiacion_uv',nombre:'Radiación UV Solar',desc:'Si hay trabajos al aire libre con exposición solar directa',obl:false},
     {id:'inclusion',nombre:'Ley de Inclusión (N°21.015)',desc:'Cuota del 1% para empresas con 100 o más trabajadores',obl:false},
-    {id:'subcontratacion',nombre:'Subcontratación (DS 76)',desc:'Obligatorio si hay empresas contratistas o subcontratistas en la faena',obl:false},
+    {id:'subcontratacion',nombre:'Subcontratación (DS 76)',desc:'Si hay empresas contratistas o subcontratistas en la faena',obl:false},
   ];
 
-  function renderNorms() {
-    document.getElementById('normGrid').innerHTML = NORMS.map(n=>`
+  function renderNorms(){
+    document.getElementById('normGrid').innerHTML=NORMS.map(n=>`
       <div class="norm-item ${n.obl?'obl':''} ${normsActivas.has(n.id)?'activa':''}" id="ni-${n.id}" onclick="togNorm('${n.id}')">
         <div class="norm-check">${normsActivas.has(n.id)?'✓':''}</div>
         <div class="norm-info">
           <div class="norm-nombre">${n.nombre}</div>
           <div class="norm-desc">${n.desc}</div>
-          <span class="norm-badge ${n.obl?'obl':''}">${n.obl?'✅ Obligatoria por ley':'Según condiciones'}</span>
+          <span class="norm-badge ${n.obl?'obl':''}">${n.obl?'✅ Obligatoria':'Según condiciones'}</span>
         </div>
       </div>`).join('');
   }
 
-  function togNorm(id) {
+  function togNorm(id){
     normsActivas.has(id)?normsActivas.delete(id):normsActivas.add(id);
     const el=document.getElementById(`ni-${id}`);
     const activa=normsActivas.has(id);
-    const norm=NORMS.find(n=>n.id===id);
-    el.className=`norm-item ${norm?.obl?'obl':''} ${activa?'activa':''}`;
+    const n=NORMS.find(x=>x.id===id);
+    el.className=`norm-item ${n?.obl?'obl':''} ${activa?'activa':''}`;
     el.querySelector('.norm-check').textContent=activa?'✓':'';
   }
 
-  async function init() {
-    const {data:{session}} = await db.auth.getSession();
+  // LOGO
+  function previewLogo(input){
+    const f=input.files[0];if(!f)return;
+    if(f.size>2*1024*1024){mostrarToast('El logo no debe superar 2 MB',true);return}
+    logoFile=f;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const preview=document.getElementById('logoPreview');
+      preview.innerHTML=`<img src="${e.target.result}" alt="Logo">`;
+      document.getElementById('logoPlaceholder') && (document.getElementById('logoPlaceholder').style.display='none');
+      document.getElementById('btnRemoveLogo').style.display='inline-block';
+      document.getElementById('logoStatus').innerHTML='<span class="logo-badge">✅ Logo listo para guardar</span>';
+    };
+    reader.readAsDataURL(f);
+  }
+
+  function quitarLogo(){
+    logoFile=null;logoUrl=null;
+    document.getElementById('logoPreview').innerHTML='<div class="logo-placeholder" id="logoPlaceholder">📷<br>Subir logo<br><small>(opcional)</small></div>';
+    document.getElementById('inputLogo').value='';
+    document.getElementById('btnRemoveLogo').style.display='none';
+    document.getElementById('logoStatus').innerHTML='';
+  }
+
+  async function subirLogo(){
+    if(!logoFile||!clienteId)return logoUrl;
+    const ext=logoFile.name.split('.').pop();
+    const path=`${clienteId}/logo.${ext}`;
+    const{error}=await db.storage.from('logos').upload(path,logoFile,{upsert:true});
+    if(error){console.error('Error subiendo logo:',error);return logoUrl}
+    const{data}=db.storage.from('logos').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  async function init(){
+    const{data:{session}}=await db.auth.getSession();
     if(!session){window.location.href='index.html';return}
     NORMS.filter(n=>n.obl).forEach(n=>normsActivas.add(n.id));
     renderNorms();
@@ -278,14 +365,12 @@
     clienteId=p.get('id');
     if(clienteId){
       document.getElementById('pageTitle').textContent='Editar Cliente';
-      await cargarCliente();
-      await cargarHist();
-      habilitarBotones();
+      await cargarCliente();await cargarHist();habilitarBotones();
     }
   }
 
-  async function cargarCliente() {
-    const {data}=await db.from('clientes').select('*').eq('id',clienteId).single();
+  async function cargarCliente(){
+    const{data}=await db.from('clientes').select('*').eq('id',clienteId).single();
     if(!data)return;
     const campos=['razon_social','rut','region','rubro','actividad_economica','representante_legal','direccion','num_trabajadores','turnos','organismo_administrador','contacto_ssoma','email_contacto'];
     campos.forEach(c=>{const el=document.getElementById(c);if(el)el.value=data[c]||''});
@@ -293,10 +378,16 @@
     if(data.color_primario)updColor('primario',data.color_primario);
     if(data.color_secundario)updColor('secundario',data.color_secundario);
     if(data.normativas_json){try{normsActivas=new Set(JSON.parse(data.normativas_json));renderNorms()}catch{}}
+    if(data.logo_url){
+      logoUrl=data.logo_url;
+      document.getElementById('logoPreview').innerHTML=`<img src="${data.logo_url}?t=${Date.now()}" alt="Logo">`;
+      document.getElementById('btnRemoveLogo').style.display='inline-block';
+      document.getElementById('logoStatus').innerHTML='<span class="logo-badge">✅ Logo guardado</span>';
+    }
   }
 
-  async function cargarHist() {
-    const {data}=await db.from('documentos_riohs').select('*').eq('cliente_id',clienteId).order('created_at',{ascending:false});
+  async function cargarHist(){
+    const{data}=await db.from('documentos_riohs').select('*').eq('cliente_id',clienteId).order('created_at',{ascending:false});
     if(!data?.length)return;
     document.getElementById('secHist').style.display='block';
     document.getElementById('histLista').innerHTML=data.map(d=>`
@@ -308,16 +399,29 @@
       </div>`).join('');
   }
 
-  function habilitarBotones() {
+  function habilitarBotones(){
     document.getElementById('btnGen').disabled=false;
     document.getElementById('btnAud').disabled=false;
     document.getElementById('secHist').style.display='block';
+    document.getElementById('btnEliminar').style.display='inline-block';
   }
 
-  async function guardar() {
+  async function guardar(){
     const razon_social=document.getElementById('razon_social').value.trim();
     const rubro=document.getElementById('rubro').value;
     if(!razon_social||!rubro){mostrarToast('La razón social y el rubro son obligatorios',true);return}
+
+    // Subir logo si hay uno nuevo
+    let urlFinal=logoUrl;
+    if(logoFile){
+      if(!clienteId){
+        // Primero crear el cliente sin logo para tener ID
+        const{data:nuevo,error:errNuevo}=await db.from('clientes').insert({razon_social,rubro}).select().single();
+        if(errNuevo){mostrarToast('Error al guardar. Intenta nuevamente.',true);return}
+        clienteId=nuevo.id;
+      }
+      urlFinal=await subirLogo();
+    }
 
     const datos={
       razon_social,rubro,
@@ -335,13 +439,16 @@
       color_primario:document.getElementById('hex_primario').value,
       color_secundario:document.getElementById('hex_secundario').value,
       normativas_json:JSON.stringify([...normsActivas]),
+      logo_url:urlFinal||null,
     };
 
     let error;
-    if(clienteId){
+    if(clienteId&&!logoFile){
+      ({error}=await db.from('clientes').update(datos).eq('id',clienteId));
+    } else if(clienteId){
       ({error}=await db.from('clientes').update(datos).eq('id',clienteId));
     } else {
-      const {data,error:err}=await db.from('clientes').insert(datos).select().single();
+      const{data,error:err}=await db.from('clientes').insert(datos).select().single();
       error=err;
       if(data){
         clienteId=data.id;
@@ -352,20 +459,38 @@
     }
 
     if(error){mostrarToast('Error al guardar. Intenta nuevamente.',true);console.error(error)}
-    else{mostrarToast('✅ Ficha guardada correctamente')}
+    else{
+      logoFile=null; // Resetear el archivo después de subir
+      mostrarToast('✅ Ficha guardada correctamente');
+    }
+  }
+
+  // ELIMINAR CLIENTE
+  function mostrarModal(){document.getElementById('modalEliminar').classList.add('show')}
+  function cerrarModal(){document.getElementById('modalEliminar').classList.remove('show')}
+
+  async function confirmarEliminar(){
+    cerrarModal();
+    // Eliminar logo del storage si existe
+    if(logoUrl){
+      try{await db.storage.from('logos').remove([`${clienteId}/logo.png`,`${clienteId}/logo.jpg`,`${clienteId}/logo.svg`,`${clienteId}/logo.jpeg`])}catch{}
+    }
+    const{error}=await db.from('clientes').delete().eq('id',clienteId);
+    if(error){mostrarToast('Error al eliminar. Intenta nuevamente.',true)}
+    else{mostrarToast('✅ Cliente eliminado');setTimeout(()=>window.location.href='dashboard.html',1500)}
   }
 
   function irA(tipo){if(clienteId)window.location.href=`generar.html?cliente=${clienteId}&tipo=${tipo}`}
 
   function updColor(c,v){document.getElementById(`color_${c}`).value=v;document.getElementById(`hex_${c}`).value=v;updPrev()}
   function updHex(c,v){if(/^#[0-9A-Fa-f]{6}$/.test(v)){document.getElementById(`color_${c}`).value=v;updPrev()}}
-  function updPrev(){const p=document.getElementById('hex_primario').value,s=document.getElementById('hex_secundario').value;document.querySelector('.b1').style.background=p;document.querySelector('.b2').style.background=s}
+  function updPrev(){document.querySelector('.b1').style.background=document.getElementById('hex_primario').value;document.querySelector('.b2').style.background=document.getElementById('hex_secundario').value}
 
-  function mostrarToast(msg, esError=false) {
+  function mostrarToast(msg,esError=false){
     const t=document.getElementById('toast');
     t.textContent=msg;
-    t.className=`toast${esError?' error-toast':''} show`;
-    setTimeout(()=>{t.className=`toast${esError?' error-toast':''}`},4000);
+    t.className=`toast ${esError?'toast-err':'toast-ok'} show`;
+    setTimeout(()=>{t.className=`toast ${esError?'toast-err':'toast-ok'}`},4000);
   }
 
   init();
