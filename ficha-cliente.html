@@ -6,120 +6,107 @@
   <title>Ficha de Cliente · Portal RIOHS</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root { --navy: #1B2E6E; --naranja: #E87722; --gris-fondo: #f0f2f7; --texto: #2a2a2a; --muted: #666; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; background: var(--gris-fondo); color: var(--texto); min-height: 100vh; }
+    :root{--navy:#1B2E6E;--naranja:#E87722;--gris:#f0f2f7;--texto:#2a2a2a;--muted:#666}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;background:var(--gris);color:var(--texto);min-height:100vh}
+    header{background:var(--navy);color:white;padding:0 2rem;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+    .btn-volver{background:transparent;border:1px solid rgba(255,255,255,.3);color:white;padding:.4rem .9rem;border-radius:5px;font-size:.85rem;cursor:pointer}
+    .btn-volver:hover{background:rgba(255,255,255,.1)}
+    main{max-width:860px;margin:0 auto;padding:2rem 1.5rem}
+    .page-title{font-size:1.4rem;color:var(--navy);margin-bottom:.3rem}
+    .page-sub{color:var(--muted);font-size:.9rem;margin-bottom:2rem}
 
-    header { background: var(--navy); color: white; padding: 0 2rem; height: 64px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-    .btn-volver { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.4rem 0.9rem; border-radius: 5px; font-size: 0.85rem; cursor: pointer; }
-    .btn-volver:hover { background: rgba(255,255,255,0.1); }
+    /* TOAST DE CONFIRMACIÓN */
+    .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#2e7d32;color:white;padding:1rem 2rem;border-radius:10px;font-size:1rem;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:9999;display:none;align-items:center;gap:.75rem;min-width:300px;justify-content:center}
+    .toast.error-toast{background:#c62828}
+    .toast.show{display:flex;animation:slideDown .3s ease}
+    @keyframes slideDown{from{transform:translateX(-50%) translateY(-20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
 
-    main { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
-    .page-title { font-size: 1.4rem; color: var(--navy); margin-bottom: 0.3rem; }
-    .page-subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
-
-    .seccion { background: white; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .seccion-titulo { font-size: 0.82rem; font-weight: 700; color: var(--naranja); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.2rem; padding-bottom: 0.5rem; border-bottom: 2px solid #f0f2f7; }
-
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .form-group { display: flex; flex-direction: column; }
-    .form-group.span-2 { grid-column: span 2; }
-    label { font-size: 0.78rem; font-weight: 700; color: var(--muted); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.5px; }
-    input, select, textarea { padding: 0.7rem 0.9rem; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem; font-family: Arial; transition: border-color 0.2s; }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--navy); }
-    textarea { resize: vertical; min-height: 70px; }
+    .seccion{background:white;border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .sec-tit{font-size:.82rem;font-weight:700;color:var(--naranja);text-transform:uppercase;letter-spacing:1px;margin-bottom:1.2rem;padding-bottom:.5rem;border-bottom:2px solid #f0f2f7}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .fg{display:flex;flex-direction:column}
+    .fg.span2{grid-column:span 2}
+    label{font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.5px}
+    input,select,textarea{padding:.7rem .9rem;border:2px solid #e0e0e0;border-radius:6px;font-size:.95rem;font-family:Arial;transition:border-color .2s}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy)}
+    textarea{resize:vertical;min-height:70px}
 
     /* COLORES */
-    .color-row { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
-    .color-picker-group { display: flex; flex-direction: column; gap: 0.4rem; }
-    .color-input-wrap { display: flex; align-items: center; gap: 0.5rem; }
-    input[type="color"] { width: 44px; height: 36px; padding: 2px; border-radius: 6px; cursor: pointer; }
-    .color-hex { font-family: monospace; font-size: 0.9rem; width: 90px; }
-    .preview-colores { flex: 1; min-width: 160px; border-radius: 8px; overflow: hidden; height: 52px; display: flex; border: 1px solid #eee; }
-    .preview-colores .banda-1 { flex: 2; }
-    .preview-colores .banda-2 { flex: 1; }
+    .color-row{display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap}
+    .cpg{display:flex;flex-direction:column;gap:.4rem}
+    .cpg label{font-size:.78rem}
+    .ciw{display:flex;align-items:center;gap:.5rem}
+    input[type="color"]{width:44px;height:36px;padding:2px;border-radius:6px;cursor:pointer}
+    .chex{font-family:monospace;font-size:.9rem;width:90px}
+    .prev{flex:1;min-width:160px;border-radius:8px;overflow:hidden;height:52px;display:flex;border:1px solid #eee}
+    .prev .b1{flex:2}
+    .prev .b2{flex:1}
 
     /* TOGGLE */
-    .toggle-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.4rem 0; }
-    .toggle { position: relative; width: 44px; height: 24px; }
-    .toggle input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; border-radius: 24px; transition: 0.3s; }
-    .toggle-slider:before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
-    .toggle input:checked + .toggle-slider { background: var(--navy); }
-    .toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+    .tog-row{display:flex;align-items:center;gap:.75rem;padding:.4rem 0}
+    .tog{position:relative;width:44px;height:24px}
+    .tog input{opacity:0;width:0;height:0}
+    .tog-sl{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;border-radius:24px;transition:.3s}
+    .tog-sl:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s}
+    .tog input:checked+.tog-sl{background:var(--navy)}
+    .tog input:checked+.tog-sl:before{transform:translateX(20px)}
 
-    /* CHECKLIST NORMATIVAS */
-    .normativas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    .normativa-item { border: 2px solid #e8e8e8; border-radius: 8px; padding: 0.9rem 1rem; cursor: pointer; transition: all 0.2s; display: flex; gap: 0.75rem; align-items: flex-start; }
-    .normativa-item:hover { border-color: var(--navy); background: #f8f9ff; }
-    .normativa-item.activa { border-color: var(--navy); background: #eef3ff; }
-    .normativa-item.obligatoria.activa { border-color: #2e7d32; background: #e8f5e9; }
-    .normativa-item.obligatoria { border-color: #a5d6a7; }
-
-    .norm-check { width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin-top: 1px; }
-    .normativa-item.activa .norm-check { background: var(--navy); border-color: var(--navy); color: white; }
-    .normativa-item.obligatoria.activa .norm-check { background: #2e7d32; border-color: #2e7d32; }
-    .norm-check::after { content: '✓'; font-size: 0.75rem; font-weight: 700; display: none; }
-    .normativa-item.activa .norm-check::after { display: block; }
-
-    .norm-info { flex: 1; }
-    .norm-nombre { font-size: 0.9rem; font-weight: 700; color: var(--texto); margin-bottom: 0.15rem; }
-    .norm-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
-    .norm-badge { display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 3px; margin-top: 0.3rem; background: #ffecb3; color: #e65100; }
-    .norm-badge.ob { background: #c8e6c9; color: #1b5e20; }
+    /* NORMATIVAS */
+    .norm-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+    .norm-item{border:2px solid #e8e8e8;border-radius:8px;padding:.9rem 1rem;cursor:pointer;transition:all .2s;display:flex;gap:.75rem;align-items:flex-start}
+    .norm-item:hover{border-color:var(--navy);background:#f8f9ff}
+    .norm-item.activa{border-color:var(--navy);background:#eef3ff}
+    .norm-item.obl{border-color:#a5d6a7}
+    .norm-item.obl.activa{border-color:#2e7d32;background:#e8f5e9}
+    .norm-check{width:20px;height:20px;border:2px solid #ccc;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px;font-size:.75rem;font-weight:700}
+    .norm-item.activa .norm-check{background:var(--navy);border-color:var(--navy);color:white}
+    .norm-item.obl.activa .norm-check{background:#2e7d32;border-color:#2e7d32;color:white}
+    .norm-info{flex:1}
+    .norm-nombre{font-size:.9rem;font-weight:700;color:var(--texto);margin-bottom:.15rem}
+    .norm-desc{font-size:.78rem;color:var(--muted);line-height:1.4}
+    .norm-badge{display:inline-block;font-size:.68rem;font-weight:700;padding:.1rem .4rem;border-radius:3px;margin-top:.3rem;background:#ffecb3;color:#e65100}
+    .norm-badge.obl{background:#c8e6c9;color:#1b5e20}
 
     /* HISTORIAL */
-    .historial-item { display: flex; align-items: center; justify-content: space-between; padding: 0.8rem; border: 1px solid #eee; border-radius: 6px; margin-bottom: 0.5rem; }
-    .tipo-badge { font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 20px; }
-    .tipo-nuevo { background: #e8f0ff; color: var(--navy); }
-    .tipo-auditoria { background: #fff3e8; color: var(--naranja); }
-    .historial-fecha { font-size: 0.8rem; color: var(--muted); }
+    .hist-item{display:flex;align-items:center;justify-content:space-between;padding:.8rem;border:1px solid #eee;border-radius:6px;margin-bottom:.5rem}
+    .tipo-b{font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:20px}
+    .tb-n{background:#e8f0ff;color:var(--navy)}
+    .tb-a{background:#fff3e8;color:var(--naranja)}
 
     /* BOTONES */
-    .botones-principales { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .btn { padding: 0.8rem 1.4rem; border: none; border-radius: 6px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
-    .btn:hover { opacity: 0.85; }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-guardar { background: var(--navy); color: white; }
-    .btn-generar { background: var(--naranja); color: white; }
-    .btn-auditar { background: #f0f2f7; color: var(--navy); border: 2px solid var(--navy); }
+    .btns-p{display:flex;gap:1rem;flex-wrap:wrap}
+    .btn{padding:.8rem 1.4rem;border:none;border-radius:6px;font-size:.95rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+    .btn:hover{opacity:.85}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .btn-guard{background:var(--navy);color:white}
+    .btn-gen{background:var(--naranja);color:white}
+    .btn-aud{background:#f0f2f7;color:var(--navy);border:2px solid var(--navy)}
 
-    .success-msg { background: #e8f5e9; border: 1px solid #a5d6a7; color: #2e7d32; padding: 0.8rem 1rem; border-radius: 6px; margin-bottom: 1rem; display: none; }
-    .error-msg { background: #fff0f0; border: 1px solid #ffcccc; color: #cc0000; padding: 0.8rem 1rem; border-radius: 6px; margin-bottom: 1rem; display: none; }
-
-    @media (max-width: 600px) {
-      .form-grid, .normativas-grid { grid-template-columns: 1fr; }
-      .form-group.span-2 { grid-column: span 1; }
-    }
+    @media(max-width:600px){.grid2,.norm-grid{grid-template-columns:1fr}.fg.span2{grid-column:span 1}}
   </style>
 </head>
 <body>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ Ficha guardada correctamente</div>
+
 <header>
-  <div style="display:flex;align-items:center;gap:0.75rem"><span>🛡️</span><strong>Portal RIOHS</strong></div>
+  <div style="display:flex;align-items:center;gap:.75rem"><span>🛡️</span><strong>Portal RIOHS</strong></div>
   <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Volver</button>
 </header>
 
 <main>
   <h1 class="page-title" id="pageTitle">Nuevo Cliente</h1>
-  <p class="page-subtitle">Completa los datos para generar el RIOHS personalizado</p>
-
-  <div class="success-msg" id="successMsg"></div>
-  <div class="error-msg" id="errorMsg"></div>
+  <p class="page-sub">Completa los datos para generar el RIOHS personalizado</p>
 
   <!-- DATOS GENERALES -->
   <div class="seccion">
-    <div class="seccion-titulo">📋 Datos de la empresa</div>
-    <div class="form-grid">
-      <div class="form-group span-2">
-        <label>Razón Social *</label>
-        <input type="text" id="razon_social" placeholder="Ej: Servicios Industriales JAVER S.A.">
-      </div>
-      <div class="form-group">
-        <label>RUT Empresa</label>
-        <input type="text" id="rut" placeholder="76.123.456-7">
-      </div>
-      <div class="form-group">
-        <label>Región</label>
+    <div class="sec-tit">📋 Datos de la empresa</div>
+    <div class="grid2">
+      <div class="fg span2"><label>Razón Social *</label><input type="text" id="razon_social" placeholder="Ej: Servicios Industriales JAVER S.A."></div>
+      <div class="fg"><label>RUT Empresa</label><input type="text" id="rut" placeholder="76.123.456-7"></div>
+      <div class="fg"><label>Región</label>
         <select id="region">
           <option value="">Seleccionar...</option>
           <option>Región de Arica y Parinacota</option><option>Región de Tarapacá</option>
@@ -133,8 +120,7 @@
           <option>Región de Aysén</option><option>Región de Magallanes</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Rubro / Industria *</label>
+      <div class="fg"><label>Rubro / Industria *</label>
         <select id="rubro">
           <option value="">Seleccionar...</option>
           <option>Construcción</option><option>Minería</option>
@@ -146,31 +132,18 @@
           <option>Servicios generales</option><option>Otro</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Actividad económica (descripción)</label>
-        <input type="text" id="actividad_economica" placeholder="Ej: Extracción y procesamiento de cobre">
-      </div>
-      <div class="form-group">
-        <label>Representante Legal</label>
-        <input type="text" id="representante_legal" placeholder="Nombre completo">
-      </div>
-      <div class="form-group span-2">
-        <label>Dirección</label>
-        <input type="text" id="direccion" placeholder="Calle, número, ciudad">
-      </div>
+      <div class="fg"><label>Actividad económica (descripción)</label><input type="text" id="actividad_economica" placeholder="Ej: Extracción y procesamiento de cobre"></div>
+      <div class="fg"><label>Representante Legal</label><input type="text" id="representante_legal" placeholder="Nombre completo"></div>
+      <div class="fg span2"><label>Dirección</label><input type="text" id="direccion" placeholder="Calle, número, ciudad"></div>
     </div>
   </div>
 
   <!-- DATOS LABORALES -->
   <div class="seccion">
-    <div class="seccion-titulo">👷 Datos laborales y prevención</div>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>N° de Trabajadores</label>
-        <input type="number" id="num_trabajadores" placeholder="Ej: 45" min="1">
-      </div>
-      <div class="form-group">
-        <label>Sistema de Turnos</label>
+    <div class="sec-tit">👷 Datos laborales y prevención</div>
+    <div class="grid2">
+      <div class="fg"><label>N° de Trabajadores</label><input type="number" id="num_trabajadores" placeholder="Ej: 45" min="1"></div>
+      <div class="fg"><label>Sistema de Turnos</label>
         <select id="turnos">
           <option value="">Sin turnos definidos</option>
           <option>Jornada diurna estándar (8h)</option>
@@ -180,8 +153,7 @@
           <option>Mixto (oficina + terreno)</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Organismo Administrador (mutual) *</label>
+      <div class="fg"><label>Organismo Administrador (mutual) *</label>
         <select id="organismo_administrador">
           <option value="">Seleccionar...</option>
           <option>ACHS — Asociación Chilena de Seguridad</option>
@@ -190,71 +162,64 @@
           <option>ISEC — Instituto de Seguridad Laboral</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Contacto SSOMA</label>
-        <input type="text" id="contacto_ssoma" placeholder="Nombre del encargado">
-      </div>
-      <div class="form-group">
-        <label>Email de contacto</label>
-        <input type="email" id="email_contacto" placeholder="ssoma@empresa.cl">
-      </div>
-      <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end">
-        <div class="toggle-row">
-          <label class="toggle"><input type="checkbox" id="tiene_sindicato"><span class="toggle-slider"></span></label>
-          <span style="font-size:0.95rem">La empresa tiene sindicato activo</span>
+      <div class="fg"><label>Contacto SSOMA</label><input type="text" id="contacto_ssoma" placeholder="Nombre del encargado"></div>
+      <div class="fg"><label>Email de contacto</label><input type="email" id="email_contacto" placeholder="ssoma@empresa.cl"></div>
+      <div class="fg" style="display:flex;flex-direction:column;justify-content:flex-end">
+        <div class="tog-row">
+          <label class="tog"><input type="checkbox" id="tiene_sindicato"><span class="tog-sl"></span></label>
+          <span style="font-size:.95rem">La empresa tiene sindicato activo</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- NORMATIVAS OBLIGATORIAS -->
+  <!-- NORMATIVAS -->
   <div class="seccion">
-    <div class="seccion-titulo">⚖️ Normativas y protocolos a incorporar</div>
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">
-      Selecciona las normativas que debe incluir el RIOHS de este cliente.
-      Las marcadas en <span style="color:#1b5e20;font-weight:700">verde</span> son obligatorias por ley para todas las empresas.
+    <div class="sec-tit">⚖️ Normativas y protocolos a incorporar</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">
+      Selecciona qué normativas debe incluir el RIOHS. Las marcadas en <strong style="color:#1b5e20">verde</strong> son obligatorias para todas las empresas.
     </p>
-    <div class="normativas-grid" id="normativasGrid"></div>
+    <div class="norm-grid" id="normGrid"></div>
   </div>
 
-  <!-- IDENTIDAD VISUAL -->
+  <!-- COLORES -->
   <div class="seccion">
-    <div class="seccion-titulo">🎨 Identidad visual del cliente</div>
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">Colores que se aplican al documento Word y PDF entregado al cliente.</p>
+    <div class="sec-tit">🎨 Identidad visual del cliente</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Estos colores se aplican al documento Word entregado al cliente.</p>
     <div class="color-row">
-      <div class="color-picker-group">
+      <div class="cpg">
         <label>Color Primario</label>
-        <div class="color-input-wrap">
-          <input type="color" id="color_primario" value="#1B2E6E" oninput="actualizarColor('primario',this.value)">
-          <input type="text" class="color-hex" id="hex_primario" value="#1B2E6E" oninput="actualizarColorDesdeHex('primario',this.value)">
+        <div class="ciw">
+          <input type="color" id="color_primario" value="#1B2E6E" oninput="updColor('primario',this.value)">
+          <input type="text" class="chex" id="hex_primario" value="#1B2E6E" oninput="updHex('primario',this.value)">
         </div>
       </div>
-      <div class="color-picker-group">
+      <div class="cpg">
         <label>Color Secundario</label>
-        <div class="color-input-wrap">
-          <input type="color" id="color_secundario" value="#E87722" oninput="actualizarColor('secundario',this.value)">
-          <input type="text" class="color-hex" id="hex_secundario" value="#E87722" oninput="actualizarColorDesdeHex('secundario',this.value)">
+        <div class="ciw">
+          <input type="color" id="color_secundario" value="#E87722" oninput="updColor('secundario',this.value)">
+          <input type="text" class="chex" id="hex_secundario" value="#E87722" oninput="updHex('secundario',this.value)">
         </div>
       </div>
-      <div class="preview-colores" id="previewColores">
-        <div class="banda-1" style="background:#1B2E6E"></div>
-        <div class="banda-2" style="background:#E87722"></div>
+      <div class="prev" id="prevColores">
+        <div class="b1" style="background:#1B2E6E"></div>
+        <div class="b2" style="background:#E87722"></div>
       </div>
     </div>
   </div>
 
   <!-- HISTORIAL -->
-  <div class="seccion" id="seccionHistorial" style="display:none">
-    <div class="seccion-titulo">📁 Historial de documentos</div>
-    <div id="historialLista"><p style="color:var(--muted);font-size:0.9rem">Sin documentos generados aún.</p></div>
+  <div class="seccion" id="secHist" style="display:none">
+    <div class="sec-tit">📁 Historial de documentos</div>
+    <div id="histLista"><p style="color:var(--muted);font-size:.9rem">Sin documentos generados aún.</p></div>
   </div>
 
   <!-- BOTONES -->
   <div class="seccion">
-    <div class="botones-principales">
-      <button class="btn btn-guardar" onclick="guardarCliente()">💾 Guardar ficha</button>
-      <button class="btn btn-generar" id="btnGenerar" onclick="irAGenerar('nuevo')" disabled>➕ Generar RIOHS Nuevo</button>
-      <button class="btn btn-auditar" id="btnAuditar" onclick="irAGenerar('auditoria')" disabled>🔍 Auditar RIOHS Existente</button>
+    <div class="btns-p">
+      <button class="btn btn-guard" onclick="guardar()">💾 Guardar ficha</button>
+      <button class="btn btn-gen" id="btnGen" onclick="irA('nuevo')" disabled>➕ Generar RIOHS Nuevo</button>
+      <button class="btn btn-aud" id="btnAud" onclick="irA('auditoria')" disabled>🔍 Auditar RIOHS Existente</button>
     </div>
   </div>
 </main>
@@ -262,182 +227,146 @@
 <script>
   const SUPABASE_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_JLaCYGFE3fq6b7ecDl0glA_axBuVRZo';
-  const { createClient } = supabase;
+  const {createClient} = supabase;
   const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let clienteId = null;
-  let normativasActivas = new Set();
+  let normsActivas = new Set();
 
-  // Lista completa de normativas
-  const NORMATIVAS = [
-    { id: 'ley_karin', nombre: 'Ley Karin N°21.643', desc: 'Protocolo de prevención de acoso laboral y sexual', obligatoria: true },
-    { id: 'ds44', nombre: 'DS 44/2023 — SSO', desc: 'Reglamento de Seguridad y Salud Ocupacional (reemplaza DS 40 y DS 54)', obligatoria: true },
-    { id: 'temer', nombre: 'TEMER', desc: 'Protocolo de vigilancia de trastornos musculoesqueléticos de extremidades superiores', obligatoria: true },
-    { id: 'psicosocial', nombre: 'ISTAS21 / Riesgo Psicosocial', desc: 'Protocolo de vigilancia de factores de riesgo psicosocial en el trabajo', obligatoria: true },
-    { id: 'mmcargas', nombre: 'Manejo Manual de Cargas', desc: 'Ley N°20.001 y D.S. N°63 — límites de peso y técnicas seguras', obligatoria: true },
-    { id: 'ley21719', nombre: 'Ley 21.719 — Datos Personales', desc: 'Protección de datos personales de trabajadores', obligatoria: true },
-    { id: 'planesi', nombre: 'PLANESI', desc: 'Plan Nacional de Erradicación de la Silicosis (aplica si hay exposición a polvo de sílice)', obligatoria: false },
-    { id: 'teletrabajo', nombre: 'Teletrabajo (Ley 21.220)', desc: 'Protocolo de trabajo a distancia y desconexión digital', obligatoria: false },
-    { id: 'alcohol_drogas', nombre: 'Alcohol y Drogas', desc: 'Protocolo de prevención y control del consumo de sustancias', obligatoria: false },
-    { id: 'radiacion_uv', nombre: 'Radiación UV Solar', desc: 'Protocolo de protección contra radiación ultravioleta en trabajos al aire libre', obligatoria: false },
-    { id: 'inclusion', nombre: 'Ley de Inclusión (N°21.015)', desc: 'Normas sobre inclusión laboral de personas con discapacidad', obligatoria: false },
-    { id: 'subcontratacion', nombre: 'Subcontratación (DS 76)', desc: 'Gestión de empresas contratistas y subcontratistas en la faena', obligatoria: false },
+  const NORMS = [
+    {id:'ley_karin',nombre:'Ley Karin N°21.643',desc:'Protocolo de prevención de acoso laboral y sexual',obl:true},
+    {id:'ds44',nombre:'DS 44/2023 — SSO',desc:'Reglamento de Seguridad y Salud Ocupacional (reemplaza DS 40 y DS 54)',obl:true},
+    {id:'temer',nombre:'TEMER',desc:'Protocolo de vigilancia de trastornos musculoesqueléticos',obl:true},
+    {id:'psicosocial',nombre:'ISTAS21 / Riesgo Psicosocial',desc:'Protocolo de vigilancia de factores de riesgo psicosocial (obligatorio 10+ trabajadores)',obl:true},
+    {id:'mmcargas',nombre:'Manejo Manual de Cargas',desc:'Ley N°20.001 y D.S. N°63 — límites de peso y técnicas seguras',obl:true},
+    {id:'ley21719',nombre:'Ley 21.719 — Datos Personales',desc:'Protección de datos personales de trabajadores',obl:true},
+    {id:'planesi',nombre:'PLANESI',desc:'Plan de erradicación de la silicosis (obligatorio si hay exposición a polvo de sílice)',obl:false},
+    {id:'teletrabajo',nombre:'Teletrabajo (Ley 21.220)',desc:'Obligatorio si hay trabajadores en modalidad remota o mixta',obl:false},
+    {id:'alcohol_drogas',nombre:'Alcohol y Drogas',desc:'Muy recomendado en transporte, construcción y minería',obl:false},
+    {id:'radiacion_uv',nombre:'Radiación UV Solar',desc:'Obligatorio en trabajos al aire libre con exposición solar directa',obl:false},
+    {id:'inclusion',nombre:'Ley de Inclusión (N°21.015)',desc:'Cuota del 1% para empresas con 100 o más trabajadores',obl:false},
+    {id:'subcontratacion',nombre:'Subcontratación (DS 76)',desc:'Obligatorio si hay empresas contratistas o subcontratistas en la faena',obl:false},
   ];
 
-  function renderNormativas() {
-    const grid = document.getElementById('normativasGrid');
-    grid.innerHTML = NORMATIVAS.map(n => `
-      <div class="normativa-item ${n.obligatoria ? 'obligatoria' : ''} ${normativasActivas.has(n.id) ? 'activa' : ''}"
-           id="norm-${n.id}" onclick="toggleNormativa('${n.id}')">
-        <div class="norm-check"></div>
+  function renderNorms() {
+    document.getElementById('normGrid').innerHTML = NORMS.map(n=>`
+      <div class="norm-item ${n.obl?'obl':''} ${normsActivas.has(n.id)?'activa':''}" id="ni-${n.id}" onclick="togNorm('${n.id}')">
+        <div class="norm-check">${normsActivas.has(n.id)?'✓':''}</div>
         <div class="norm-info">
           <div class="norm-nombre">${n.nombre}</div>
           <div class="norm-desc">${n.desc}</div>
-          <span class="norm-badge ${n.obligatoria ? 'ob' : ''}">${n.obligatoria ? '✅ Obligatoria por ley' : 'Opcional'}</span>
+          <span class="norm-badge ${n.obl?'obl':''}">${n.obl?'✅ Obligatoria por ley':'Según condiciones'}</span>
         </div>
       </div>`).join('');
   }
 
-  function toggleNormativa(id) {
-    if (normativasActivas.has(id)) normativasActivas.delete(id);
-    else normativasActivas.add(id);
-    const item = document.getElementById(`norm-${id}`);
-    item.classList.toggle('activa', normativasActivas.has(id));
+  function togNorm(id) {
+    normsActivas.has(id)?normsActivas.delete(id):normsActivas.add(id);
+    const el=document.getElementById(`ni-${id}`);
+    const activa=normsActivas.has(id);
+    const norm=NORMS.find(n=>n.id===id);
+    el.className=`norm-item ${norm?.obl?'obl':''} ${activa?'activa':''}`;
+    el.querySelector('.norm-check').textContent=activa?'✓':'';
   }
 
   async function init() {
-    const { data: { session } } = await db.auth.getSession();
-    if (!session) { window.location.href = 'index.html'; return; }
-
-    // Activar obligatorias por defecto
-    NORMATIVAS.filter(n => n.obligatoria).forEach(n => normativasActivas.add(n.id));
-    renderNormativas();
-
-    const params = new URLSearchParams(window.location.search);
-    clienteId = params.get('id');
-    if (clienteId) {
-      document.getElementById('pageTitle').textContent = 'Editar Cliente';
+    const {data:{session}} = await db.auth.getSession();
+    if(!session){window.location.href='index.html';return}
+    NORMS.filter(n=>n.obl).forEach(n=>normsActivas.add(n.id));
+    renderNorms();
+    const p=new URLSearchParams(window.location.search);
+    clienteId=p.get('id');
+    if(clienteId){
+      document.getElementById('pageTitle').textContent='Editar Cliente';
       await cargarCliente();
-      await cargarHistorial();
-      document.getElementById('btnGenerar').disabled = false;
-      document.getElementById('btnAuditar').disabled = false;
-      document.getElementById('seccionHistorial').style.display = 'block';
+      await cargarHist();
+      habilitarBotones();
     }
   }
 
   async function cargarCliente() {
-    const { data } = await db.from('clientes').select('*').eq('id', clienteId).single();
-    if (!data) return;
-
-    document.getElementById('razon_social').value = data.razon_social || '';
-    document.getElementById('rut').value = data.rut || '';
-    document.getElementById('region').value = data.region || '';
-    document.getElementById('rubro').value = data.rubro || '';
-    document.getElementById('actividad_economica').value = data.actividad_economica || '';
-    document.getElementById('representante_legal').value = data.representante_legal || '';
-    document.getElementById('direccion').value = data.direccion || '';
-    document.getElementById('num_trabajadores').value = data.num_trabajadores || '';
-    document.getElementById('turnos').value = data.turnos || '';
-    document.getElementById('organismo_administrador').value = data.organismo_administrador || '';
-    document.getElementById('contacto_ssoma').value = data.contacto_ssoma || '';
-    document.getElementById('email_contacto').value = data.email_contacto || '';
-    document.getElementById('tiene_sindicato').checked = data.tiene_sindicato || false;
-    if (data.color_primario) actualizarColor('primario', data.color_primario);
-    if (data.color_secundario) actualizarColor('secundario', data.color_secundario);
-
-    // Cargar normativas guardadas
-    if (data.normativas_json) {
-      try {
-        const guardadas = JSON.parse(data.normativas_json);
-        normativasActivas = new Set(guardadas);
-        renderNormativas();
-      } catch {}
-    }
+    const {data}=await db.from('clientes').select('*').eq('id',clienteId).single();
+    if(!data)return;
+    const campos=['razon_social','rut','region','rubro','actividad_economica','representante_legal','direccion','num_trabajadores','turnos','organismo_administrador','contacto_ssoma','email_contacto'];
+    campos.forEach(c=>{const el=document.getElementById(c);if(el)el.value=data[c]||''});
+    document.getElementById('tiene_sindicato').checked=data.tiene_sindicato||false;
+    if(data.color_primario)updColor('primario',data.color_primario);
+    if(data.color_secundario)updColor('secundario',data.color_secundario);
+    if(data.normativas_json){try{normsActivas=new Set(JSON.parse(data.normativas_json));renderNorms()}catch{}}
   }
 
-  async function cargarHistorial() {
-    const { data } = await db.from('documentos_riohs').select('*').eq('cliente_id', clienteId).order('created_at', { ascending: false });
-    if (!data?.length) return;
-    document.getElementById('historialLista').innerHTML = data.map(d => `
-      <div class="historial-item">
+  async function cargarHist() {
+    const {data}=await db.from('documentos_riohs').select('*').eq('cliente_id',clienteId).order('created_at',{ascending:false});
+    if(!data?.length)return;
+    document.getElementById('secHist').style.display='block';
+    document.getElementById('histLista').innerHTML=data.map(d=>`
+      <div class="hist-item">
         <div>
-          <span class="tipo-badge ${d.tipo === 'nuevo' ? 'tipo-nuevo' : 'tipo-auditoria'}">
-            ${d.tipo === 'nuevo' ? '➕ Nuevo' : '🔍 Auditoría'}
-          </span>
-          <span class="historial-fecha" style="margin-left:0.5rem">
-            ${new Date(d.created_at).toLocaleDateString('es-CL')} — v${d.version}
-          </span>
+          <span class="tipo-b ${d.tipo==='nuevo'?'tb-n':'tb-a'}">${d.tipo==='nuevo'?'➕ RIOHS Nuevo':'🔍 Auditoría'}</span>
+          <span style="font-size:.8rem;color:var(--muted);margin-left:.5rem">${new Date(d.created_at).toLocaleDateString('es-CL')} — v${d.version}</span>
         </div>
       </div>`).join('');
   }
 
-  async function guardarCliente() {
-    const razon_social = document.getElementById('razon_social').value.trim();
-    const rubro = document.getElementById('rubro').value;
-    if (!razon_social || !rubro) { mostrarError('La razón social y el rubro son obligatorios.'); return; }
+  function habilitarBotones() {
+    document.getElementById('btnGen').disabled=false;
+    document.getElementById('btnAud').disabled=false;
+    document.getElementById('secHist').style.display='block';
+  }
 
-    const datos = {
-      razon_social, rubro,
-      rut: document.getElementById('rut').value.trim(),
-      region: document.getElementById('region').value,
-      actividad_economica: document.getElementById('actividad_economica').value.trim(),
-      representante_legal: document.getElementById('representante_legal').value.trim(),
-      direccion: document.getElementById('direccion').value.trim(),
-      num_trabajadores: parseInt(document.getElementById('num_trabajadores').value) || null,
-      turnos: document.getElementById('turnos').value,
-      organismo_administrador: document.getElementById('organismo_administrador').value,
-      contacto_ssoma: document.getElementById('contacto_ssoma').value.trim(),
-      email_contacto: document.getElementById('email_contacto').value.trim(),
-      tiene_sindicato: document.getElementById('tiene_sindicato').checked,
-      color_primario: document.getElementById('hex_primario').value,
-      color_secundario: document.getElementById('hex_secundario').value,
-      normativas_json: JSON.stringify([...normativasActivas]),
+  async function guardar() {
+    const razon_social=document.getElementById('razon_social').value.trim();
+    const rubro=document.getElementById('rubro').value;
+    if(!razon_social||!rubro){mostrarToast('La razón social y el rubro son obligatorios',true);return}
+
+    const datos={
+      razon_social,rubro,
+      rut:document.getElementById('rut').value.trim(),
+      region:document.getElementById('region').value,
+      actividad_economica:document.getElementById('actividad_economica').value.trim(),
+      representante_legal:document.getElementById('representante_legal').value.trim(),
+      direccion:document.getElementById('direccion').value.trim(),
+      num_trabajadores:parseInt(document.getElementById('num_trabajadores').value)||null,
+      turnos:document.getElementById('turnos').value,
+      organismo_administrador:document.getElementById('organismo_administrador').value,
+      contacto_ssoma:document.getElementById('contacto_ssoma').value.trim(),
+      email_contacto:document.getElementById('email_contacto').value.trim(),
+      tiene_sindicato:document.getElementById('tiene_sindicato').checked,
+      color_primario:document.getElementById('hex_primario').value,
+      color_secundario:document.getElementById('hex_secundario').value,
+      normativas_json:JSON.stringify([...normsActivas]),
     };
 
     let error;
-    if (clienteId) {
-      ({ error } = await db.from('clientes').update(datos).eq('id', clienteId));
+    if(clienteId){
+      ({error}=await db.from('clientes').update(datos).eq('id',clienteId));
     } else {
-      const { data, error: err } = await db.from('clientes').insert(datos).select().single();
-      error = err;
-      if (data) {
-        clienteId = data.id;
-        window.history.replaceState({}, '', `?id=${clienteId}`);
-        document.getElementById('btnGenerar').disabled = false;
-        document.getElementById('btnAuditar').disabled = false;
-        document.getElementById('seccionHistorial').style.display = 'block';
-        document.getElementById('pageTitle').textContent = 'Editar Cliente';
+      const {data,error:err}=await db.from('clientes').insert(datos).select().single();
+      error=err;
+      if(data){
+        clienteId=data.id;
+        window.history.replaceState({},'',`?id=${clienteId}`);
+        habilitarBotones();
+        document.getElementById('pageTitle').textContent='Editar Cliente';
       }
     }
 
-    if (error) { mostrarError('Error al guardar. Intenta nuevamente.'); console.error(error); }
-    else mostrarExito('✅ Ficha guardada correctamente.');
+    if(error){mostrarToast('Error al guardar. Intenta nuevamente.',true);console.error(error)}
+    else{mostrarToast('✅ Ficha guardada correctamente')}
   }
 
-  function irAGenerar(tipo) {
-    if (!clienteId) return;
-    window.location.href = `generar.html?cliente=${clienteId}&tipo=${tipo}`;
-  }
+  function irA(tipo){if(clienteId)window.location.href=`generar.html?cliente=${clienteId}&tipo=${tipo}`}
 
-  function actualizarColor(cual, valor) {
-    document.getElementById(`color_${cual}`).value = valor;
-    document.getElementById(`hex_${cual}`).value = valor;
-    actualizarPreview();
-  }
+  function updColor(c,v){document.getElementById(`color_${c}`).value=v;document.getElementById(`hex_${c}`).value=v;updPrev()}
+  function updHex(c,v){if(/^#[0-9A-Fa-f]{6}$/.test(v)){document.getElementById(`color_${c}`).value=v;updPrev()}}
+  function updPrev(){const p=document.getElementById('hex_primario').value,s=document.getElementById('hex_secundario').value;document.querySelector('.b1').style.background=p;document.querySelector('.b2').style.background=s}
 
-  function actualizarColorDesdeHex(cual, valor) {
-    if (/^#[0-9A-Fa-f]{6}$/.test(valor)) { document.getElementById(`color_${cual}`).value = valor; actualizarPreview(); }
+  function mostrarToast(msg, esError=false) {
+    const t=document.getElementById('toast');
+    t.textContent=msg;
+    t.className=`toast${esError?' error-toast':''} show`;
+    setTimeout(()=>{t.className=`toast${esError?' error-toast':''}`},4000);
   }
-
-  function actualizarPreview() {
-    const p = document.getElementById('hex_primario').value;
-    const s = document.getElementById('hex_secundario').value;
-    document.querySelector('.banda-1').style.background = p;
-    document.querySelector('.banda-2').style.background = s;
-  }
-
-  function mostrarExito(msg) { const el = document.getElementById('successMsg'); el.textContent = msg; el.style.display = 'block'; document.getElementById('errorMsg').style.display = 'none'; setTimeout(() => el.style.display = 'none', 4000); }
-  function mostrarError(msg) { const el = document.getElementById('errorMsg'); el.textContent = msg; el.style.display = 'block'; document.getElementById('successMsg').style.display = 'none'; }
 
   init();
 </script>
