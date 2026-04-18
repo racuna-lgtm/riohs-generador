@@ -26,14 +26,13 @@
     .aviso{border-radius:8px;padding:.8rem 1rem;margin-bottom:1.2rem;font-size:.85rem;display:flex;gap:.5rem;align-items:flex-start}
     .av-campos{background:#fff8e1;border:1px solid #ffcc80;color:#e65100}
 
-    /* PANEL PERFIL EDITORIAL */
     .panel-perfil{background:white;border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:none}
-    .perfil-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem}
-    .perfil-nivel{padding:.4rem 1rem;border-radius:20px;font-size:.9rem;font-weight:700}
+    .perfil-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+    .perfil-nivel{padding:.35rem .9rem;border-radius:20px;font-size:.9rem;font-weight:700}
     .nivel-compacto{background:#e8f5e9;color:#2e7d32}
     .nivel-intermedio{background:#e3f2fd;color:#1565c0}
     .nivel-extenso{background:#fff3e0;color:#e65100}
-    .perfil-justif{font-size:.9rem;color:var(--muted);line-height:1.5;margin-bottom:.75rem}
+    .perfil-justif{font-size:.88rem;color:var(--muted);line-height:1.5;margin-bottom:.75rem}
     .perfil-datos{display:flex;gap:.5rem;flex-wrap:wrap}
     .pdato{background:#f0f2f7;border-radius:5px;padding:.3rem .7rem;font-size:.78rem;color:var(--navy)}
 
@@ -46,20 +45,21 @@
     .btn-main:disabled{opacity:.5;cursor:not-allowed}
     .btn-main:hover:not(:disabled){opacity:.88}
 
-    /* PROGRESO */
     .progreso{display:none;background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);padding:1.5rem 2rem;margin-bottom:1.5rem}
     .prog-tit{font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:1rem;text-align:center}
     .prog-barra-w{background:#f0f2f7;border-radius:20px;height:14px;margin-bottom:.6rem;overflow:hidden}
     .prog-barra{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--navy),var(--naranja));transition:width .5s ease;width:0%}
     .prog-pct{text-align:center;font-size:.9rem;color:var(--navy);font-weight:700;margin-bottom:1rem}
     .secs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:1rem}
+    .secs-grid-8{grid-template-columns:repeat(4,1fr)}
+    .secs-grid-12{grid-template-columns:repeat(4,1fr)}
+    .secs-grid-16{grid-template-columns:repeat(4,1fr)}
     .sec{background:#f0f2f7;border-radius:6px;padding:.4rem;text-align:center;font-size:.66rem;color:var(--muted);transition:all .3s}
     .sec.activa{background:#fff3e0;color:#e65100;font-weight:700;transform:scale(1.05)}
     .sec.done{background:#e8f5e9;color:#2e7d32;font-weight:700}
     .sec .is{font-size:.9rem;display:block;margin-bottom:.15rem}
     .prog-nota{text-align:center;font-size:.78rem;color:var(--muted)}
 
-    /* ALERTAS */
     .panel-alertas{display:none}
     .al-header{background:white;border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
     .al-header h3{color:var(--navy);font-size:1.1rem}
@@ -85,7 +85,7 @@
     .cat-tit{font-weight:700;font-size:.95rem}
     .cat-cnt{margin-left:auto;background:rgba(0,0,0,.1);padding:.2rem .6rem;border-radius:20px;font-size:.8rem;font-weight:700}
     .cat-tog{font-size:.8rem;color:#999}
-    .al-item{padding:1rem 1.5rem;border-bottom:1px solid #f0f0f0;display:flex;gap:1rem;align-items:flex-start;transition:background .15s}
+    .al-item{padding:1rem 1.5rem;border-bottom:1px solid #f0f0f0;display:flex;gap:1rem;align-items:flex-start}
     .al-item:last-child{border-bottom:none}
     .al-item:hover{background:#fafbfc}
     .al-item.sel{background:#f0f7ff}
@@ -98,8 +98,6 @@
     .p-a{background:#fff0f0;color:#c62828}
     .p-m{background:#fff8e1;color:#f57f17}
     .p-b{background:#e8f5e9;color:#2e7d32}
-
-    /* RESULTADO */
     .resultado{display:none;background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;margin-bottom:1.5rem}
     .res-hdr{padding:1rem 1.5rem;background:var(--cp);color:white;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
     .res-hdr h3{font-size:1rem}
@@ -137,10 +135,9 @@
   </div>
 
   <div class="aviso av-campos" id="avisoCampos" style="display:none">
-    ⚠️ <strong>Hay campos incompletos en la ficha.</strong> El documento incluira marcadores PENDIENTE donde falten datos — completar antes de entregar al cliente.
+    ⚠️ <strong>Campos incompletos en la ficha.</strong> El documento incluira marcadores PENDIENTE — completar antes de entregar al cliente.
   </div>
 
-  <!-- PANEL PERFIL EDITORIAL -->
   <div class="panel-perfil" id="panelPerfil">
     <div class="perfil-header">
       <span style="font-size:1.1rem">📊</span>
@@ -153,7 +150,7 @@
 
   <div class="panel" id="panelUpload" style="display:none">
     <h3 style="color:var(--navy);margin-bottom:.5rem">📄 Sube el RIOHS existente</h3>
-    <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">El sistema detectara brechas legales y de calidad editorial comparando con normativa vigente.</p>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">El sistema detectara brechas legales y editoriales comparando con normativa vigente.</p>
     <div class="upload-area" id="uploadArea" onclick="document.getElementById('inputArchivo').click()">
       <div style="font-size:2rem;margin-bottom:.5rem">📂</div>
       <p id="uploadTxt">Haz clic para seleccionar el archivo<br><small>Formatos: .docx, .txt</small></p>
@@ -167,7 +164,7 @@
   </div>
 
   <div class="progreso" id="progreso">
-    <div class="prog-tit" id="progTit">Generando...</div>
+    <div class="prog-tit" id="progTit">Evaluando perfil...</div>
     <div class="prog-barra-w"><div class="prog-barra" id="progBarra"></div></div>
     <div class="prog-pct" id="progPct">0%</div>
     <div class="secs-grid" id="secsGrid"></div>
@@ -213,17 +210,43 @@
   let cliente=null,contenido='',textoDoc='',alertas=[],seleccionadas=new Set(),alertasAplicadas=[];
   let perfilEditorial=null;
 
-  const SECS=[
+  // SECCIONES según perfil
+  const SECS_COMPACTO=[
+    {n:1,l:'Portada, Generales e Ingreso',i:'📋'},
+    {n:2,l:'Jornada, Horas Extra y Descansos',i:'⏰'},
+    {n:3,l:'Remuneraciones',i:'💰'},
+    {n:4,l:'Obligaciones y Prohibiciones',i:'✅'},
+    {n:5,l:'Disciplina y Reclamos',i:'⚖️'},
+    {n:6,l:'Higiene, Seguridad y Accidentes',i:'⛑️'},
+    {n:7,l:'Protocolo Ley Karin',i:'🚨'},
+    {n:8,l:'Normativas Especificas y Cierre',i:'🌟'},
+  ];
+  const SECS_INTERMEDIO=[
+    {n:1,l:'Generales e Ingreso',i:'📋'},{n:2,l:'Jornada',i:'⏰'},
+    {n:3,l:'Horas Extra y Descansos',i:'🏖️'},{n:4,l:'Remuneraciones',i:'💰'},
+    {n:5,l:'Obligaciones y Prohibiciones',i:'✅'},{n:6,l:'Disciplina',i:'⚖️'},
+    {n:7,l:'Higiene y Seguridad',i:'⛑️'},{n:8,l:'Accidentes',i:'🏥'},
+    {n:9,l:'Ley Karin',i:'🚨'},{n:10,l:'TEMER e ISTAS21',i:'💪'},
+    {n:11,l:'Maternidad y Datos',i:'👶'},{n:12,l:'Cierre',i:'🌟'},
+  ];
+  const SECS_EXTENSO=[
     {n:1,l:'Portada e Indice',i:'📋'},{n:2,l:'Ingreso y Contrato',i:'📝'},
     {n:3,l:'Jornada Parte 1',i:'⏰'},{n:4,l:'Horas Extra y Descansos',i:'🏖️'},
     {n:5,l:'Remuneraciones',i:'💰'},{n:6,l:'Obligaciones',i:'✅'},
     {n:7,l:'Prohibiciones',i:'🚫'},{n:8,l:'Disciplina',i:'⚖️'},
     {n:9,l:'Higiene y Seg. 1',i:'⛑️'},{n:10,l:'Higiene y Seg. 2',i:'🔥'},
     {n:11,l:'Accidentes',i:'🏥'},{n:12,l:'Ley Karin 1',i:'🚨'},
-    {n:13,l:'Ley Karin 2',i:'🔍'},{n:14,l:'TEMER·ISTAS·Cargas',i:'💪'},
-    {n:15,l:'Maternidad y Datos',i:'👶'},{n:16,l:'Cierre y Normativa',i:'🌟'},
+    {n:13,l:'Ley Karin 2',i:'🔍'},{n:14,l:'TEMER e ISTAS21',i:'💪'},
+    {n:15,l:'Maternidad y Datos',i:'👶'},{n:16,l:'Cierre',i:'🌟'},
   ];
+
   const CAMPOS_OBL=['rut','region','organismo_administrador','representante_legal','num_trabajadores'];
+
+  function getSECS(nivel){
+    if(nivel==='compacto')return SECS_COMPACTO;
+    if(nivel==='extenso')return SECS_EXTENSO;
+    return SECS_INTERMEDIO;
+  }
 
   async function init(){
     const{data:{session}}=await db.auth.getSession();
@@ -278,9 +301,6 @@
 
   function iniciar(){tipo==='auditoria'?iniciarAuditoria():iniciarGeneracion()}
 
-  // ═══════════════════════════════════════════
-  // SECCIÓN 0 — Obtener perfil editorial
-  // ═══════════════════════════════════════════
   async function obtenerPerfil(){
     const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),tipo:'perfil',bloque:{id:1}})});
     if(!r.ok)return null;
@@ -291,50 +311,43 @@
     if(!p)return;
     const colores={compacto:'nivel-compacto',intermedio:'nivel-intermedio',extenso:'nivel-extenso'};
     const textos={compacto:'COMPACTO',intermedio:'INTERMEDIO',extenso:'EXTENSO'};
-    document.getElementById('perfilNivel').textContent=textos[p.nivel]||p.nivel.toUpperCase();
+    document.getElementById('perfilNivel').textContent=`${textos[p.nivel]||p.nivel.toUpperCase()} — ${p.secciones||'?'} secciones · ${p.articulos||'?'} articulos · ${p.paginas||'?'}`;
     document.getElementById('perfilNivel').className=`perfil-nivel ${colores[p.nivel]||'nivel-intermedio'}`;
     document.getElementById('perfilJustif').textContent=p.justificacion;
     const vc=p.variables_coherencia||{};
-    document.getElementById('perfilDatos').innerHTML=Object.entries(vc).map(([k,v])=>`<span class="pdato">${v}</span>`).join('');
+    document.getElementById('perfilDatos').innerHTML=Object.values(vc).filter(Boolean).map(v=>`<span class="pdato">${v}</span>`).join('');
     document.getElementById('panelPerfil').style.display='block';
   }
 
-  // ═══════════════════════════════════════════
-  // GENERACIÓN RIOHS NUEVO (16 secciones)
-  // ═══════════════════════════════════════════
   async function iniciarGeneracion(){
     document.getElementById('btnAccion').disabled=true;
     document.getElementById('errMsg').style.display='none';
-
-    // Paso 0: Obtener perfil editorial
     document.getElementById('progTit').textContent='Evaluando perfil de la empresa...';
     document.getElementById('progBarra').style.width='3%';
-    document.getElementById('progNota').textContent='Definiendo la extension y el nivel de detalle adecuados para esta empresa';
+    document.getElementById('progNota').textContent='Definiendo estructura, extension y nivel de detalle adecuados';
     document.getElementById('progreso').style.display='block';
 
     perfilEditorial=await obtenerPerfil();
     mostrarPerfil(perfilEditorial);
 
-    // Generar grilla de secciones
+    const SECS=getSECS(perfilEditorial?.nivel||'intermedio');
     document.getElementById('secsGrid').innerHTML=SECS.map(s=>`<div class="sec" id="s${s.n}"><span class="is">${s.i}</span>${s.l}</div>`).join('');
-    document.getElementById('progNota').textContent=`⏱ Perfil ${perfilEditorial?.nivel||'intermedio'} · ${perfilEditorial?.paginas||'60-80 paginas'} · generando 16 secciones`;
+    document.getElementById('progNota').textContent=`⏱ Perfil ${perfilEditorial?.nivel||'?'} · ${SECS.length} secciones · ${perfilEditorial?.paginas||'?'} · tiempo estimado: ${SECS.length*2+5} minutos aprox.`;
 
     const partes=[];
     for(let i=0;i<SECS.length;i++){
       const s=SECS[i];
       const pct=Math.round(3+((i/SECS.length)*94));
+      document.getElementById(`s${s.n}`)?.classList.replace('sec','sec');
       document.getElementById(`s${s.n}`).className='sec activa';
-      document.getElementById('progTit').textContent=`Generando: ${s.l} (${i+1} de 16)`;
+      document.getElementById('progTit').textContent=`Generando: ${s.l} (${i+1} de ${SECS.length})`;
       document.getElementById('progBarra').style.width=`${pct}%`;
       document.getElementById('progPct').textContent=`${pct}%`;
 
       try{
         const texto=await llamarStreaming({
-          cliente:buildPayload(),
-          tipo:'nuevo',
-          seccion:s.n,
-          perfil:perfilEditorial,
-          bloque:{id:1}
+          cliente:buildPayload(),tipo:'nuevo',seccion:s.n,
+          perfil:perfilEditorial,bloque:{id:1}
         });
         if(!texto)throw new Error('Respuesta vacia');
         partes.push(texto);
@@ -355,26 +368,22 @@
     await guardarDoc(contenido,'nuevo');
     setTimeout(()=>{
       document.getElementById('progreso').style.display='none';
-      mostrarResultado(contenido,`RIOHS Completo - Perfil ${perfilEditorial?.nivel||'intermedio'} (${perfilEditorial?.paginas||'60-80 paginas'})`);
+      mostrarResultado(contenido,`RIOHS Completo - Perfil ${perfilEditorial?.nivel||'?'} (${perfilEditorial?.paginas||'?'})`);
     },800);
   }
 
-  // ═══════════════════════════════════════════
-  // AUDITORÍA — Análisis en 3 partes
-  // ═══════════════════════════════════════════
   async function iniciarAuditoria(){
     if(!textoDoc){mostrarErr('Primero sube el RIOHS existente.');return}
     document.getElementById('btnAccion').disabled=true;
     document.getElementById('errMsg').style.display='none';
     document.getElementById('secsGrid').innerHTML='';
-    document.getElementById('progNota').textContent='El analisis se realiza en 3 partes para mayor precision';
+    document.getElementById('progNota').textContent='El analisis se realiza en 3 partes para mayor precision y para no exceder limites de la API';
     document.getElementById('progreso').style.display='block';
 
     const largo=textoDoc.length;
     const tam=Math.ceil(largo/3);
     const partes=[textoDoc.substring(0,tam),textoDoc.substring(tam,tam*2),textoDoc.substring(tam*2)];
-    const todasLasAlertas=[];
-    let idGlobal=1;
+    const todasLasAlertas=[];let idGlobal=1;
 
     for(let i=0;i<3;i++){
       const pct=Math.round((i/3)*90);
@@ -384,20 +393,15 @@
 
       try{
         const texto=await llamarStreaming({
-          cliente:buildPayload(),
-          tipo:'auditoria_analisis',
-          documento_existente:partes[i],
-          parte:i+1,
-          bloque:{id:1}
+          cliente:buildPayload(),tipo:'auditoria_analisis',
+          documento_existente:partes[i],parte:i+1,bloque:{id:1}
         });
-
         let lista=[];
         try{
           const m=texto.match(/```json\n?([\s\S]*?)\n?```/);
           const parsed=JSON.parse(m?m[1]:texto);
           lista=parsed.alertas||parsed;
         }catch{}
-
         lista.forEach(a=>{a.id=idGlobal++;todasLasAlertas.push(a)});
       }catch(e){
         if(e.message.includes('400')||e.message.includes('credit')){
@@ -408,7 +412,6 @@
         }
         console.warn(`Parte ${i+1} fallo:`,e.message);
       }
-
       if(i<2)await new Promise(resolve=>setTimeout(resolve,10000));
     }
 
@@ -421,59 +424,49 @@
       document.getElementById('btnAccion').disabled=false;
       return;
     }
-
     alertas=todasLasAlertas;
     setTimeout(()=>{document.getElementById('progreso').style.display='none';mostrarAlertas(todasLasAlertas)},600);
   }
 
-  // ═══════════════════════════════════════════
-  // OPCIÓN B — Regenerar RIOHS con cambios
-  // ═══════════════════════════════════════════
   async function aplicarOpcionB(){
     const selec=alertas.filter(a=>seleccionadas.has(a.id));
     alertasAplicadas=selec;
-
     if(selec.length===0)return;
 
-    // Agrupar cambios por tipo para pasarlos como instrucciones
     const porTipo={falta:[],cambio:[],sobra:[],error:[]};
     selec.forEach(a=>{if(porTipo[a.tipo])porTipo[a.tipo].push(a)});
-
     const instrucciones=[];
     if(porTipo.falta.length)instrucciones.push(`AGREGAR: ${porTipo.falta.map(a=>`${a.titulo} (${a.normativa||''})`).join('; ')}`);
     if(porTipo.cambio.length)instrucciones.push(`ACTUALIZAR: ${porTipo.cambio.map(a=>`${a.titulo} (${a.normativa||''})`).join('; ')}`);
-    if(porTipo.sobra.length)instrucciones.push(`ELIMINAR: ${porTipo.sobra.map(a=>a.titulo).join('; ')}`);
+    if(porTipo.sobra.length)instrucciones.push(`ELIMINAR o no incluir: ${porTipo.sobra.map(a=>a.titulo).join('; ')}`);
     if(porTipo.error.length)instrucciones.push(`CORREGIR: ${porTipo.error.map(a=>a.titulo).join('; ')}`);
-
     const cambiosStr=instrucciones.join('\n');
 
     document.getElementById('panelAlertas').style.display='none';
-    document.getElementById('secsGrid').innerHTML=SECS.map(s=>`<div class="sec" id="s${s.n}"><span class="is">${s.i}</span>${s.l}</div>`).join('');
-    document.getElementById('progTit').textContent='Evaluando perfil de la empresa...';
+    document.getElementById('progTit').textContent='Evaluando perfil...';
     document.getElementById('progBarra').style.width='3%';
-    document.getElementById('progNota').textContent=`Regenerando RIOHS completo con ${selec.length} cambios incorporados`;
+    document.getElementById('progNota').textContent=`Regenerando RIOHS con ${selec.length} cambios incorporados`;
     document.getElementById('progreso').style.display='block';
 
-    // Obtener perfil primero
     perfilEditorial=await obtenerPerfil();
     mostrarPerfil(perfilEditorial);
+
+    const SECS=getSECS(perfilEditorial?.nivel||'intermedio');
+    document.getElementById('secsGrid').innerHTML=SECS.map(s=>`<div class="sec" id="s${s.n}"><span class="is">${s.i}</span>${s.l}</div>`).join('');
 
     const partes=[];
     for(let i=0;i<SECS.length;i++){
       const s=SECS[i];
       const pct=Math.round(3+((i/SECS.length)*94));
       document.getElementById(`s${s.n}`).className='sec activa';
-      document.getElementById('progTit').textContent=`Generando con cambios: ${s.l} (${i+1} de 16)`;
+      document.getElementById('progTit').textContent=`Generando con cambios: ${s.l} (${i+1} de ${SECS.length})`;
       document.getElementById('progBarra').style.width=`${pct}%`;
       document.getElementById('progPct').textContent=`${pct}%`;
 
       try{
         const texto=await llamarStreaming({
-          cliente:buildPayload(),
-          tipo:'nuevo',
-          seccion:s.n,
-          perfil:{...perfilEditorial,cambios:cambiosStr},
-          bloque:{id:1}
+          cliente:buildPayload(),tipo:'nuevo',seccion:s.n,
+          perfil:{...perfilEditorial,cambios:cambiosStr},bloque:{id:1}
         });
         if(!texto)throw new Error('Respuesta vacia');
         partes.push(texto);
@@ -491,7 +484,6 @@
     document.getElementById('progTit').textContent='✅ RIOHS actualizado con todos los cambios';
     contenido=partes.join('\n\n---\n\n');
     await guardarDoc(contenido,'auditoria');
-
     setTimeout(()=>{
       document.getElementById('progreso').style.display='none';
       document.getElementById('btnsR').innerHTML=`
@@ -499,28 +491,20 @@
         <button class="btn-d bd-res" id="btnRes" onclick="genResumen()">📋 Resumen Ejecutivo</button>
         <button class="btn-d bd-inf" id="btnInf" onclick="genInforme()">📊 Informe de Cambios</button>
         <button class="btn-d bd-new" onclick="reiniciar()">🔄 Nuevo</button>`;
-      mostrarResultado(contenido,`RIOHS Actualizado · ${selec.length} cambio${selec.length!==1?'s':''} incorporado${selec.length!==1?'s':''}`);
+      mostrarResultado(contenido,`RIOHS Actualizado con ${selec.length} cambio${selec.length!==1?'s':''} incorporado${selec.length!==1?'s':''}`);
     },800);
   }
 
-  // ═══════════════════════════════════════════
-  // LLAMADA CON STREAMING — función central
-  // ═══════════════════════════════════════════
   async function llamarStreaming(body){
     const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!r.ok)throw new Error(`Error ${r.status}`);
-
-    const reader=r.body.getReader();
-    const decoder=new TextDecoder();
-    let texto='';
-    let buffer='';
-
+    const reader=r.body.getReader();const decoder=new TextDecoder();
+    let texto='';let buffer='';
     while(true){
       const{done,value}=await reader.read();
       if(done)break;
       buffer+=decoder.decode(value,{stream:true});
-      const lines=buffer.split('\n');
-      buffer=lines.pop();
+      const lines=buffer.split('\n');buffer=lines.pop();
       for(const line of lines){
         if(!line.startsWith('data: '))continue;
         const raw=line.slice(6).trim();
@@ -529,17 +513,12 @@
           if(ev.chunk)texto+=ev.chunk;
           if(ev.error)throw new Error(ev.error);
           if(ev.done&&ev.contenido)texto=ev.contenido;
-        }catch(parseErr){
-          if(parseErr.message&&!parseErr.message.includes('JSON'))throw parseErr;
-        }
+        }catch(pe){if(pe.message&&!pe.message.includes('JSON'))throw pe}
       }
     }
     return texto;
   }
 
-  // ═══════════════════════════════════════════
-  // RESUMEN EJECUTIVO (con streaming)
-  // ═══════════════════════════════════════════
   async function genResumen(){
     const btn=document.getElementById('btnRes');
     btn.textContent='⏳ Generando...';btn.disabled=true;
@@ -550,9 +529,6 @@
     finally{btn.textContent='📋 Resumen Ejecutivo';btn.disabled=false}
   }
 
-  // ═══════════════════════════════════════════
-  // INFORME DE CAMBIOS (con streaming)
-  // ═══════════════════════════════════════════
   async function genInforme(){
     const btn=document.getElementById('btnInf');
     btn.textContent='⏳ Generando...';btn.disabled=true;
@@ -563,9 +539,6 @@
     finally{btn.textContent='📊 Informe de Cambios';btn.disabled=false}
   }
 
-  // ═══════════════════════════════════════════
-  // ALERTAS — mostrar y gestionar
-  // ═══════════════════════════════════════════
   function mostrarAlertas(lista){
     document.getElementById('panelAlertas').style.display='block';
     const cnt={falta:0,cambio:0,sobra:0,error:0};lista.forEach(a=>{if(cnt[a.tipo]!==undefined)cnt[a.tipo]++});
@@ -598,7 +571,7 @@
   function buildPayload(){
     let n='Todas las obligatorias';
     if(cliente.normativas_json){try{n=JSON.parse(cliente.normativas_json).join(', ')}catch{}}
-    return{empresa:cliente.razon_social,rut:cliente.rut,rubro:cliente.rubro,actividad_economica:cliente.actividad_economica,region:cliente.region,num_trabajadores:cliente.num_trabajadores,turnos:cliente.turnos,tiene_sindicato:cliente.tiene_sindicato,organismo_administrador:cliente.organismo_administrador,representante_legal:cliente.representante_legal,direccion:cliente.direccion,normativas_activas:n};
+    return{empresa:cliente.razon_social,rut:cliente.rut,rubro:cliente.rubro,actividad_economica:cliente.actividad_economica,region:cliente.region,num_trabajadores:cliente.num_trabajadores,turnos:cliente.turnos,tiene_sindicato:cliente.tiene_sindicato,organismo_administrador:cliente.organismo_administrador,representante_legal:cliente.representante_legal,direccion:cliente.direccion,normativas_activas:n,funcion_real:cliente.funcion_real||''};
   }
 
   async function guardarDoc(cont,tipoDoc){
@@ -609,17 +582,37 @@
 
   function mostrarResultado(cont,titulo){
     document.getElementById('resTit').textContent=`✅ ${titulo}`;
-    document.getElementById('riohsC').innerHTML=marked.parse(cont).replace(/\[PENDIENTE[^\]]*\]/g,'<mark style="background:#fff3cd;padding:2px 6px;border-radius:3px;color:#856404;font-weight:700">$&</mark>');
+    document.getElementById('riohsC').innerHTML=marked.parse(limpiarEncoding(cont)).replace(/\[PENDIENTE[^\]]*\]/g,'<mark style="background:#fff3cd;padding:2px 6px;border-radius:3px;color:#856404;font-weight:700">$&</mark>');
     document.getElementById('resultado').style.display='block';
     document.getElementById('resultado').scrollIntoView({behavior:'smooth'});
+  }
+
+  // FIX ENCODING — limpia caracteres corruptos antes de exportar a Word
+  function limpiarEncoding(texto){
+    if(!texto)return texto;
+    return texto
+      .replace(/√°/g,'a').replace(/√©/g,'e').replace(/√≠/g,'i').replace(/√≥/g,'o').replace(/√∫/g,'u')
+      .replace(/√Å/g,'A').replace(/√â/g,'E').replace(/√Ö/g,'I').replace(/√ì/g,'O').replace(/√ü/g,'U')
+      .replace(/√±/g,'n').replace(/√Ñ/g,'N').replace(/‚Äî/g,'—').replace(/‚Äì/g,'-')
+      .replace(/‚Äú/g,'"').replace(/‚Äù/g,'"').replace(/‚Äò/g,"'").replace(/‚Äô/g,"'")
+      .replace(/√∂/g,'o').replace(/√ñ/g,'o').replace(/\u00e1/g,'a').replace(/\u00e9/g,'e')
+      .replace(/\u00ed/g,'i').replace(/\u00f3/g,'o').replace(/\u00fa/g,'u')
+      .replace(/\u00c1/g,'A').replace(/\u00c9/g,'E').replace(/\u00cd/g,'I').replace(/\u00d3/g,'O').replace(/\u00da/g,'U')
+      .replace(/\u00f1/g,'n').replace(/\u00d1/g,'N').replace(/\u00fc/g,'u');
   }
 
   function descargar(cont,nombre='RIOHS'){
     if(!cont)return;
     const cp=cliente.color_primario||'#1B2E6E',cs=cliente.color_secundario||'#E87722';
-    const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.6;color:#333;margin:2cm}h1{color:${cp};font-size:18pt;border-bottom:3pt solid ${cs};padding-bottom:6pt;margin-bottom:12pt}h2{color:${cp};font-size:14pt;margin-top:18pt;margin-bottom:6pt}h3{color:${cs};font-size:12pt;margin-top:12pt;margin-bottom:4pt}p{margin-bottom:8pt;text-align:justify}table{width:100%;border-collapse:collapse;margin:10pt 0;font-size:10pt}th{background:${cp};color:white;padding:6pt 8pt;text-align:left;font-weight:bold}td{padding:5pt 8pt;border:1pt solid #ccc}tr:nth-child(even) td{background:#f5f5f5}strong{color:${cp}}ul,ol{margin:6pt 0 6pt 20pt}li{margin-bottom:3pt}hr{border:none;border-top:2pt solid ${cs};margin:12pt 0}mark{background:#fff3cd;padding:2px 6px;color:#856404;font-weight:bold}</style></head><body>${marked.parse(cont)}</body></html>`;
-    try{const blob=htmlDocx.asBlob(html,{orientation:'portrait',margins:{top:1440,right:1440,bottom:1440,left:1440}});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${nombre}.docx`;a.click()}
-    catch(e){const blob=new Blob(['\ufeff',html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${nombre}.doc`;a.click()}
+    const contLimpio=limpiarEncoding(cont);
+    const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.6;color:#333;margin:2cm}h1{color:${cp};font-size:18pt;border-bottom:3pt solid ${cs};padding-bottom:6pt;margin-bottom:12pt}h2{color:${cp};font-size:14pt;margin-top:18pt;margin-bottom:6pt}h3{color:${cs};font-size:12pt;margin-top:12pt;margin-bottom:4pt}p{margin-bottom:8pt;text-align:justify}table{width:100%;border-collapse:collapse;margin:10pt 0;font-size:10pt}th{background:${cp};color:white;padding:6pt 8pt;text-align:left;font-weight:bold}td{padding:5pt 8pt;border:1pt solid #ccc}tr:nth-child(even) td{background:#f5f5f5}strong{color:${cp}}ul,ol{margin:6pt 0 6pt 20pt}li{margin-bottom:3pt}hr{border:none;border-top:2pt solid ${cs};margin:12pt 0}mark{background:#fff3cd;padding:2px 6px;color:#856404;font-weight:bold}</style></head><body>${marked.parse(contLimpio)}</body></html>`;
+    try{
+      const blob=htmlDocx.asBlob(html,{orientation:'portrait',margins:{top:1440,right:1440,bottom:1440,left:1440}});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${nombre}.docx`;a.click();
+    }catch(e){
+      const blob=new Blob(['\ufeff',html],{type:'application/msword'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${nombre}.doc`;a.click();
+    }
   }
 
   function reiniciar(){
@@ -628,13 +621,13 @@
     document.getElementById('panelAlertas').style.display='none';
     document.getElementById('panelPerfil').style.display='none';
     document.getElementById('btnAccion').disabled=false;
+    document.getElementById('secsGrid').innerHTML='';
     document.getElementById('btnsR').innerHTML=`<button class="btn-d bd-word" onclick="descargar(contenido,'riohs')">📄 RIOHS (.docx)</button><button class="btn-d bd-res" id="btnRes" onclick="genResumen()">📋 Resumen Ejecutivo</button><button class="btn-d bd-new" onclick="reiniciar()">🔄 Nuevo</button>`;
     if(tipo==='auditoria'){document.getElementById('uploadArea').classList.remove('ok');document.getElementById('uploadTxt').innerHTML='Haz clic para seleccionar el archivo<br><small>Formatos: .docx, .txt</small>';document.getElementById('inputArchivo').value=''}
     window.scrollTo({top:0,behavior:'smooth'});
   }
 
   function mostrarErr(msg){const el=document.getElementById('errMsg');el.textContent=msg;el.style.display='block'}
-
   init();
 </script>
 </body>
