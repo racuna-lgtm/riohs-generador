@@ -20,86 +20,400 @@ export default async function handler(req, res) {
     const TRAB = parseInt(cliente.num_trabajadores) || 0;
     const TURN = cliente.turnos || 'jornada diurna estandar';
     const SIN = cliente.tiene_sindicato ? 'Si tiene sindicato' : 'No tiene sindicato';
+    const FUNC = cliente.funcion_real || 'No especificada';
 
-    // Perfil editorial (viene del frontend tras llamar tipo=perfil)
     const NIVEL = perfil?.nivel || 'intermedio';
-    const MAX_TOKENS = perfil?.max_tokens || 3500;
     const CAMBIOS_AUDITORIA = perfil?.cambios || '';
+    // max_tokens: resumen e informe siempre 3500 independiente del perfil
+    const MAX_TOKENS = (tipo === 'resumen_empleador' || tipo === 'informe_cambios')
+      ? 3500
+      : (perfil?.max_tokens || 3500);
 
     // ═══════════════════════════════════════════
     // SECCIÓN 0 — PERFIL EDITORIAL
-    // Evaluación de la empresa antes de generar
     // ═══════════════════════════════════════════
     if (tipo === 'perfil') {
-      const rubrosAltoRiesgo = ['Construccion','Mineria','Manufactura','Transporte','Seguridad privada','Agroindustria'];
-      const esAltoRiesgo = rubrosAltoRiesgo.some(r => R.toLowerCase().includes(r.toLowerCase()));
-      const tieneTurnos = TURN && TURN !== 'Sin turnos definidos' && TURN !== 'jornada diurna estandar';
+      const rubrosAltoRiesgo = ['construccion','mineria','manufactura','transporte','seguridad privada','agroindustria'];
+      const esAltoRiesgo = rubrosAltoRiesgo.some(r => R.toLowerCase().includes(r));
+      const esFaena = ['terreno','faena','planta','obra','produccion'].some(f => FUNC.toLowerCase().includes(f));
+      const esOficina = ['oficina','administracion','consultoria','capacitacion','educacion','servicios','tecnologia','ti ','software'].some(f => R.toLowerCase().includes(f) || FUNC.toLowerCase().includes(f));
+      const tieneTurnos = TURN && !['sin turnos','jornada diurna'].some(t => TURN.toLowerCase().includes(t));
       const esGrande = TRAB >= 100;
       const esMediana = TRAB >= 25 && TRAB < 100;
 
-      let nivel, paginas, maxTok, justificacion;
+      let nivel, paginas, maxTok, secciones, articulos, justificacion;
 
-      if (esGrande || esAltoRiesgo) {
-        nivel = 'extenso';
-        paginas = '90-110 paginas';
-        maxTok = 4000;
-        justificacion = `Con ${TRAB > 0 ? TRAB + ' trabajadores' : 'alta complejidad operativa'} en el rubro ${R}, el reglamento requiere desarrollo completo de todos los procedimientos, incluyendo protocolos detallados de seguridad, disciplina y canales de denuncia.`;
-      } else if (esMediana || tieneTurnos || cliente.tiene_sindicato) {
-        nivel = 'intermedio';
-        paginas = '60-80 paginas';
-        maxTok = 3500;
-        justificacion = `Con ${TRAB > 0 ? TRAB + ' trabajadores' : 'estructura mediana'} y ${tieneTurnos ? 'sistema de turnos activo' : 'estructura organizacional con areas definidas'}, el reglamento debe cubrir todos los aspectos legales con nivel de detalle moderado.`;
+      if (esGrande || (esAltoRiesgo && esFaena)) {
+        nivel = 'extenso'; paginas = '90-110 paginas'; maxTok = 4000; secciones = 16; articulos = '~130-142';
+        justificacion = `Con ${TRAB > 0 ? TRAB + ' trabajadores' : 'dotacion grande'} y rubro ${R} (funcion: ${FUNC}), el reglamento requiere desarrollo completo con protocolos detallados.`;
+      } else if (esMediana || tieneTurnos || cliente.tiene_sindicato || (esAltoRiesgo && !esFaena)) {
+        nivel = 'intermedio'; paginas = '60-80 paginas'; maxTok = 3500; secciones = 12; articulos = '~90-105';
+        justificacion = `Con ${TRAB > 0 ? TRAB + ' trabajadores' : 'dotacion mediana'} en ${R}, el reglamento cubre todos los aspectos legales con nivel de detalle moderado.`;
       } else {
-        nivel = 'compacto';
-        paginas = '40-55 paginas';
-        maxTok = 2500;
-        justificacion = `Con ${TRAB > 0 ? TRAB + ' trabajadores' : 'estructura pequena'} en el rubro ${R}, el reglamento debe ser preciso y directo, sin sobredimensionamiento ni bloques genericos que no aplican a la realidad de esta empresa.`;
+        nivel = 'compacto'; paginas = '35-50 paginas'; maxTok = 2800; secciones = 8; articulos = '~65-75';
+        justificacion = `Con ${TRAB > 0 ? TRAB + ' trabajadores' : 'dotacion pequena'} en ${R} (${esOficina ? 'entorno de oficina, bajo riesgo fisico' : 'operacion simple'}), el reglamento debe ser preciso y directo. Arquitectura simplificada: ${secciones} secciones fusionadas, sin mini-capitulos doctrinales.`;
       }
 
       return res.status(200).json({
-        nivel,
-        paginas,
-        max_tokens: maxTok,
-        justificacion,
+        nivel, paginas, max_tokens: maxTok, secciones, articulos, justificacion,
         variables_coherencia: {
-          jornada: '42 horas semanales (Ley 21.561, vigente desde abril 2026)',
+          jornada: '42 horas semanales (Ley 21.561, vigente abril 2026)',
+          aviso_inasistencia: 'dentro de las primeras 2 horas de iniciada la jornada',
           organismo_administrador: OA,
           turnos: TURN,
           trabajadores: TRAB || P,
           sindicato: SIN,
+          funcion_real: FUNC,
           region: REG
         }
       });
     }
 
     // ═══════════════════════════════════════════
-    // CRITERIO MAESTRO — se inyecta en todos los prompts
+    // CRITERIO MAESTRO
     // ═══════════════════════════════════════════
     const CRITERIO = `
 CRITERIO MAESTRO DE CALIDAD (OBLIGATORIO):
-Perfil de empresa: ${NIVEL.toUpperCase()} — ajusta la extension y el nivel de detalle a este perfil.
+Perfil: ${NIVEL.toUpperCase()} | Empresa: ${TRAB||'?'} trabajadores | Funcion real: ${FUNC}
 
-Variables de coherencia interna que DEBEN ser consistentes en todo el documento:
-- Jornada ordinaria: 42 horas semanales (Ley 21.561, vigente desde abril 2026)
+VARIABLES DE COHERENCIA INTERNA (usar estas mismas en TODAS las secciones):
+- Jornada ordinaria: 42 horas semanales (Ley 21.561, vigente abril 2026)
+- Aviso de inasistencia: SIEMPRE "dentro de las primeras 2 horas de iniciada la jornada" (no cambiar en ninguna seccion)
 - Organismo Administrador: ${OA}
-- Sistema de turnos: ${TURN}
-- Numero de trabajadores: ${TRAB || P}
-- Sindicato: ${SIN}
+- Turnos: ${TURN} | Sindicato: ${SIN}
 
-Reglas de redaccion:
-1. NUNCA dejes un articulo truncado, una frase incompleta o una enumeracion sin cerrar. Si falta informacion puntual, cierra el articulo con una formula neutra formal.
-2. Usa "${P}" SOLO para datos especificos del cliente que faltan (RUT, nombre de persona, correo, etc.). NUNCA como parche para contenido incompleto.
-3. Redaccion: formal, clara, sin inflado. Evita repetir la razon social mas de una vez por articulo. Evita frases redundantes y ampulosidad innecesaria.
-4. Sanciones: siempre con gradualidad explicita. NUNCA redactes como si cualquier incumplimiento derivara automaticamente en despido.
-5. Equilibrio empleador/trabajador: toda obligacion, prohibicion o sancion debe quedar dentro de un marco proporcional y juridicamente defendible.
-6. Extension: proporcional al perfil ${NIVEL}. No maximices extension ni tecnicismo. Maximiza coherencia, claridad y aplicabilidad real.
-7. Documentos al ingreso: usa criterio de pertinencia real para el rubro ${R}, no maximalismo.`;
+REGLAS OBLIGATORIAS:
+1. NUNCA dejes un articulo truncado o una frase incompleta. Si falta informacion puntual del cliente, usa "${P}" solo para ese dato. NUNCA como parche de contenido incompleto.
+2. NO uses "periodo de prueba" como clausula general. Es figura juridicamente delicada en Chile. Si debes regular adaptacion inicial, usa: "acompanamiento al inicio de la relacion laboral" o "evaluacion de adaptacion al cargo".
+3. Horas extraordinarias: distingue siempre entre (a) exigencia de autorizacion previa, (b) consecuencias disciplinarias por incumplir esa regla, y (c) tratamiento del tiempo efectivamente trabajado. NUNCA redactes como negacion absoluta del pago.
+4. Sanciones: gradualidad explicita. NUNCA automatismo hacia el despido.
+5. Sin errores de codificacion: usa solo caracteres ASCII seguros o UTF-8 limpio. No uses caracteres especiales que puedan corromperse.
+6. Perfil ${NIVEL}: ${NIVEL === 'compacto' ? 'usa reglas practicas suficientes, no mini-capitulos doctrinales. Una regla clara vale mas que tres parrafos que dicen lo mismo.' : NIVEL === 'intermedio' ? 'desarrollo moderado sin inflado.' : 'desarrollo completo con protocolos detallados.'}`;
 
     const BASE = `Eres experto en derecho laboral chileno con criterio editorial riguroso.
-Empresa: ${E} | RUT: ${RUT} | Rubro: ${R} | Region: ${REG} | Trabajadores: ${TRAB||P} | Turnos: ${TURN} | ${SIN} | OA: ${OA} | Representante Legal: ${RL} | Direccion: ${DIR}.
+Empresa: ${E} | RUT: ${RUT} | Rubro: ${R} | Funcion real: ${FUNC} | Region: ${REG} | Trabajadores: ${TRAB||P} | Turnos: ${TURN} | ${SIN} | OA: ${OA} | Rep. Legal: ${RL} | Direccion: ${DIR}.
 ${CRITERIO}`;
 
-    const INDICE = `## INDICE GENERAL
+    let prompt = '';
+
+    if (tipo === 'nuevo' && seccion) {
+      const instrCambios = CAMBIOS_AUDITORIA
+        ? `\n\nCAMBIOS DE AUDITORIA A INCORPORAR EN ESTA SECCION:\n${CAMBIOS_AUDITORIA}` : '';
+
+      // ═══════════════════════════════════════════
+      // ARQUITECTURA COMPACTA — 8 SECCIONES
+      // Secciones fusionadas para empresas pequenas
+      // ═══════════════════════════════════════════
+      if (NIVEL === 'compacto') {
+
+        const INDICE_C = `## INDICE GENERAL
+| N | TITULO | ARTICULOS |
+|---|--------|-----------|
+| I | Disposiciones Generales e Ingreso | 1-18 |
+| II | Jornada, Horas Extra y Descansos | 19-32 |
+| III | Remuneraciones | 33-42 |
+| IV | Obligaciones y Prohibiciones | 43-56 |
+| V | Disciplina y Reclamos | 57-64 |
+| VI | Higiene, Seguridad y Accidentes | 65-76 |
+| VII | Protocolo Ley Karin | 77-86 |
+| VIII | Normativas Especificas y Cierre | 87-98 |`;
+
+        if (seccion === 1) {
+          prompt = `${BASE}
+
+Genera la SECCION 1 COMPACTA: Portada + Indice + Titulo I Disposiciones Generales + Titulo II Ingreso (Arts. 1-18).
+
+PORTADA:
+# REGLAMENTO INTERNO DE ORDEN, HIGIENE Y SEGURIDAD
+# ${E.toUpperCase()}
+RUT: ${RUT} | Rubro: ${R} | Region: ${REG}
+Direccion: ${DIR} | Organismo Administrador: ${OA}
+Representante Legal: ${RL} | Version 01 - ${new Date().getFullYear()}
+
+El presente Reglamento Interno ha sido elaborado en cumplimiento del articulo 153 del Codigo del Trabajo, y es de observancia obligatoria para todos los trabajadores de ${E} desde el inicio de la relacion laboral.
+
+${INDICE_C}
+
+## TITULO I: DISPOSICIONES GENERALES (Arts. 1-8)
+Redacta los articulos 1 al 8. Perfil compacto: reglas claras y practicas, sin desarrollo doctrinal excesivo.
+- Art. 1: Objeto y ambito. Que regula, a quienes aplica. Art. 153 CT.
+- Art. 2: Definiciones esenciales: empleador, trabajador, empresa. Arts. 3 y 7 CT.
+- Art. 3: Definiciones operativas: jefe inmediato, jornada, turno, hora extraordinaria, feriado, licencia medica. Todas en un solo articulo sintetico.
+- Art. 4: Definiciones economicas: remuneracion, sueldo, gratificacion. En un solo articulo.
+- Art. 5: Entrega y recepcion del reglamento. Firma de cargo. Art. 153 CT.
+- Art. 6: Vigencia y modificacion. Proceso ante la Inspeccion del Trabajo. Plazos. Art. 156 CT.
+- Art. 7: Valor juridico del reglamento como instrumento de la relacion laboral.
+- Art. 8: Normativa supletoria aplicable.
+
+## TITULO II: DEL INGRESO Y CONTRATACION (Arts. 9-18)
+Perfil compacto: documentos pertinentes para ${R} con ${TRAB} trabajadores. Separar esenciales de condicionales por cargo. No pedir documentos sin relacion con la funcion.
+- Art. 9: Requisitos de ingreso. ESENCIALES para todos los cargos en ${R}: cedula de identidad, curriculum vitae, certificado de antecedentes laborales, certificado de estudios/titulo segun cargo. ADICIONALES segun funcion: para relatores/docentes agrega acreditacion equivalente; para manejo de fondos, referencias laborales. No mas que lo necesario.
+- Art. 10: Examenes preocupacionales. Ajustados al bajo riesgo fisico del rubro ${R}: se realizan en el centro medico de ${OA}. Para funciones de oficina, examen general de salud suficiente.
+- Art. 11: Acompanamiento al inicio de la relacion laboral. En los primeros 30 dias, el/la trabajador/a recibe orientacion sobre sus funciones, equipo de trabajo y normas internas. Esto no constituye un periodo de prueba laboral especial sino un proceso de integracion normal.
+- Art. 12: Celebracion del contrato. 15 dias desde el ingreso (5 dias para contratos inferiores a 30 dias). Art. 9 CT.
+- Art. 13: Contenido minimo del contrato. Literales a) a i). Art. 10 CT.
+- Art. 14: Modificaciones al contrato. Formalidad escrita.
+- Art. 15: Actualizacion de antecedentes personales. Plazo: 5 dias habiles.
+- Art. 16: Documentos falsos. Art. 160 N1 CT.
+- Art. 17: Certificado de antecedentes penales. Solo cuando sea pertinente al cargo.
+- Art. 18: Inclusion laboral. Ley 21.015.
+${instrCambios}`;
+
+        } else if (seccion === 2) {
+          prompt = `${BASE}
+
+Genera la SECCION 2 COMPACTA: Jornada + Horas Extra + Descansos (Arts. 19-32).
+Perfil compacto: una regla clara por materia. Sin desarrollo doctrinal extenso.
+
+COHERENCIA CRITICA: Aviso de inasistencia = "dentro de las primeras 2 horas de iniciada la jornada". Esta regla debe ser IDENTICA en esta seccion y en la seccion de obligaciones. No cambiar.
+
+## TITULO III: JORNADA, HORAS EXTRA Y DESCANSOS (Arts. 19-32)
+- Art. 19: Jornada ordinaria. 42 horas semanales (Ley 21.561, vigente abril 2026, reduccion progresiva a 40h en 2028). Horario de ${E}: ${TURN}. Una regla clara, sin tabla extensa si no hay turnos complejos.
+- Art. 20: Control de asistencia. Medio de registro: ${P}. Obligacion de registrar entrada y salida. No marcar tarjeta ajena es falta grave.
+- Art. 21: Ausentismo. Aviso al jefe directo dentro de las primeras 2 horas de iniciada la jornada, por cualquier medio. Sin aviso justificado, la inasistencia es injustificada y puede sancionarse.
+- Art. 22: Atrasos. Se registran y descuentan proporcionalmente. La reincidencia se sanciona conforme al sistema gradual.
+- Art. 23: Permisos durante la jornada. Solicitud escrita o verbal al jefe directo. Imputacion al feriado o descuento segun acuerdo.
+- Art. 24: Colacion. Tiempo no computable como jornada. Art. 34 CT.
+- Art. 25: Teletrabajo. ${R === 'Educacion' || FUNC.toLowerCase().includes('oficina') ? `Dado el rubro, ${E} podra acordar teletrabajo por escrito. Se aplicara Ley 21.220: desconexion digital minima de 12 horas, provision de herramientas, cobertura del seguro de accidentes en el lugar designado.` : `${E} podra acordar teletrabajo por escrito cuando corresponda. Se aplica Ley 21.220.`}
+- Art. 26: Horas extraordinarias. Solo con autorizacion escrita previa del empleador. Limite: 2 horas diarias. Art. 30-31 CT. Trabajar tiempo extra sin dicha autorizacion constituye infraccion a este reglamento y podra ser sancionado disciplinariamente. El tiempo efectivamente trabajado en esas condiciones sera evaluado caso a caso por el empleador conforme a la ley.
+- Art. 27: Pago de horas extra. Las horas extras autorizadas se pagan con recargo del 50% sobre el sueldo convenido para la jornada ordinaria. Art. 32 CT.
+- Art. 28: Descanso semanal. Domingo como regla general. Art. 38 CT.
+- Art. 29: Feriado anual. 15 dias habiles con remuneracion integra. Irrenunciable. Art. 67 CT. Para trabajadores con mas de 10 anos laborados, se agrega 1 dia por cada 3 nuevos anos (vacaciones progresivas, Art. 68 CT).
+- Art. 30: Fraccionamiento del feriado. El exceso sobre 10 dias habiles puede fraccionarse. Acumulacion hasta 2 periodos. Art. 70 CT.
+- Art. 31: Feriado proporcional al termino del contrato. Art. 73 CT.
+- Art. 32: Permisos especiales por fallecimiento. Hijo: 10 dias. Conyuge/conviviente: 7 dias. Hijo no nato: 7 dias habiles. Padre/madre: 4 dias. Fuero laboral de 1 mes para quien pierde un hijo o conyuge. Art. 66 CT.
+${instrCambios}`;
+
+        } else if (seccion === 3) {
+          prompt = `${BASE}
+
+Genera la SECCION 3 COMPACTA: Remuneraciones (Arts. 33-42).
+Perfil compacto: cita la regla legal pertinente y aplica. Sin desarrollo doctrinal extenso.
+
+## TITULO IV: DE LAS REMUNERACIONES (Arts. 33-42)
+- Art. 33: Definicion de remuneracion y componentes. Que NO es remuneracion. Arts. 41-42 CT.
+- Art. 34: Fecha y forma de pago. Dia 30 de cada mes o habil anterior. Deposito bancario o cuenta vista. Anticipo maximo 25% de la remuneracion liquida, solicitado antes del dia 10.
+- Art. 35: Ingreso minimo. No puede ser inferior al minimo mensual vigente. Proporcional en jornadas parciales.
+- Art. 36: Gratificaciones. ${E} optara por: (a) distribuir el 30% de las utilidades liquidas entre los trabajadores, o (b) pagar el 25% de la remuneracion anual de cada trabajador con tope de 4.75 ingresos minimos. Arts. 46-49 CT.
+- Art. 37: Descuentos legales. Cotizaciones previsionales, impuesto unico, cuotas sindicales si corresponde. Limite del 30% para descuentos voluntarios. Art. 58 CT.
+- Art. 38: Liquidacion de sueldo. Entrega mensual fisica o digital. Debe especificar remuneracion bruta, descuentos y liquido a pagar.
+- Art. 39: Igualdad de remuneraciones. Hombres y mujeres que realicen el mismo trabajo perciben igual remuneracion. Las diferencias solo se justifican por capacidades, calificaciones o productividad objetivamente verificables. Art. 62 bis CT.
+- Art. 40: Reclamo por remuneraciones. El trabajador puede reclamar por escrito a la gerencia de ${E}. Respuesta en 30 dias. En caso de no respuesta satisfactoria, puede recurrir a la Inspeccion del Trabajo.
+- Art. 41: Asignaciones no remuneracionales. Viaticos, colacion, movilizacion: no sirven de base para calcular indemnizaciones.
+- Art. 42: Finiquito y termino del contrato. Al termino, ${E} paga remuneraciones, indemnizaciones y demas prestaciones adeudadas. Ratificacion ante ministro de fe. Pago dentro de 5 dias habiles desde la separacion. Art. 163 CT.
+${instrCambios}`;
+
+        } else if (seccion === 4) {
+          prompt = `${BASE}
+
+Genera la SECCION 4 COMPACTA: Obligaciones y Prohibiciones fusionadas (Arts. 43-56).
+Perfil compacto: listas directas y operativas. Sin desarrollo doctrinal. Cada punto debe ser practico y aplicable a ${R} con ${TRAB} trabajadores.
+
+COHERENCIA CRITICA: En obligaciones, el aviso de inasistencia es "dentro de las primeras 2 horas de iniciada la jornada" (mismo que Art. 21).
+
+## TITULO V: OBLIGACIONES Y PROHIBICIONES (Arts. 43-56)
+
+### Obligaciones del trabajador (Arts. 43-51)
+- Art. 43: Obligaciones de conducta. Solo las pertinentes para ${R}: puntualidad y asistencia, registrar correctamente la asistencia, avisar la inasistencia dentro de las primeras 2 horas de iniciada la jornada, cumplir las instrucciones del jefe directo con buena fe, tratar con respeto a companeros y clientes, cuidar los bienes de la empresa, mantener orden en el puesto de trabajo.
+- Art. 44: Obligaciones de seguridad. Usar los EPP asignados, reportar condiciones inseguras al jefe directo, participar en capacitaciones de seguridad, no operar equipos sin capacitacion.
+- Art. 45: Cuidado de bienes. El trabajador responde por los danos causados a bienes de la empresa cuando medie negligencia o descuido grave.
+- Art. 46: Confidencialidad. Guardar reserva de informacion tecnica, comercial y de clientes de ${E}. Esta obligacion se extiende por un plazo razonable despues del termino del contrato.
+- Art. 47: Actualizacion de datos personales. Informar cambios de domicilio, cargas familiares o sistema previsional en 5 dias habiles.
+- Art. 48: Ante un accidente del trabajo. Avisar de inmediato al jefe directo, no mover al accidentado si hay riesgo de lesion grave, coordinar traslado a ${OA}.
+- Art. 49: Trato y convivencia. Contribuir activamente a un ambiente de respeto y libre de violencia o acoso.
+- Art. 50: Capacitacion. Asistir a las actividades de capacitacion programadas por ${E}. La inasistencia injustificada constituye incumplimiento de este reglamento.
+- Art. 51: Uso de tecnologia corporativa. Solo para fines laborales. No instalar software no autorizado. No usar sistemas de la empresa para actividades personales de forma habitual.
+
+### Prohibiciones del trabajador (Arts. 52-56)
+- Art. 52: Prohibiciones de conducta. Trabajar horas extra sin autorizacion escrita, abandonar el puesto sin permiso, atender asuntos personales sistematicamente en horario de trabajo, prestar servicios a competidores de ${E} sin autorizacion.
+- Art. 53: Prohibiciones de seguridad. No usar EPP, desactivar sistemas de seguridad, trabajar bajo efectos de alcohol o drogas, introducir sustancias prohibidas en instalaciones de ${E}.
+- Art. 54: Prohibiciones sobre bienes. Usar bienes de ${E} para fines personales, sacar materiales sin autorizacion, dañar intencionalmente equipos o instalaciones. Art. 160 N6 CT.
+- Art. 55: Prohibicion de acoso. Toda conducta constitutiva de acoso laboral o sexual segun el Protocolo Ley Karin (Titulo VII de este reglamento). Sancion maxima aplicable.
+- Art. 56: Prohibiciones especificas del rubro ${R}. Conductas que comprometan la calidad del servicio educativo o la confidencialidad de informacion de alumnos o clientes.
+${instrCambios}`;
+
+        } else if (seccion === 5) {
+          prompt = `${BASE}
+
+Genera la SECCION 5 COMPACTA: Disciplina y Reclamos (Arts. 57-64).
+Perfil compacto: sistema disciplinario claro, gradual y juridicamente prudente. Sin automatismo hacia el despido.
+
+## TITULO VI: ORDEN, DISCIPLINA Y RECLAMOS (Arts. 57-64)
+- Art. 57: Sistema de sanciones. Gradualidad obligatoria: (1) amonestacion verbal del jefe directo, (2) amonestacion escrita con copia al expediente, (3) amonestacion escrita con copia a la Inspeccion del Trabajo, (4) multa de entre el 10% y el 25% de la remuneracion diaria. La aplicacion de cada nivel considera la gravedad del hecho y los antecedentes del trabajador. Art. 154 N10 CT.
+- Art. 58: Multas. No pueden exceder el 25% de la remuneracion diaria. Los fondos se destinan a bienestar de los trabajadores de ${E} o a capacitacion. Art. 157 CT.
+- Art. 59: Derecho a reclamo. El trabajador puede reclamar la sancion aplicada ante la Inspeccion del Trabajo dentro del tercer dia habil desde su notificacion. Antes de aplicar una multa, el empleador permite que el trabajador presente sus descargos.
+- Art. 60: Causales de termino sin derecho a indemnizacion. Art. 160 CT. Las 7 causales son situaciones que requieren verificacion y analisis previo, no consecuencias automaticas: (1) falta de probidad, acoso sexual o laboral, vias de hecho, injurias, conducta inmoral; (2) negociaciones prohibidas; (3) inasistencias injustificadas (2 dias seguidos, 2 lunes en el mes o 3 dias en total en el mes); (4) abandono del trabajo; (5) actos u omisiones que afecten la seguridad; (6) dano material intencional; (7) incumplimiento grave de las obligaciones del contrato. Ejemplos pertinentes para el rubro ${R}.
+- Art. 61: Otras causales de termino. Art. 159 CT: mutuo acuerdo, renuncia (aviso 30 dias), muerte del trabajador, vencimiento del plazo, conclusion del trabajo. Art. 161 CT: necesidades de la empresa, con preaviso de 30 dias e indemnizacion legal.
+- Art. 62: Investigacion disciplinaria. Ante una falta grave, ${E} inicia proceso interno: el trabajador conoce los cargos, tiene derecho a presentar descargos, y la resolucion se comunica en un plazo maximo de 10 dias habiles.
+- Art. 63: Reclamos y peticiones de trabajadores. El trabajador puede presentar reclamos escritos a la gerencia de ${E}. Respuesta en 5 dias habiles.
+- Art. 64: Relaciones laborales armonicas. ${E} promueve un ambiente de trabajo basado en el respeto mutuo y la comunicacion directa.
+${instrCambios}`;
+
+        } else if (seccion === 6) {
+          prompt = `${BASE}
+
+Genera la SECCION 6 COMPACTA: Higiene, Seguridad y Accidentes fusionadas (Arts. 65-76).
+Perfil compacto: rubro ${R} con bajo riesgo fisico. Reglas practicas y suficientes, sin desarrollo extenso de riesgos industriales que no aplican.
+
+## TITULO VII: HIGIENE, SEGURIDAD Y ACCIDENTES DEL TRABAJO (Arts. 65-76)
+
+### Higiene y Seguridad (Arts. 65-70)
+- Art. 65: Marco legal. Ley 16.744, DS 44/2023, Art. 184 CT (deber de proteccion del empleador), Ley 21.012.
+- Art. 66: Obligaciones del empleador. ${E} garantiza: condiciones seguras de trabajo para el rubro ${R}, provision de EPP necesarios sin costo, informacion sobre riesgos del puesto, investigacion de accidentes.
+- Art. 67: Obligaciones del trabajador. Usar EPP si se asignan, reportar condiciones inseguras, participar en capacitaciones, no operar equipos sin autorizacion.
+- Art. 68: Riesgos especificos del rubro ${R}. Los principales riesgos identificados en ${E} son: [para consultoría/capacitación: riesgo ergonómico por trabajo prolongado con computador, riesgo psicosocial por interacción con público, riesgo de caída en desplazamientos, iluminación inadecuada]. Medidas preventivas para cada uno.
+- Art. 69: Orden, limpieza y condiciones ambientales. Puesto de trabajo ordenado, pasillos despejados. Iluminacion, ventilacion y temperatura adecuadas. El trabajador que detecte una condicion inadecuada debe informar al jefe directo.
+- Art. 70: Prevencion de incendios y emergencias. Extintores vigentes, vias de evacuacion senalizadas, punto de encuentro designado. Simulacro de evacuacion al menos una vez al ano. Numero de emergencia interno: ${P}.
+
+### Accidentes del Trabajo (Arts. 71-76)
+- Art. 71: Definiciones. Accidente del trabajo: lesion a causa o con ocasion del trabajo. Accidente de trayecto: en el trayecto directo entre domicilio y trabajo. Enfermedad profesional: causada directamente por el ejercicio de la profesion. Art. 5 Ley 16.744.
+- Art. 72: Procedimiento ante un accidente. (1) Conservar la calma. (2) Avisar al jefe directo de inmediato. (3) Aplicar primeros auxilios basicos si se esta capacitado y es seguro. (4) No mover al accidentado si hay riesgo de lesion espinal. (5) Coordinar traslado a ${OA}. (6) Preservar el lugar del accidente para la investigacion.
+- Art. 73: Denuncia del accidente. DIAT (Denuncia Individual de Accidente del Trabajo) ante ${OA} dentro de 24 horas. Puede llenarla el trabajador, el empleador o el medico que presto la primera atencion.
+- Art. 74: Accidente de trayecto. Acreditar con parte policial, certificado medico de urgencia o declaracion jurada. Denuncia dentro de 24 horas.
+- Art. 75: Prestaciones del seguro. Atencion medica gratuita en ${OA}, medicamentos, rehabilitacion, subsidio equivalente al 100% de la remuneracion durante la incapacidad temporal. Ley 16.744.
+- Art. 76: Derecho a saber. Los trabajadores tienen derecho a conocer los riesgos de su puesto y las medidas preventivas adoptadas. Art. 21 DS 44/2023.
+${instrCambios}`;
+
+        } else if (seccion === 7) {
+          prompt = `${BASE}
+
+Genera la SECCION 7 COMPACTA: Protocolo Ley Karin completo en una sola seccion (Arts. 77-86).
+Ley 21.643, vigente desde el 1 de agosto de 2024. Arts. 211-A al 211-I CT. DS 2/2024.
+Perfil compacto: completo en contenido legal, sintetico en desarrollo.
+
+## TITULO VIII: PROTOCOLO LEY KARIN - PREVENCION DEL ACOSO LABORAL, SEXUAL Y VIOLENCIA EN EL TRABAJO (Arts. 77-86)
+- Art. 77: Fundamento y objetivo. Ley 21.643 vigente desde agosto 2024. ${E} se compromete a mantener un entorno laboral libre de violencia, con perspectiva de genero.
+- Art. 78: Ambito. Todos los trabajadores y trabajadoras de ${E} sin excepcion, incluyendo contratistas, proveedores, visitas y practicantes.
+- Art. 79: Definiciones. ACOSO SEXUAL: requerimientos sexuales no consentidos por cualquier medio que amenacen o perjudiquen la situacion laboral. Incluye: insinuaciones verbales o escritas, contacto fisico no deseado, envio de material sexual digital, comentarios de connotacion sexual. Caracteristica esencial: NO es consentido. ACOSO LABORAL: conductas de agresion u hostigamiento, reiteradas o unicas, que causen menoscabo, maltrato o humillacion. Incluye: aislamiento, humillacion publica, tareas degradantes, sobrecarga excesiva, acoso digital. VIOLENCIA POR TERCEROS: conductas de clientes, proveedores o usuarios que afecten a trabajadores/as en la prestacion de servicios.
+- Art. 80: Conductas que NO constituyen acoso. Evaluaciones objetivas de desempeño, instrucciones de trabajo, cambios organizativos, medidas disciplinarias ajustadas a derecho, ejercicio legitimo de facultades directivas.
+- Art. 81: Principios. Confidencialidad de los antecedentes, no represalia contra quien denuncia de buena fe, perspectiva de genero, imparcialidad del investigador, celeridad en los plazos.
+- Art. 82: Canal de denuncia. (a) Correo electronico designado por ${E}: ${P}. (b) Formulario fisico disponible en la gerencia. (c) Directamente ante la Inspeccion del Trabajo. La denuncia puede ser anonima.
+- Art. 83: Procedimiento y medidas de resguardo. Una vez recibida la denuncia: ${E} adopta medidas de resguardo inmediatas (separacion fisica, redistribucion de horario, trabajo remoto temporal) sin que esto implique prejuzgamiento. Dentro de los 5 dias habiles siguientes, inicia investigacion interna o deriva a la Inspeccion del Trabajo. La investigacion interna debe resolverse en maximo 30 dias habiles: investigador imparcial, notificacion de cargos al investigado, audiencias, analisis de pruebas, informe final con propuesta de medidas.
+- Art. 84: Sanciones. Segun la gravedad establecida en la investigacion: amonestacion, multa, traslado, o despido conforme al Art. 160 N1 b) (acoso sexual) o f) (acoso laboral) CT. Las represalias contra quien denuncia de buena fe tambien seran sancionadas.
+- Art. 85: Capacitacion. Al menos una capacitacion anual para todos los trabajadores/as sobre prevencion del acoso y violencia. Registro con lista de asistencia.
+- Art. 86: Derivacion a atencion psicologica. ${E} podra gestionar atencion psicologica para la persona afectada a traves de ${OA} u otros mecanismos disponibles.
+${instrCambios}`;
+
+        } else if (seccion === 8) {
+          prompt = `${BASE}
+
+Genera la SECCION 8 COMPACTA FINAL: TEMER + ISTAS21 + Cargas + Maternidad + Datos Personales + Disposiciones Finales (Arts. 87-98).
+Perfil compacto: cada materia con una regla clara y suficiente. Sin mini-capitulos doctrinales.
+
+## TITULO IX: NORMATIVAS ESPECIFICAS (Arts. 87-98)
+
+### TEMER, ISTAS21 y Manejo de Cargas (Arts. 87-90)
+- Art. 87: Trastornos musculoesqueleticos (TEMER). Protocolo SUSESO. En ${E}, dado el rubro ${R}, los principales factores son el trabajo prolongado con computador y posturas inadecuadas. Medidas: pausas activas minimo 2 veces por jornada, ajuste ergonomico del puesto, evaluacion periodica.
+- Art. 88: Riesgo psicosocial (ISTAS21). Protocolo SUSESO/ISTAS21 obligatorio. ${E} aplicara el cuestionario ISTAS21 al menos cada 2 anos, de forma anonima. Ante niveles de riesgo medio o alto, se diseñara un plan de accion.
+- Art. 89: Manejo manual de cargas. Ley 20.001 y DS 63/2005. En caso de que alguna tarea requiera manejo de cargas: hombres maximo 25 kg, mujeres maximo 20 kg, embarazadas maximo 5 kg. Tecnica correcta: rodillas dobladas, espalda recta, levantar con la fuerza de las piernas.
+- Art. 90: Capacitacion en seguridad. ${E} realiza al menos una capacitacion anual sobre: riesgos del puesto, prevencion de lesiones musculoesqueleticas, manejo del estres laboral, primeros auxilios basicos. Registro obligatorio.
+
+### Proteccion de la Maternidad y Paternidad (Arts. 91-93)
+- Art. 91: Fuero y descansos. Fuero maternal desde el embarazo hasta 1 ano post posnatal. Descanso prenatal: 6 semanas. Posnatal: 12 semanas. Posnatal parental adicional: 12 semanas transferibles en parte al padre. Permiso de paternidad: 5 dias pagados e irrenunciables. Arts. 194-197 CT, Ley 20.545.
+- Art. 92: Sala cuna, amamantamiento y restricciones. Sala cuna obligatoria si ${E} emplea 20 o mas trabajadoras. Amamantamiento: 1 hora diaria hasta los 2 anos del hijo. Las trabajadoras embarazadas o en lactancia no realizaran tareas de alto esfuerzo fisico ni trabajo nocturno, siendo trasladadas a funciones compatibles con igual remuneracion. Arts. 202-206 CT.
+- Art. 93: Otros permisos. Por enfermedad grave de hijo menor de 1 ano: licencia medica con subsidio. Art. 199 CT.
+
+### Proteccion de Datos Personales (Art. 94)
+- Art. 94: Datos personales de los trabajadores. Ley 21.719. ${E} trata datos de identificacion, laborales, de salud (solo para fines laborales) e imagenes de videovigilancia si aplica. Principios: licitud, finalidad, proporcionalidad. Derechos ARCO: el trabajador puede acceder, rectificar, cancelar u oponerse al tratamiento, dirigiendose a ${P}. Plazo de respuesta: 15 dias habiles.
+
+## TITULO X: DISPOSICIONES FINALES (Arts. 95-98)
+- Art. 95: Vigencia. Este reglamento entra en vigor 30 dias despues de ser puesto en conocimiento de los trabajadores, salvo objecion fundada de la Inspeccion del Trabajo. Art. 156 CT.
+- Art. 96: Difusion. ${E} entrega una copia fisica o digital al ingreso. El trabajador firma cargo de recepcion. El reglamento esta disponible en cartelera.
+- Art. 97: Modificaciones. Se realizaran conforme al procedimiento del Art. 6 de este reglamento.
+- Art. 98: Normativa supletoria. En lo no previsto, se aplica el Codigo del Trabajo y las normas de la Direccion del Trabajo.
+
+---
+
+## NORMATIVA DE REFERENCIA
+| Norma | Materia |
+|-------|---------|
+| Codigo del Trabajo DFL N1/2003 | Marco general laboral |
+| Ley N16.744 | Accidentes del trabajo y EEPP |
+| DS N44/2023 | Seguridad y Salud Ocupacional |
+| Ley N21.643 Ley Karin | Prevencion acoso laboral, sexual y violencia (2024) |
+| Ley N21.719 | Proteccion de datos personales |
+| Ley N21.561 | Reduccion jornada laboral (42h desde abril 2026) |
+| Ley N20.001 / DS 63/2005 | Manejo manual de cargas |
+| Protocolo TEMER SUSESO | Trastornos musculoesqueleticos |
+| Protocolo ISTAS21 SUSESO | Riesgos psicosociales |
+| Ley N20.545 | Posnatal parental |
+| DS N2/2024 | Politica Nacional de Seguridad y Salud |
+
+---
+
+## DECLARACION DE APROBACION
+
+El presente Reglamento Interno de ${E} ha sido elaborado en cumplimiento del articulo 153 del Codigo del Trabajo.
+
+${RL}
+Representante Legal | ${E} | RUT: ${RUT}
+${DIR}
+
+*Elaborado: ${new Date().toLocaleDateString('es-CL')} - Version 01/${new Date().getFullYear()}*
+${instrCambios}`;
+
+        } else {
+          return res.status(400).json({ error: `Seccion ${seccion} no valida para perfil compacto (1-8).` });
+        }
+
+      // ═══════════════════════════════════════════
+      // ARQUITECTURA INTERMEDIA — 12 SECCIONES
+      // ═══════════════════════════════════════════
+      } else if (NIVEL === 'intermedio') {
+
+        const INDICE_I = `## INDICE GENERAL
+| N | TITULO | ARTICULOS |
+|---|--------|-----------|
+| I | Disposiciones Generales e Ingreso | 1-16 |
+| II | Jornada de Trabajo | 17-26 |
+| III | Horas Extra, Descansos y Licencias | 27-36 |
+| IV | Remuneraciones | 37-46 |
+| V | Obligaciones y Prohibiciones | 47-60 |
+| VI | Disciplina y Reclamos | 61-70 |
+| VII | Higiene y Seguridad | 71-82 |
+| VIII | Accidentes del Trabajo y EEPP | 83-92 |
+| IX | Protocolo Ley Karin | 93-104 |
+| X | TEMER, ISTAS21 y Manejo de Cargas | 105-114 |
+| XI | Maternidad, Paternidad y Datos | 115-122 |
+| XII | Disposiciones Finales | 123-126 |`;
+
+        const seccionesIntermedias = {
+          1: `Portada + Titulo I Disposiciones Generales + Titulo II Ingreso (Arts. 1-16). ${INDICE_I}. Disposiciones: Arts. 1-7 (objeto, definiciones esenciales, definiciones operativas, valor juridico, entrega, vigencia, normativa supletoria). Ingreso: Arts. 8-16 (requisitos documentales pertinentes para ${R}, examenes preocupacionales segun riesgo del rubro, celebracion del contrato Art. 9 CT, contenido minimo Art. 10 CT, modificaciones, menores, documentos falsos, actualizacion antecedentes, inclusion laboral Ley 21.015). NO usar periodo de prueba como clausula general.`,
+          2: `Titulo III Jornada de Trabajo (Arts. 17-26). Jornada 42h Ley 21.561 con horarios de ${E} (${TURN}), control de asistencia, ausentismo (aviso dentro de las primeras 2 horas de iniciada la jornada), atrasos, permisos durante jornada, colacion Art. 34 CT, teletrabajo Ley 21.220, cambios de turno.`,
+          3: `Titulo IV Horas Extra, Descansos y Licencias (Arts. 27-36). Horas extra: autorizacion previa escrita, limite 2h, pago 50% Art. 32 CT (distinguir autorizacion/sancion disciplinaria/tratamiento del tiempo trabajado - no negar el pago de forma absoluta). Descanso semanal, feriado 15 dias Art. 67 CT, vacaciones progresivas, fraccionamiento, feriado proporcional, licencias medicas, permisos por fallecimiento Art. 66 CT.`,
+          4: `Titulo V Remuneraciones (Arts. 37-46). Definicion, componentes, fecha y forma de pago, ingreso minimo, gratificaciones, descuentos legales, liquidacion, igualdad de remuneraciones Art. 62 bis CT, reclamo por remuneraciones, asignaciones no remuneracionales, finiquito Art. 163 CT.`,
+          5: `Titulo VI Obligaciones y Prohibiciones (Arts. 47-60). Obligaciones: lista pertinente para ${R} (no maximalista), seguridad, cuidado de bienes, confidencialidad, actualizacion de datos (aviso inasistencia: primeras 2 horas de la jornada), ante accidente, convivencia, capacitacion, tecnologia. Prohibiciones: laborales, de seguridad, sobre bienes, control asistencia, sustancias, acoso (remision a Ley Karin), especificas del rubro ${R}.`,
+          6: `Titulo VII Disciplina y Reclamos (Arts. 61-70). Sistema gradual de sanciones (verbal/escrita/con copia Inspeccion/multa Art. 154 N10 CT), multas Art. 157 CT, derecho a reclamo, causales Art. 160 CT (con gradualidad, no automatismo), causales Art. 161 CT, causales Art. 159 CT, investigacion disciplinaria interna, reclamos internos, relaciones laborales armonicas.`,
+          7: `Titulo VIII Higiene y Seguridad (Arts. 71-82). Marco legal (Ley 16.744, DS 44/2023, Art. 184 CT), obligaciones del empleador y trabajador, identificacion de riesgos del rubro ${R} con controles jerarquicos, EPP pertinentes, señalizacion, orden y limpieza, prevencion incendios, primeros auxilios, CPHS si corresponde (25+ trabajadores), politica alcohol y drogas, derecho a saber Art. 21 DS 44/2023.`,
+          8: `Titulo IX Accidentes del Trabajo y EEPP (Arts. 83-92). Definiciones Art. 5 Ley 16.744, procedimiento inmediato ante accidente (7 pasos, traslado a ${OA}), DIAT dentro de 24h, accidente de trayecto, investigacion 24-48h DS 44/2023, accidentes graves y fatales (notificacion Inspeccion del Trabajo y SEREMI de Salud 24h), enfermedades profesionales DIEP, prestaciones Ley 16.744, estadisticas de accidentabilidad, rehabilitacion y reincorporacion.`,
+          9: `Titulo X Protocolo Ley Karin (Arts. 93-104). Ley 21.643 agosto 2024, Arts. 211-A al 211-I CT. Fundamento y objetivo, ambito (todos los trabajadores + contratistas + visitas), definiciones (acoso sexual, acoso laboral, violencia por terceros, conductas que NO constituyen acoso), principios (confidencialidad, no represalia, perspectiva de genero, imparcialidad, celeridad), canal de denuncia, medidas de resguardo inmediatas, procedimiento de investigacion interna 30 dias habiles, investigacion por Inspeccion del Trabajo, sanciones graduales, capacitacion anual.`,
+          10: `Titulo XI TEMER, ISTAS21 y Manejo de Cargas (Arts. 105-114). TEMER: factores de riesgo, evaluacion anual, pausas activas, vigilancia medica con ${OA}. ISTAS21: 5 dimensiones, cuestionario cada 2 anos anonimo, plan de accion por nivel de riesgo. Manejo de cargas: Ley 20.001 y DS 63/2005, limites de peso (hombres 25kg, mujeres 20kg, embarazadas 5kg), tecnica correcta 7 pasos, capacitacion anual.`,
+          11: `Titulo XII Maternidad, Paternidad y Datos Personales (Arts. 115-122). Maternidad: fuero maternal, descansos prenatal y posnatal Arts. 195-197 CT, permiso de paternidad 5 dias, sala cuna 20+ trabajadoras, amamantamiento, restricciones embarazo y lactancia Art. 202 CT, permiso por enfermedad grave hijo menor 1 ano. Datos personales: Ley 21.719, tipos de datos que trata ${E}, principios, derechos ARCO con plazo 15 dias habiles.`,
+          12: `Titulo XIII Disposiciones Finales (Arts. 123-126) + Normativa de Referencia + Declaracion de Aprobacion. Vigencia Art. 156 CT (30 dias), difusion y entrega con firma de cargo, modificaciones, normativa supletoria. Tabla normativa completa. Declaracion firmada por ${RL}.`
+        };
+
+        if (seccionesIntermedias[seccion]) {
+          prompt = `${BASE}
+
+Genera la SECCION ${seccion} - PERFIL INTERMEDIO.
+
+${INDICE_I}
+
+Instrucciones especificas para esta seccion:
+${seccionesIntermedias[seccion]}
+
+Criterio: desarrollo moderado. Una regla clara y aplicable por articulo. Sin mini-capitulos doctrinales. Sin inflado.
+${instrCambios}`;
+        } else {
+          return res.status(400).json({ error: `Seccion ${seccion} no valida para perfil intermedio (1-12).` });
+        }
+
+      // ═══════════════════════════════════════════
+      // ARQUITECTURA EXTENSA — 16 SECCIONES
+      // ═══════════════════════════════════════════
+      } else {
+
+        const INDICE_E = `## INDICE GENERAL
 | N | TITULO | ARTICULOS |
 |---|--------|-----------|
 | I | Disposiciones Generales | 1-8 |
@@ -115,347 +429,44 @@ ${CRITERIO}`;
 | XI | Accidentes del Trabajo y EEPP | 91-100 |
 | XII | Ley Karin - Parte 1 | 101-107 |
 | XIII | Ley Karin - Parte 2 | 108-114 |
-| XIV | TEMER - ISTAS21 - Manejo de Cargas | 115-128 |
+| XIV | TEMER, ISTAS21 y Manejo de Cargas | 115-128 |
 | XV | Maternidad y Datos Personales | 129-139 |
 | XVI | Disposiciones Finales | 140-142 |`;
 
-    let prompt = '';
+        const seccionesExtensas = {
+          1: `Portada + ${INDICE_E} + Titulo I Disposiciones Generales (Arts. 1-8). Objeto y ambito Art. 153 CT, definicion y valor juridico del reglamento, definiciones de empleador/trabajador/empresa Arts. 3 y 7 CT, jefe inmediato y estructura jerarquica, definiciones economicas (remuneracion/sueldo/gratificacion), definiciones operativas (jornada/turno/hora extra/feriado/licencia), entrega y recepcion con firma, modificacion del reglamento 30 dias. Empresa: ${E.toUpperCase()}, RUT: ${RUT}, Region: ${REG}, OA: ${OA}, Rep. Legal: ${RL}.`,
+          2: `Titulo II Del Ingreso y Contratacion (Arts. 9-18). Requisitos de ingreso pertinentes para ${R} (esenciales / condicionales por cargo / no maximalistas), examenes preocupacionales con ${OA} segun riesgo real del rubro, acompanamiento al inicio (NO periodo de prueba como clausula general), celebracion del contrato Art. 9 CT, contenido minimo Art. 10 CT, modificaciones, menores, documentos falsos Art. 160 N1 CT, actualizacion antecedentes 5 dias, inclusion laboral Ley 21.015.`,
+          3: `Titulo III Jornada de Trabajo Parte 1 (Arts. 19-26). Jornada 42h Ley 21.561 desde abril 2026 (reduccion progresiva a 40h en 2028), horarios de ${E} segun ${TURN}, control de asistencia, ausentismo (aviso dentro de las primeras 2 horas de iniciada la jornada - COHERENCIA CRITICA), atrasos, permisos durante jornada, colacion Art. 34 CT, teletrabajo Ley 21.220, cambios de turno 30 dias anticipacion.`,
+          4: `Titulo IV Jornada Horas Extra y Descansos (Arts. 27-34). Horas extra: solo con autorizacion escrita previa, limite 2h diarias Arts. 30-31 CT. IMPORTANTE: distinguir claramente entre (a) exigencia interna de autorizacion, (b) consecuencias disciplinarias por incumplir, (c) tratamiento del tiempo efectivamente trabajado - NO negar el pago de forma absoluta. Pago 50% recargo Art. 32 CT. Descanso semanal Art. 38 CT, feriado 15 dias Art. 67 CT, vacaciones progresivas Art. 68 CT, fraccionamiento, feriado proporcional Art. 73 CT, permisos por fallecimiento tabla completa Art. 66 CT con fuero laboral 1 mes.`,
+          5: `Titulo V De las Remuneraciones (Arts. 35-44). Definicion y componentes Arts. 41-42 CT, fecha y forma de pago dia 30, ingreso minimo, gratificaciones modalidades Arts. 46-49 CT, descuentos legales limite 30% Art. 58 CT, liquidacion de sueldo, igualdad de remuneraciones Art. 62 bis CT, reclamo 30 dias, asignaciones no remuneracionales, finiquito ratificacion ministro de fe 5 dias Art. 163 CT.`,
+          6: `Titulo VI Obligaciones del Trabajador (Arts. 45-54). Lista equilibrada y pertinente para ${R}. No maximalista. Obligaciones de conducta, seguridad (EPP, reportar condiciones inseguras), cuidado de bienes (responsabilidad proporcional a negligencia), confidencialidad razonable post-contrato, actualizacion de antecedentes (aviso inasistencia: primeras 2 horas de la jornada - COHERENCIA CRITICA), procedimiento ante accidente traslado a ${OA}, trato y convivencia, capacitacion obligatoria, tecnologia corporativa.`,
+          7: `Titulo VII Prohibiciones del Trabajador (Arts. 55-62). Redaccion sobria y proporcional. Prohibiciones laborales pertinentes para ${R}, de seguridad (EPP, operar sin capacitacion, alcohol y drogas con facultad de control), sobre bienes Art. 160 N6 CT, control de asistencia (marcar tarjeta ajena como falta grave Art. 160 N1 CT), sustancias (control aleatorio con protocolo), acoso y violencia (remision Ley Karin), especificas del rubro ${R}.`,
+          8: `Titulo VIII Orden y Disciplina (Arts. 63-72). Sistema gradual de sanciones con gradualidad explicita (nunca automatismo al despido): verbal/escrita/con copia Inspeccion/multa 10-25% Art. 154 N10 CT. Multas destino bienestar Art. 157 CT. Derecho a reclamo 3er dia habil. Causales Art. 160 CT (las 7 causales como situaciones que requieren analisis, con ejemplos para ${R}). Causales Art. 161 CT, Art. 159 CT. Investigacion disciplinaria (10-15 dias habiles, derecho a descargos), reclamos internos 5 dias, relaciones laborales armonicas.`,
+          9: `Titulo IX Higiene y Seguridad Parte 1 (Arts. 73-82). Marco normativo Ley 16.744, DS 44/2023 (reemplaza DS 40 y DS 54), Art. 184 CT. Obligaciones del empleador (Art. 184 CT). Obligaciones del trabajador en seguridad (proporcionales al riesgo real del rubro ${R}). Identificacion de riesgos: matriz IPER con 5-7 riesgos principales del rubro ${R} y controles jerarquicos (eliminacion, sustitucion, ingenieria, administrativo, EPP). EPP obligatorio para ${R}. Señalizacion, orden y limpieza. CPHS (25+ trabajadores, si no aplica: designar responsable interno). Departamento de Prevencion (100+ trabajadores, si no aplica indicar responsable interno). Politica alcohol y drogas con control aleatorio.`,
+          10: `Titulo X Higiene y Seguridad Parte 2 (Arts. 83-90). Prevencion incendios (extintores vigentes, simulacros anuales, brigada, evacuacion paso a paso). Primeros auxilios (botiquines, trabajador certificado por turno, procedimiento ante accidente). Higiene industrial (iluminacion, ruido 85dB, temperatura 10-30 grados, ventilacion, ergonomia). Capacitaciones obligatorias (induccion al ingreso, anual en riesgos del rubro ${R}, registro). Riesgos especificos del rubro ${R}: 6-8 riesgos propios con descripcion, situacion y medida preventiva. PTS para tareas de mayor riesgo. Inspecciones periodicas y fiscalizacion. Derecho a saber Art. 21 DS 44/2023.`,
+          11: `Titulo XI Accidentes del Trabajo y EEPP (Arts. 91-100). Definiciones Art. 5 Ley 16.744. Procedimiento ante accidente: 7 pasos claros con traslado a ${OA}. DIAT dentro de 24h. Accidente de trayecto (acreditacion). Investigacion 24-48h DS 44/2023 (causas inmediatas/basicas/raiz, medidas correctivas). Accidentes graves y fatales (notificacion Inspeccion del Trabajo y SEREMI 24h, suspension faenas). Enfermedades profesionales DIEP. Prestaciones Ley 16.744 (atencion gratuita, subsidio 100%, rehabilitacion). Estadisticas (frecuencia, gravedad, accidentabilidad). Rehabilitacion y reincorporacion gradual con restricciones medicas.`,
+          12: `Titulo XII Protocolo Ley Karin Parte 1 (Arts. 101-107). Ley 21.643 agosto 2024, Arts. 211-A al 211-I CT, DS 2/2024. Fundamento y objetivo (perspectiva de genero, compromiso de ${E}). Ambito (todos los trabajadores + contratistas + visitas). Definicion acoso sexual (ejemplos verbales, fisicos, digitales, visuales; caracteristica: no consentido; Art. 2 CT). Definicion acoso laboral (conductas unicas o reiteradas que causen menoscabo o humillacion; Art. 2 CT). Violencia por terceros. Principios (confidencialidad, no represalia, perspectiva de genero, buena fe, imparcialidad, celeridad). Canal de denuncia (correo ${P}, formulario fisico, Inspeccion del Trabajo; anonimato).`,
+          13: `Titulo XII Protocolo Ley Karin Parte 2 (Arts. 108-114). Procedimiento de denuncia (contenido minimo, constancia recepcion, inicio 5 dias habiles, opcion Inspeccion del Trabajo). Medidas de resguardo inmediatas (separacion fisica, redistribucion jornada, teletrabajo temporal, derivacion psicologica a traves de ${OA}, sin prejuzgamiento). Investigacion interna (investigador imparcial, notificacion cargos, audiencias, pruebas, informe final 30 dias habiles maximos). Investigacion por Inspeccion del Trabajo (cooperacion plena, adoptar medidas). Sanciones graduales (amonestacion, multa, traslado, despido Art. 160 N1 b) y f) CT; represalias sancionadas). Capacitacion anual obligatoria. Conductas que NO constituyen acoso (evaluaciones objetivas, instrucciones, medidas disciplinarias ajustadas a derecho).`,
+          14: `Titulo XIV TEMER, ISTAS21 y Manejo de Cargas (Arts. 115-128). TEMER (115-118): marco legal SUSESO, factores de riesgo del rubro ${R}, evaluacion anual RULA/OCRA, medidas preventivas (rotacion, pausas activas 2 veces por jornada, rediseno ergonomico), vigilancia medica con ${OA}. ISTAS21 (119-121): marco legal SUSESO/ISTAS21 obligatorio 10+ trabajadores DS 44/2023, 5 dimensiones del riesgo psicosocial, cuestionario cada 2 anos anonimo, plan de accion por nivel de riesgo, CPHS participa. Manejo de Cargas (122-128): Ley 20.001 y DS 63/2005, limites (hombres 25kg, mujeres 20kg, embarazadas 5kg), tecnica correcta 7 pasos, medios mecanicos, restricciones embarazadas, capacitacion anual practica, pausas de recuperacion DS 63/2005, seguimiento CPHS.`,
+          15: `Titulo XV Maternidad, Paternidad y Datos Personales (Arts. 129-139). Maternidad (129-136): marco legal Arts. 194-208 CT Ley 20.545, fuero maternal hasta 1 ano post posnatal, descansos (prenatal 6 semanas, posnatal 12 semanas, parental 12 semanas transferibles) Arts. 195-197 CT, permiso de paternidad 5 dias irrenunciable, sala cuna 20+ trabajadoras, amamantamiento 1 hora diaria hasta 2 anos Arts. 203-206 CT, restricciones embarazo y lactancia Art. 202 CT, enfermedad grave hijo menor 1 ano Art. 199 CT, permisos por fallecimiento Art. 66 CT. Datos Personales Ley 21.719 (137-139): tipos de datos que trata ${E}, principios (licitud, finalidad, proporcionalidad, seguridad, transparencia), derechos ARCO con responsable designado ${P} y plazo 15 dias habiles.`,
+          16: `Titulo XVI Disposiciones Finales (Arts. 140-142) + Normativa de Referencia completa con tabla (16 normas: CT, Ley 16.744, DS 44/2023, Ley Karin 21.643, Ley 21.719, Ley 21.561, Ley 20.001, DS 63/2005, Ley 21.012, Ley 21.015, Ley 21.220, TEMER SUSESO, ISTAS21 SUSESO, Ley 20.545, DS 2/2024, DS 54/1969) + Declaracion de Aprobacion firmada por ${RL} con RUT ${RUT}. Vigencia Art. 156 CT (30 dias), difusion y entrega con firma de cargo, modificaciones y normativa supletoria.`
+        };
 
-    if (tipo === 'nuevo' && seccion) {
+        if (seccionesExtensas[seccion]) {
+          prompt = `${BASE}
 
-      // Si viene de auditoria (Opcion B), incluir cambios como instrucciones adicionales
-      const instrCambios = CAMBIOS_AUDITORIA
-        ? `\n\nINSTRUCCIONES ADICIONALES (cambios de auditoria a incorporar en esta seccion):\n${CAMBIOS_AUDITORIA}`
-        : '';
+Genera la SECCION ${seccion} - PERFIL EXTENSO. Desarrollo completo con protocolos detallados.
 
-      if (seccion === 1) {
-        prompt = `${BASE}
+${INDICE_E}
 
-Genera la SECCION 1 del RIOHS: portada, indice y Titulo I (Arts. 1-8).
+Instrucciones especificas para esta seccion:
+${seccionesExtensas[seccion]}
 
-PORTADA:
-# REGLAMENTO INTERNO DE ORDEN, HIGIENE Y SEGURIDAD
-# ${E.toUpperCase()}
-RUT: ${RUT} | Rubro: ${R} | Region: ${REG}
-Direccion: ${DIR} | Organismo Administrador: ${OA}
-Representante Legal: ${RL} | Version 01 - ${new Date().getFullYear()}
-
-En cumplimiento del articulo 153 del Codigo del Trabajo (DFL N1/2003), ${E} establece el presente Reglamento Interno de Orden, Higiene y Seguridad para regular las condiciones, derechos, obligaciones y prohibiciones de todos sus trabajadores. Este reglamento es de cumplimiento obligatorio desde el primer dia de contratacion.
-
-${INDICE}
-
-## TITULO I: DISPOSICIONES GENERALES
-Redacta los Articulos 1 al 8. Extensión proporcional al perfil ${NIVEL}.
-- Art. 1: Objeto y ambito. Que regula, a quienes aplica, caracter obligatorio. Art. 153 CT.
-- Art. 2: Definicion y valor juridico del reglamento. Proceso de aprobacion ante la Inspeccion del Trabajo.
-- Art. 3: Definiciones de empleador, trabajador y empresa. Arts. 3 y 7 CT.
-- Art. 4: Jefe inmediato, cargo, faena y dependencia jerarquica en ${E}.
-- Art. 5: Remuneracion, sueldo, gratificacion y sobresueldo.
-- Art. 6: Jornada, turno, hora extraordinaria, feriado y licencia medica.
-- Art. 7: Entrega y recepcion del reglamento. Firma de cargo. Disponibilidad en carteleras.
-- Art. 8: Modificacion del reglamento. Procedimiento, plazos y participacion sindical si existe.
+Criterio: desarrollo completo y detallado. Cada articulo minimo 6-8 lineas. Procedimientos con pasos numerados. Tablas donde sea util.
 ${instrCambios}`;
-
-      } else if (seccion === 2) {
-        prompt = `${BASE}
-
-Genera la SECCION 2 - TITULO II: DEL INGRESO Y CONTRATACION (Arts. 9-18). Perfil: ${NIVEL}.
-
-CRITERIO ESPECIFICO: Los documentos de ingreso (Art. 9) deben ser pertinentes para el rubro ${R} y el tamano de la empresa (${TRAB||'sin dato'} trabajadores). No listes documentos de forma maximalista. Usa criterio de pertinencia real.
-
-- Art. 9: Requisitos de ingreso. Lista documentos esenciales para ${R}. Diferencia opcionales por cargo. No incluyas documentos discutibles sin fundamento.
-- Art. 10: Examenes preocupacionales con ${OA}. Tipos segun cargo y riesgo real del rubro.
-- Art. 11: Periodo de prueba.
-- Art. 12: Celebracion del contrato. Plazos: 15 dias / 5 dias por obra. Art. 9 CT.
-- Art. 13: Contenido minimo del contrato. Literales a) hasta i). Art. 10 CT.
-- Art. 14: Modificaciones al contrato.
-- Art. 15: Contrato de trabajadores menores de edad. Art. 13 CT.
-- Art. 16: Documentos falsos al ingreso. Art. 160 N1 CT.
-- Art. 17: Actualizacion de antecedentes en 5 dias habiles.
-- Art. 18: Inclusion laboral Ley 21.015.
-${instrCambios}`;
-
-      } else if (seccion === 3) {
-        prompt = `${BASE}
-
-Genera la SECCION 3 - TITULO III: JORNADA DE TRABAJO - PARTE 1 (Arts. 19-26). Perfil: ${NIVEL}.
-
-DATO CRITICO DE COHERENCIA: La jornada ordinaria es de 42 horas semanales (Ley 21.561, vigente desde abril 2026, reduccion progresiva a 40h en 2028). Este dato es fijo y debe reflejarse exactamente igual en todas las secciones.
-
-- Art. 19: Jornada ordinaria. 42 horas semanales. Distribucion en ${E} segun ${TURN}. Tabla de horarios si corresponde.
-- Art. 20: Control de asistencia. Medios de registro. Consecuencias de no marcar.
-- Art. 21: Ausentismo. Aviso en 24 horas. Art. 160 N3 CT. Redaccion sin automatismo sancionatorio.
-- Art. 22: Atrasos. Registro y descuento proporcional. Gradualidad de la sancion.
-- Art. 23: Permisos durante la jornada. Solicitud escrita, autorizacion del jefe directo.
-- Art. 24: Colacion. No computable como jornada. Art. 34 CT.
-- Art. 25: Teletrabajo. Ley 21.220. Si no aplica actualmente, redactar brevemente que la empresa podra acordarlo por escrito cuando corresponda.
-- Art. 26: Cambios de turno. 30 dias de anticipacion.
-${instrCambios}`;
-
-      } else if (seccion === 4) {
-        prompt = `${BASE}
-
-Genera la SECCION 4 - TITULO IV: HORAS EXTRAORDINARIAS Y DESCANSOS (Arts. 27-34). Perfil: ${NIVEL}.
-
-COHERENCIA: La jornada ordinaria es de 42 horas semanales. Las horas extras se calculan sobre esa base.
-
-- Art. 27: Horas extraordinarias. Acuerdo escrito previo. Limite 2h diarias. Arts. 30-31 CT.
-- Art. 28: Pago de horas extra. Recargo 50%. Sin autorizacion escrita no hay derecho a pago. Art. 32 CT.
-- Art. 29: Descanso semanal. Domingo como regla general. Excepciones para el rubro ${R}. Art. 38 CT.
-- Art. 30: Feriado anual. 15 dias habiles. Irrenunciable. No compensable en dinero durante la vigencia del contrato. Art. 67 CT.
-- Art. 31: Vacaciones progresivas. 1 dia adicional por cada 3 anos. Art. 68 CT.
-- Art. 32: Fraccionamiento y acumulacion del feriado. Hasta 2 periodos. Art. 70 CT.
-- Art. 33: Feriado proporcional al termino del contrato. Art. 73 CT.
-- Art. 34: Permisos por fallecimiento. Tabla completa: hijo (10 dias), conyuge/conviviente (7 dias), hijo no nato (7 dias habiles), padre/madre (4 dias). Fuero laboral 1 mes. Art. 66 CT.
-${instrCambios}`;
-
-      } else if (seccion === 5) {
-        prompt = `${BASE}
-
-Genera la SECCION 5 - TITULO V: DE LAS REMUNERACIONES (Arts. 35-44). Perfil: ${NIVEL}.
-
-- Art. 35: Definicion de remuneracion y componentes. Que NO es remuneracion. Arts. 41-42 CT.
-- Art. 36: Fecha y forma de pago. Dia 30 o habil anterior. Deposito bancario. Anticipo maximo 25%.
-- Art. 37: Ingreso minimo. Proporcionalidad en jornadas parciales.
-- Art. 38: Gratificaciones. Modalidades: 30% utilidades o 25% remuneracion anual. Arts. 46-49 CT.
-- Art. 39: Descuentos legales. Cotizaciones, impuesto, cuotas sindicales. Limite 30%. Art. 58 CT.
-- Art. 40: Liquidacion de sueldo. Entrega, componentes, firma.
-- Art. 41: Igualdad de remuneraciones. Art. 62 bis CT. Procedimiento de reclamo interno.
-- Art. 42: Reclamo por remuneraciones. Plazo de respuesta 30 dias.
-- Art. 43: Asignaciones no remuneracionales. Viaticos, colacion, movilizacion.
-- Art. 44: Finiquito. Ratificacion ante ministro de fe. Plazo: 5 dias habiles. Art. 163 CT.
-${instrCambios}`;
-
-      } else if (seccion === 6) {
-        prompt = `${BASE}
-
-Genera la SECCION 6 - TITULO VI: OBLIGACIONES DEL TRABAJADOR (Arts. 45-54). Perfil: ${NIVEL}.
-
-CRITERIO: Redacta de forma equilibrada. Prioriza las obligaciones mas relevantes para el rubro ${R} y el tamano de ${E}. Evita listas excesivamente largas o tono de control exagerado. El objetivo es colaboracion y responsabilidad, no vigilancia.
-
-- Art. 45: Obligaciones generales. Literales pertinentes para ${R}: puntualidad, registrar asistencia, avisar ausencias en 24h, buena fe, respeto, cuidar bienes, mantener orden, denunciar irregularidades.
-- Art. 46: Obligaciones de seguridad. Uso de EPP, reportar condiciones inseguras, participar en capacitaciones.
-- Art. 47: Cuidado de bienes. Responsabilidad proporcional segun negligencia.
-- Art. 48: Confidencialidad. Informacion tecnica, comercial y financiera. Vigencia razonable post-contrato.
-- Art. 49: Actualizacion de antecedentes. Cambios en 5 dias habiles.
-- Art. 50: Procedimiento ante accidente del trabajo. Paso a paso claro. Traslado a ${OA}.
-- Art. 51: Trato y convivencia. Respeto mutuo, ambiente libre de violencia.
-- Art. 52: Obligaciones especificas del rubro ${R}. Solo las mas relevantes y aplicables.
-- Art. 53: Capacitacion obligatoria. Asistencia y registro.
-- Art. 54: Uso de tecnologia corporativa. Solo fines laborales.
-${instrCambios}`;
-
-      } else if (seccion === 7) {
-        prompt = `${BASE}
-
-Genera la SECCION 7 - TITULO VII: PROHIBICIONES DEL TRABAJADOR (Arts. 55-62). Perfil: ${NIVEL}.
-
-CRITERIO: Redacta las prohibiciones de forma sobria y juridicamente prudente. Cada prohibicion debe tener fundamento claro y ser proporcional a la realidad de ${E}.
-
-- Art. 55: Prohibiciones laborales. Horas extra sin autorizacion, abandonar puesto sin permiso, atender asuntos personales en jornada, cargos en empresas competidoras.
-- Art. 56: Prohibiciones de seguridad. No usar EPP, operar sin capacitacion, desactivar sistemas de seguridad, trabajar bajo efectos de alcohol o drogas.
-- Art. 57: Prohibiciones sobre bienes de la empresa. Art. 160 N6 CT.
-- Art. 58: Prohibiciones en control de asistencia. Marcar tarjeta ajena como falta grave. Art. 160 N1 CT.
-- Art. 59: Sustancias prohibidas. Alcohol y drogas en instalaciones. Facultad de control aleatorio con protocolo.
-- Art. 60: Prohibicion de acoso y violencia. Remision al Titulo XII - Ley Karin.
-- Art. 61: Otras prohibiciones pertinentes para ${E}.
-- Art. 62: Prohibiciones especificas del rubro ${R}. Solo las mas relevantes.
-${instrCambios}`;
-
-      } else if (seccion === 8) {
-        prompt = `${BASE}
-
-Genera la SECCION 8 - TITULO VIII: ORDEN Y DISCIPLINA (Arts. 63-72). Perfil: ${NIVEL}.
-
-CRITERIO CRITICO DE CALIDAD: Las sanciones deben tener gradualidad explicita y razonabilidad juridica. NUNCA redactes como si cualquier incumplimiento derivara automaticamente en despido. El reglamento puede regular conductas pero no puede sonar como una maquina sancionatoria. Toda aplicacion de sancion requiere analisis del caso concreto.
-
-- Art. 63: Sistema de sanciones. Gradualidad: amonestacion verbal, escrita, escrita con copia a la Inspeccion del Trabajo, multa. Art. 154 N10 CT.
-- Art. 64: Multas. Maximo 25% de la remuneracion diaria. Destino: bienestar de los trabajadores o capacitacion. Art. 157 CT.
-- Art. 65: Derecho a reclamo. Tercer dia habil desde notificacion. Inspeccion del Trabajo.
-- Art. 66: Causales Art. 160 CT. Las 7 causales con ejemplos concretos para ${R}. Redactar como situaciones que requieren analisis previo y verificacion, no como consecuencias automaticas.
-- Art. 67: Causal Art. 161 CT. Necesidades de la empresa. Preaviso 30 dias. Indemnizacion legal.
-- Art. 68: Causales Art. 159 CT. Mutuo acuerdo, renuncia, muerte, vencimiento del plazo, conclusion de obra.
-- Art. 69: Finiquito y certificado de trabajo. Art. 162 CT.
-- Art. 70: Peticiones y reclamos internos. Plazo de respuesta 5 dias habiles.
-- Art. 71: Investigacion disciplinaria interna. Derecho a conocer cargos y presentar descargos. Plazo: 15 dias habiles.
-- Art. 72: Relaciones laborales armonicas. Compromiso de ${E} con un ambiente de trabajo digno y respetuoso.
-${instrCambios}`;
-
-      } else if (seccion === 9) {
-        prompt = `${BASE}
-
-Genera la SECCION 9 - TITULO IX: HIGIENE Y SEGURIDAD - PARTE 1 (Arts. 73-82). Perfil: ${NIVEL}.
-
-- Art. 73: Marco normativo. Ley 16.744, DS 44/2023 (reemplaza DS 40 y DS 54), Ley 21.012, Art. 184 CT.
-- Art. 74: Obligaciones del empleador. Art. 184 CT: condiciones seguras, EPP sin costo, IPER actualizada, capacitacion, investigar accidentes.
-- Art. 75: Obligaciones del trabajador en seguridad. Lista proporcional al riesgo real del rubro ${R}.
-- Art. 76: Identificacion y control de riesgos. Matriz IPER. Los 5-7 riesgos mas relevantes del rubro ${R} con jerarquia de controles: eliminacion, sustitucion, ingenieria, administrativo, EPP.
-- Art. 77: EPP obligatorio para ${R}. Lista especifica. Entrega gratuita, reposicion, prohibicion de prestar o vender.
-- Art. 78: Senalizacion. Zonas de riesgo, evacuacion, extintores, botiquines.
-- Art. 79: Orden y limpieza. Pasillos despejados, almacenamiento ordenado.
-- Art. 80: CPHS. Obligatorio para 25+ trabajadores. Composicion, funciones, reunion mensual. DS 54/1969, DS 44/2023. Si la empresa tiene menos de 25 trabajadores, indicar que se designara un delegado de prevencion.
-- Art. 81: Departamento de Prevencion. Obligatorio para 100+ trabajadores. Si ${TRAB} < 100, indicar que se designara un responsable interno de prevencion.
-- Art. 82: Politica alcohol y drogas. Tolerancia cero. Control aleatorio con protocolo. Consecuencias dentro del sistema gradual de sanciones.
-${instrCambios}`;
-
-      } else if (seccion === 10) {
-        prompt = `${BASE}
-
-Genera la SECCION 10 - TITULO X: HIGIENE Y SEGURIDAD - PARTE 2 (Arts. 83-90). Perfil: ${NIVEL}.
-
-- Art. 83: Prevencion de incendios. Extintores vigentes, rutas de evacuacion, simulacros anuales, brigada de emergencia. Procedimiento de evacuacion paso a paso.
-- Art. 84: Primeros auxilios. Botiquines abastecidos. Al menos un trabajador por turno certificado. Procedimiento ante accidente: conservar calma, llamar al numero de emergencia, no mover al accidentado si hay riesgo de lesion espinal, coordinar traslado a ${OA}.
-- Art. 85: Higiene industrial. Iluminacion, ruido (limite 85 dB TWA), temperatura (10C-30C), ventilacion, ergonomia.
-- Art. 86: Capacitaciones obligatorias. Induccion al ingreso (antes de iniciar labores), anual en riesgos del rubro ${R}, uso de EPP, primeros auxilios. Registro con lista de asistencia.
-- Art. 87: Riesgos especificos del rubro ${R}. Identifica 5-6 riesgos propios con descripcion, situacion de ocurrencia y medida preventiva principal.
-- Art. 88: Procedimientos de Trabajo Seguro. Para las tareas de mayor riesgo en ${R}: analisis de riesgos, pasos seguros, EPP requerido.
-- Art. 89: Inspecciones de seguridad. CPHS y administracion de ${E}. Derecho de fiscalizacion de Inspeccion del Trabajo, SEREMI de Salud y ${OA}.
-- Art. 90: Derecho a saber. Riesgos del puesto, sustancias peligrosas y HDS, EPP requerido, procedimientos de emergencia. Art. 21 DS 44/2023.
-${instrCambios}`;
-
-      } else if (seccion === 11) {
-        prompt = `${BASE}
-
-Genera la SECCION 11 - TITULO XI: ACCIDENTES DEL TRABAJO Y ENFERMEDADES PROFESIONALES (Arts. 91-100). Perfil: ${NIVEL}.
-
-- Art. 91: Definiciones. Accidente del trabajo, accidente de trayecto y enfermedad profesional. Art. 5 Ley 16.744.
-- Art. 92: Procedimiento inmediato ante accidente. 7 pasos: conservar calma, avisar al jefe, llamar al numero de emergencia, aplicar primeros auxilios si esta capacitado, no mover al accidentado si hay riesgo de lesion espinal, coordinar traslado a ${OA}, preservar el lugar para la investigacion.
-- Art. 93: DIAT. Denuncia a ${OA} dentro de 24 horas.
-- Art. 94: Accidente de trayecto. Trayecto directo. Acreditacion: parte policial, certificado medico o declaracion jurada.
-- Art. 95: Investigacion de accidentes. CPHS o empleador, dentro de 24-48h. Causas inmediatas, basicas y raiz. Medidas correctivas. DS 44/2023.
-- Art. 96: Accidentes graves y fatales. Llamar a emergencias (132/131), notificar a Inspeccion del Trabajo y SEREMI de Salud dentro de 24h, suspender faenas en el area.
-- Art. 97: Enfermedades profesionales. DIEP ante ${OA}. Vigilancia medica para trabajadores expuestos en el rubro ${R}.
-- Art. 98: Prestaciones. Atencion medica gratuita, medicamentos, rehabilitacion, subsidio 100%. Ley 16.744.
-- Art. 99: Estadisticas de accidentabilidad. Tasa de frecuencia, gravedad y accidentabilidad. Reporte mensual al CPHS.
-- Art. 100: Rehabilitacion y reincorporacion. Gradual, respetando restricciones medicas, coordinada con ${OA}.
-${instrCambios}`;
-
-      } else if (seccion === 12) {
-        prompt = `${BASE}
-
-Genera la SECCION 12 - TITULO XII: PROTOCOLO LEY KARIN - PARTE 1 (Arts. 101-107).
-Ley 21.643, vigente desde el 1 de agosto de 2024. Arts. 211-A al 211-I CT. DS 2/2024.
-
-- Art. 101: Fundamento legal y objetivo. Ley 21.643, perspectiva de genero, compromiso de ${E} con un entorno laboral libre de violencia.
-- Art. 102: Ambito. Todos los trabajadores y trabajadoras de ${E} sin excepcion, mas contratistas, proveedores, visitas y practicantes.
-- Art. 103: Acoso sexual. Definicion con ejemplos verbales, fisicos, digitales y visuales. La caracteristica esencial es que NO es consentido. Art. 2 CT.
-- Art. 104: Acoso laboral. Conductas reiteradas o unicas que causen menoscabo o humillacion. Ejemplos: aislamiento, humillacion publica, tareas degradantes, sobrecarga excesiva. Art. 2 CT.
-- Art. 105: Violencia por terceros. Clientes, proveedores, usuarios y visitas. Medidas de proteccion de ${E}.
-- Art. 106: Principios. Confidencialidad, no represalia, perspectiva de genero, presuncion de buena fe, imparcialidad, celeridad.
-- Art. 107: Canal de denuncia. Correo designado (${P}), formulario fisico en RRHH, denuncia verbal ante encargado/a designado/a, o directamente ante la Inspeccion del Trabajo. Opcion de anonimato.
-${instrCambios}`;
-
-      } else if (seccion === 13) {
-        prompt = `${BASE}
-
-Genera la SECCION 13 - TITULO XII: PROTOCOLO LEY KARIN - PARTE 2 (Arts. 108-114). Arts. 211-A al 211-I CT.
-
-- Art. 108: Procedimiento de denuncia. Contenido minimo, constancia de recepcion con fecha y hora, inicio de investigacion en 5 dias habiles, opcion de derivar a la Inspeccion del Trabajo.
-- Art. 109: Medidas de resguardo inmediatas. Separacion de espacios fisicos, redistribucion de jornada, teletrabajo temporal, derivacion psicologica a traves de ${OA}. No implican prejuzgamiento.
-- Art. 110: Investigacion interna. Investigador imparcial y capacitado, sin conflicto de interes. Notificacion de cargos al investigado. Derecho a defensa. Audiencias. Informe final con conclusiones y propuesta de medidas. Plazo maximo: 30 dias habiles.
-- Art. 111: Investigacion por la Inspeccion del Trabajo. Cooperacion plena de ${E}. Adoptar medidas ordenadas. Plazo: 30 dias habiles.
-- Art. 112: Sanciones. Gradualidad: amonestacion, multa, traslado, despido (Art. 160 N1 b) acoso sexual o f) acoso laboral CT). Las represalias contra quien denuncia de buena fe tambien seran sancionadas.
-- Art. 113: Capacitacion anual. Obligatoria para todos. Contenido minimo: definiciones, conductas prohibidas, canal de denuncia, procedimiento, sanciones. Registro con lista de asistencia.
-- Art. 114: Conductas que NO constituyen acoso. Evaluaciones objetivas, instrucciones de trabajo, cambios organizativos, medidas disciplinarias ajustadas a derecho, ejercicio legitimo de facultades directivas.
-${instrCambios}`;
-
-      } else if (seccion === 14) {
-        prompt = `${BASE}
-
-Genera la SECCION 14 - TITULO XIV: TEMER, ISTAS21 Y MANEJO DE CARGAS (Arts. 115-128). Perfil: ${NIVEL}.
-
-TEMER (Arts. 115-118):
-- Art. 115: Marco legal. Protocolo TEMER, SUSESO. Aplicacion en el rubro ${R}.
-- Art. 116: Factores de riesgo. Trabajo repetitivo, posturas forzadas, aplicacion de fuerza, vibracion. Evaluacion anual mediante RULA/OCRA u otras metodologias validadas.
-- Art. 117: Medidas preventivas. Rotacion de puestos, pausas activas (minimo 2 veces por jornada), rediseno ergonomico, herramientas adecuadas.
-- Art. 118: Vigilancia medica. Examenes periodicos con ${OA}. Adaptaciones del puesto ante casos detectados.
-
-ISTAS21 (Arts. 119-121):
-- Art. 119: Marco legal. Protocolo SUSESO/ISTAS21. Obligatorio para 10+ trabajadores. DS 44/2023.
-- Art. 120: Dimensiones del riesgo psicosocial. Exigencias psicologicas, trabajo activo y desarrollo, apoyo social y liderazgo, compensaciones, doble presencia.
-- Art. 121: Aplicacion y medidas. Cuestionario cada 2 anos, anonimo y confidencial. Plan de accion segun nivel de riesgo. El CPHS participa en el analisis y seguimiento.
-
-MANEJO MANUAL DE CARGAS (Arts. 122-128):
-- Art. 122: Marco legal. Ley 20.001 y DS 63/2005.
-- Art. 123: Limites de peso. Hombres: 25 kg. Mujeres y menores/mayores de edad: 20 kg. Embarazadas: maximo 5 kg.
-- Art. 124: Tecnica correcta de levantamiento. 7 pasos: evaluar el peso, ubicarse cerca de la carga, pies al ancho de los hombros, doblar rodillas manteniendo espalda recta, tomar firmemente con ambas manos, levantar con la fuerza de las piernas, evitar girar el torso.
-- Art. 125: Medidas de control. Medios mecanicos para cargas que superan los limites. Restricciones especiales para embarazadas.
-- Art. 126: Capacitacion anual. Tecnica correcta, factores de riesgo, uso de medios mecanicos.
-- Art. 127: Pausas de recuperacion. Segun carga y frecuencia, conforme a tablas del DS 63/2005.
-- Art. 128: Seguimiento CPHS. Revision periodica. Lesiones por sobreesfuerzo se investigan como accidentes del trabajo.
-${instrCambios}`;
-
-      } else if (seccion === 15) {
-        prompt = `${BASE}
-
-Genera la SECCION 15 - TITULOS XV Y XVI: MATERNIDAD/PATERNIDAD Y DATOS PERSONALES (Arts. 129-139). Perfil: ${NIVEL}.
-
-MATERNIDAD Y PATERNIDAD (Arts. 129-136):
-- Art. 129: Marco legal. Arts. 194-208 CT, Ley 20.545.
-- Art. 130: Fuero maternal. Desde el embarazo hasta 1 ano post posnatal. Requiere desafuero judicial. Extension a adopcion Ley 19.620.
-- Art. 131: Descansos de maternidad. Prenatal: 6 semanas. Posnatal: 12 semanas. Posnatal parental adicional: 12 semanas, transferibles en parte al padre. Arts. 195-197 CT.
-- Art. 132: Permiso de paternidad. 5 dias pagados, irrenunciable.
-- Art. 133: Sala cuna y amamantamiento. Sala cuna obligatoria para 20+ trabajadoras. Derecho a 1 hora diaria de amamantamiento hasta los 2 anos del hijo, sin descuento de remuneracion. Arts. 203-206 CT.
-- Art. 134: Restricciones por embarazo o lactancia. Traslado con misma remuneracion a funciones compatibles. Art. 202 CT.
-- Art. 135: Permiso por enfermedad grave del hijo menor de 1 ano. Art. 199 CT.
-- Art. 136: Permisos por fallecimiento de hijo o conyuge. Fuero laboral por 1 mes. Art. 66 CT.
-
-PROTECCION DE DATOS PERSONALES - Ley 21.719 (Arts. 137-139):
-- Art. 137: Marco legal y datos que trata ${E}. Identificacion, laborales, salud (solo fines laborales), financieros, imagenes de videovigilancia. Finalidad exclusivamente laboral.
-- Art. 138: Principios. Licitud, finalidad, proporcionalidad, calidad, seguridad y transparencia.
-- Art. 139: Derechos ARCO. Acceso, rectificacion, cancelacion y oposicion. Responsable designado en ${E} (${P}). Plazo de respuesta: 15 dias habiles.
-${instrCambios}`;
-
-      } else if (seccion === 16) {
-        prompt = `${BASE}
-
-Genera la SECCION 16 FINAL - TITULO XVII: DISPOSICIONES FINALES, NORMATIVA Y DECLARACION (Arts. 140-142). Perfil: ${NIVEL}.
-
-Art. 140: Vigencia. Entra en vigor 30 dias despues de ser puesto en conocimiento de los trabajadores, salvo objecion fundada de la Inspeccion del Trabajo. Deposito ante la Inspeccion del Trabajo y SEREMI de Salud. Art. 156 CT. Minimo 7 lineas. Cierra formalmente el articulo.
-
-Art. 141: Difusion y entrega. Copia fisica o digital al ingreso. Firma de cargo. Carteleras permanentes. Disponible para consulta en todo momento. Minimo 6 lineas. Cierra formalmente el articulo.
-
-Art. 142: Normativa supletoria y modificaciones. Aplicacion supletoria del Codigo del Trabajo. ${E} se compromete a mantener este reglamento actualizado. Toda modificacion seguira el procedimiento del Art. 8. Minimo 6 lineas. Cierra formalmente el articulo.
-
----
-
-## NORMATIVA DE REFERENCIA
-
-| N | Norma | Materia | Ano |
-|---|-------|---------|-----|
-| 1 | Codigo del Trabajo DFL N1/2003 | Marco general laboral | 2003 |
-| 2 | Ley N16.744 | Accidentes del trabajo y enfermedades profesionales | 1968 |
-| 3 | DS N44/2023 | Seguridad y Salud Ocupacional | 2023 |
-| 4 | Ley N21.643 - Ley Karin | Prevencion acoso laboral, sexual y violencia | 2024 |
-| 5 | Ley N21.719 | Proteccion de datos personales | 2022 |
-| 6 | Ley N21.561 | Reduccion jornada laboral progresiva hasta 40h en 2028 | 2024 |
-| 7 | Ley N20.001 | Manejo manual de cargas humanas | 2005 |
-| 8 | DS N63/2005 | Reglamento manejo de cargas | 2005 |
-| 9 | Ley N21.012 | Garantia del derecho a la seguridad y salud | 2017 |
-| 10 | Ley N21.015 | Inclusion laboral personas con discapacidad | 2017 |
-| 11 | Ley N21.220 | Teletrabajo y trabajo a distancia | 2020 |
-| 12 | Protocolo TEMER | Trastornos musculoesqueleticos | SUSESO |
-| 13 | Protocolo SUSESO/ISTAS21 | Riesgos psicosociales en el trabajo | SUSESO |
-| 14 | Ley N20.545 | Posnatal parental | 2011 |
-| 15 | DS N2/2024 | Politica Nacional de Seguridad y Salud | 2024 |
-| 16 | DS N54/1969 | Constitucion y funcionamiento del CPHS | 1969 |
-
----
-
-## DECLARACION DE VIGENCIA Y APROBACION
-
-El presente Reglamento Interno de Orden, Higiene y Seguridad de **${E}** ha sido elaborado en conformidad con el articulo 153 y siguientes del Codigo del Trabajo (DFL N1/2003), incorporando la normativa laboral vigente en Chile a la fecha de su elaboracion.
-
-**${RL}**
-Representante Legal - **${E}**
-RUT: ${RUT}
-${DIR}
-
-*Elaborado: ${new Date().toLocaleDateString('es-CL')} - Version 01/${new Date().getFullYear()}*
-${instrCambios}`;
-
-      } else {
-        return res.status(400).json({ error: `Seccion ${seccion} no valida.` });
+        } else {
+          return res.status(400).json({ error: `Seccion ${seccion} no valida para perfil extenso (1-16).` });
+        }
       }
 
     // ═══════════════════════════════════════════
@@ -464,28 +475,29 @@ ${instrCambios}`;
     } else if (tipo === 'resumen_empleador') {
       prompt = `${BASE}
 
-Genera un RESUMEN EJECUTIVO del RIOHS para Gerencia y RRHH de ${E}. Estilo ejecutivo, directo y accionable. Sin inflado juridico.
+Genera un RESUMEN EJECUTIVO del RIOHS para Gerencia y RRHH de ${E}. Estilo ejecutivo, directo, accionable. Sin inflado juridico.
 
 # RESUMEN EJECUTIVO - RIOHS ${new Date().getFullYear()}
-## ${E} | Rubro: ${R}
+## ${E} | Rubro: ${R} | ${TRAB||'?'} trabajadores
 
 ## Por que existe este documento
 Que es el RIOHS, por que es obligatorio (Art. 153 CT) y que consecuencias tiene no tenerlo actualizado. Maximo 6 lineas.
 
-## Lo que el empleador DEBE hacer - Obligaciones criticas
-Lista de 10-12 obligaciones concretas. Para cada una: que es, que ley lo exige, que pasa si no se cumple. Incluir: entrega del RIOHS al trabajador, condiciones seguras (Art. 184 CT), protocolo Ley Karin, CPHS si corresponde, capacitaciones, investigar accidentes, ISTAS21, TEMER, igualdad de remuneraciones, finiquito en plazo.
+## Obligaciones criticas del empleador
+Lista de 10-12 obligaciones concretas. Para cada una: que es, que ley lo exige, que pasa si no se cumple. Incluir: entrega del RIOHS al trabajador, condiciones seguras (Art. 184 CT), protocolo Ley Karin, CPHS si corresponde (25+ trabajadores), capacitaciones, investigar accidentes, ISTAS21 cada 2 anos, TEMER, igualdad de remuneraciones, finiquito en plazo.
 
-## Plazos clave
+## Plazos clave que no puede olvidar
 Tabla: | Obligacion | Plazo | Consecuencia del incumplimiento |
+Incluir: accidentes (24h), Ley Karin inicio (5 dias habiles), Ley Karin resolucion (30 dias habiles), finiquito (5 dias habiles), ISTAS21 (cada 2 anos), contratos nuevos (15 dias).
 
 ## Los 5 riesgos legales mas importantes para ${E}
-5 riesgos especificos para el rubro ${R} con la multa o consecuencia legal concreta.
+5 riesgos especificos para el rubro ${R} con la consecuencia legal concreta.
 
 ## Normativa reciente - Verificar que este incorporada
-Ley Karin (agosto 2024), DS 44/2023, Ley 21.719, Ley 21.561. Una linea por norma.
+Ley Karin agosto 2024, DS 44/2023, Ley 21.719, Ley 21.561 (42h desde abril 2026). Una linea por norma.
 
 ---
-*Este resumen no reemplaza el RIOHS completo.*`;
+*Este resumen no reemplaza el RIOHS completo. Ante dudas consulte con su asesor legal o la Inspeccion del Trabajo.*`;
 
     // ═══════════════════════════════════════════
     // INFORME DE CAMBIOS
@@ -494,42 +506,40 @@ Ley Karin (agosto 2024), DS 44/2023, Ley 21.719, Ley 21.561. Una linea por norma
       const lista = (alertas_seleccionadas||[]).map((a,i)=>
         `${i+1}. [${a.tipo.toUpperCase()}] ${a.titulo} - ${a.descripcion} (${a.normativa||''})`
       ).join('\n');
-
       prompt = `${BASE}
 
-Genera un INFORME DE CAMBIOS para la auditoria del RIOHS de ${E}. Claro, bien estructurado, sin inflado.
+Genera un INFORME DE CAMBIOS para la auditoria del RIOHS de ${E}.
 
 # INFORME DE ACTUALIZACION DEL RIOHS
 ## ${E} - ${new Date().toLocaleDateString('es-CL')}
 
 ## Resumen ejecutivo
-En 5-6 lineas: cuantos cambios se realizaron (${(alertas_seleccionadas||[]).length}), de que tipo, impacto legal de haberlos aplicado, estado actual del reglamento.
+5-6 lineas: cuantos cambios se realizaron (${(alertas_seleccionadas||[]).length}), de que tipo, impacto legal, estado actual del reglamento.
 
 ## Cambios realizados
 
-### Articulos INCORPORADOS (antes faltaban)
-Lista de cambios tipo falta. Por cada uno: que se incorporo y que normativa lo exige.
+### Incorporados (antes faltaban)
+Lista de cambios tipo falta.
 
-### Articulos ACTUALIZADOS
-Lista de cambios tipo cambio. Por cada uno: que se modifico y con que normativa.
+### Actualizados
+Lista de cambios tipo cambio.
 
-### Articulos ELIMINADOS o derogados
-Lista de cambios tipo sobra. Por cada uno: que se elimino y por que.
+### Eliminados o derogados
+Lista de cambios tipo sobra.
 
-### Errores CORREGIDOS
-Lista de cambios tipo error. Por cada uno: que error se corrigio.
+### Errores corregidos
+Lista de cambios tipo error.
 
 Cambios aplicados:
 ${lista}
 
 ## Estado del RIOHS actualizado
-Semaforo:
-- Verde: areas completamente actualizadas
-- Amarillo: areas que requieren revision periodica
-- Rojo: cambios pendientes si quedaron alertas sin aplicar
+Verde: areas completamente actualizadas.
+Amarillo: areas que requieren revision periodica.
+Rojo: cambios pendientes si quedaron alertas sin aplicar.
 
 ## Proxima revision recomendada
-Cuando hacer la proxima auditoria y que normativa monitorear en los proximos 12 meses.
+Cuando hacer la proxima auditoria y que normativa monitorear.
 
 *Informe generado el ${new Date().toLocaleDateString('es-CL')} - Sistema Mas Prevencion*`;
 
@@ -540,7 +550,7 @@ Cuando hacer la proxima auditoria y que normativa monitorear en los proximos 12 
       let parte = req.body.parte || 1;
       prompt = `Eres experto en derecho laboral chileno con criterio editorial riguroso.
 Empresa: ${E} | Rubro: ${R} | OA: ${OA}
-Normativa vigente: DS 44/2023, Ley Karin 21.643 (agosto 2024), Ley 21.719, Ley 21.561 (42h desde abril 2026), Ley 16.744.
+Normativa vigente: DS 44/2023, Ley Karin 21.643 agosto 2024, Ley 21.719, Ley 21.561 (42h desde abril 2026), Ley 16.744.
 
 FRAGMENTO DEL RIOHS A AUDITAR (parte ${parte} de 3):
 ${(documento_existente||'').substring(0,2500)}
@@ -550,15 +560,18 @@ Analiza este fragmento con criterio juridico y editorial. Detecta:
 - Redaccion excesivamente rigida o automaticamente sancionatoria
 - Desequilibrios entre potestad del empleador y derechos del trabajador
 - Articulos truncados o mal cerrados
-- Inconsistencias internas en jornada, sanciones o procedimientos
+- Inconsistencias internas
+- "Periodo de prueba" como clausula general (es figura juridicamente delicada)
+- Horas extra redactadas como negacion absoluta del pago
+- Errores de codificacion visibles
 
-Devuelve SOLO este JSON sin texto antes ni despues:
+Devuelve SOLO este JSON:
 \`\`\`json
-{"alertas":[{"id":1,"tipo":"falta","prioridad":"alta","titulo":"Titulo descriptivo","descripcion":"Descripcion clara en 1-2 oraciones.","seccion":"Seccion o articulo afectado","normativa":"Ley o decreto con ano"}]}
+{"alertas":[{"id":1,"tipo":"falta","prioridad":"alta","titulo":"Titulo","descripcion":"Descripcion en 1-2 oraciones.","seccion":"Seccion o articulo","normativa":"Ley con ano"}]}
 \`\`\`
 TIPOS: falta o cambio o sobra o error
-PRIORIDADES: alta (sancion vigente) o media (recomendado) o baja (forma)
-Genera 5-10 alertas especificas y accionables para este fragmento.`;
+PRIORIDADES: alta o media o baja
+5-10 alertas especificas para este fragmento.`;
 
     } else {
       return res.status(400).json({ error: 'Tipo no valido' });
@@ -566,8 +579,6 @@ Genera 5-10 alertas especificas y accionables para este fragmento.`;
 
     // ═══════════════════════════════════════════
     // STREAMING GLOBAL
-    // Mantiene la conexion activa evitando el
-    // timeout de 60 segundos de Vercel Hobby
     // ═══════════════════════════════════════════
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -602,11 +613,9 @@ Genera 5-10 alertas especificas y accionables para este fragmento.`;
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop();
-
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue;
         const data = line.slice(6).trim();
@@ -627,11 +636,7 @@ Genera 5-10 alertas especificas y accionables para este fragmento.`;
 
   } catch (error) {
     console.error('Error:', error);
-    try {
-      res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
-      res.end();
-    } catch {
-      res.status(500).json({ error: error.message });
-    }
+    try { res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`); res.end(); }
+    catch { res.status(500).json({ error: error.message }); }
   }
 }
