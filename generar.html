@@ -25,7 +25,6 @@
     .badge-a{background:#fff3e8;color:var(--naranja)}
     .aviso{border-radius:8px;padding:.8rem 1rem;margin-bottom:1.2rem;font-size:.85rem;display:flex;gap:.5rem;align-items:flex-start}
     .av-campos{background:#fff8e1;border:1px solid #ffcc80;color:#e65100}
-
     .panel-perfil{background:white;border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:none}
     .perfil-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
     .perfil-nivel{padding:.35rem .9rem;border-radius:20px;font-size:.9rem;font-weight:700}
@@ -35,7 +34,6 @@
     .perfil-justif{font-size:.88rem;color:var(--muted);line-height:1.5;margin-bottom:.75rem}
     .perfil-datos{display:flex;gap:.5rem;flex-wrap:wrap}
     .pdato{background:#f0f2f7;border-radius:5px;padding:.3rem .7rem;font-size:.78rem;color:var(--navy)}
-
     .panel{background:white;border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06)}
     .upload-area{border:2px dashed #ccc;border-radius:8px;padding:2rem;text-align:center;cursor:pointer;transition:border-color .2s}
     .upload-area:hover{border-color:var(--navy)}
@@ -44,7 +42,6 @@
     .btn-main{width:100%;padding:1rem;border:none;border-radius:8px;font-size:1.1rem;font-weight:700;cursor:pointer;color:white;transition:opacity .2s}
     .btn-main:disabled{opacity:.5;cursor:not-allowed}
     .btn-main:hover:not(:disabled){opacity:.88}
-
     .progreso{display:none;background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);padding:1.5rem 2rem;margin-bottom:1.5rem}
     .prog-tit{font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:1rem;text-align:center}
     .prog-barra-w{background:#f0f2f7;border-radius:20px;height:14px;margin-bottom:.6rem;overflow:hidden}
@@ -59,7 +56,6 @@
     .sec.done{background:#e8f5e9;color:#2e7d32;font-weight:700}
     .sec .is{font-size:.9rem;display:block;margin-bottom:.15rem}
     .prog-nota{text-align:center;font-size:.78rem;color:var(--muted)}
-
     .panel-alertas{display:none}
     .al-header{background:white;border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
     .al-header h3{color:var(--navy);font-size:1.1rem}
@@ -133,11 +129,9 @@
     <div><h2 id="nomCliente">Cargando...</h2><p id="infoCliente">—</p></div>
     <span class="badge" id="tipoBadge">—</span>
   </div>
-
   <div class="aviso av-campos" id="avisoCampos" style="display:none">
     ⚠️ <strong>Campos incompletos en la ficha.</strong> El documento incluira marcadores PENDIENTE — completar antes de entregar al cliente.
   </div>
-
   <div class="panel-perfil" id="panelPerfil">
     <div class="perfil-header">
       <span style="font-size:1.1rem">📊</span>
@@ -147,7 +141,6 @@
     <p class="perfil-justif" id="perfilJustif">—</p>
     <div class="perfil-datos" id="perfilDatos"></div>
   </div>
-
   <div class="panel" id="panelUpload" style="display:none">
     <h3 style="color:var(--navy);margin-bottom:.5rem">📄 Sube el RIOHS existente</h3>
     <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">El sistema detectara brechas legales y editoriales comparando con normativa vigente.</p>
@@ -157,12 +150,10 @@
     </div>
     <input type="file" id="inputArchivo" accept=".docx,.txt" onchange="archivoSel(this)">
   </div>
-
   <div class="panel" id="panelBtn">
     <button class="btn-main" id="btnAccion" onclick="iniciar()">⚡ Generar RIOHS</button>
     <div class="err-msg" id="errMsg"></div>
   </div>
-
   <div class="progreso" id="progreso">
     <div class="prog-tit" id="progTit">Evaluando perfil...</div>
     <div class="prog-barra-w"><div class="prog-barra" id="progBarra"></div></div>
@@ -170,7 +161,6 @@
     <div class="secs-grid" id="secsGrid"></div>
     <p class="prog-nota" id="progNota"></p>
   </div>
-
   <div class="panel-alertas" id="panelAlertas">
     <div class="al-header"><h3>🔍 Resultado de la Auditoria</h3><div class="badges" id="resBadges"></div></div>
     <div class="acciones">
@@ -185,7 +175,6 @@
     </div>
     <div id="listaAlertas"></div>
   </div>
-
   <div class="resultado" id="resultado">
     <div class="res-hdr" id="resHdr">
       <h3 id="resTit">✅ RIOHS Generado</h3>
@@ -198,10 +187,11 @@
     <div class="riohs-c" id="riohsC"></div>
   </div>
 </main>
-
 <script>
   const SUPABASE_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_JLaCYGFE3fq6b7ecDl0glA_axBuVRZo';
+  // ⚙️ URL de la Edge Function que genera el RIOHS (reemplaza a /api/generarRIOHS)
+  const GENERAR_URL = 'https://cayvrsqyjljqnrtsagwq.supabase.co/functions/v1/generarRIOHS';
   const {createClient}=supabase;
   const db=createClient(SUPABASE_URL,SUPABASE_KEY);
   const params=new URLSearchParams(window.location.search);
@@ -209,7 +199,6 @@
   const tipo=params.get('tipo')||'nuevo';
   let cliente=null,contenido='',textoDoc='',alertas=[],seleccionadas=new Set(),alertasAplicadas=[];
   let perfilEditorial=null;
-
   // SECCIONES según perfil
   const SECS_COMPACTO=[
     {n:1,l:'Portada, Generales e Ingreso',i:'📋'},
@@ -239,15 +228,12 @@
     {n:13,l:'Ley Karin 2',i:'🔍'},{n:14,l:'TEMER e ISTAS21',i:'💪'},
     {n:15,l:'Maternidad y Datos',i:'👶'},{n:16,l:'Cierre',i:'🌟'},
   ];
-
   const CAMPOS_OBL=['rut','region','organismo_administrador','representante_legal','num_trabajadores'];
-
   function getSECS(nivel){
     if(nivel==='compacto')return SECS_COMPACTO;
     if(nivel==='extenso')return SECS_EXTENSO;
     return SECS_INTERMEDIO;
   }
-
   async function init(){
     const{data:{session}}=await db.auth.getSession();
     if(!session){window.location.href='index.html';return}
@@ -257,7 +243,6 @@
     configurar();
     checkCampos();
   }
-
   async function cargarCliente(){
     const{data}=await db.from('clientes').select('*').eq('id',clienteId).single();
     if(!data){window.location.href='dashboard.html';return}
@@ -271,11 +256,9 @@
     document.getElementById('banner').style.borderLeftColor=cp;
     document.getElementById('resHdr').style.background=cp;
   }
-
   function checkCampos(){
     if(CAMPOS_OBL.some(c=>!cliente[c]))document.getElementById('avisoCampos').style.display='flex';
   }
-
   function configurar(){
     const badge=document.getElementById('tipoBadge'),btn=document.getElementById('btnAccion');
     if(tipo==='auditoria'){
@@ -287,7 +270,6 @@
       btn.textContent='⚡ Generar RIOHS Completo';btn.style.background='var(--naranja)';
     }
   }
-
   function archivoSel(input){
     const f=input.files[0];if(!f)return;
     document.getElementById('uploadArea').classList.add('ok');
@@ -298,15 +280,12 @@
       r.readAsArrayBuffer(f);
     } else {const r=new FileReader();r.onload=(e)=>{textoDoc=e.target.result};r.readAsText(f)}
   }
-
   function iniciar(){tipo==='auditoria'?iniciarAuditoria():iniciarGeneracion()}
-
   async function obtenerPerfil(){
-    const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),tipo:'perfil',bloque:{id:1}})});
+    const r=await fetch(GENERAR_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cliente:buildPayload(),tipo:'perfil',bloque:{id:1}})});
     if(!r.ok)return null;
     return r.json();
   }
-
   function mostrarPerfil(p){
     if(!p)return;
     const colores={compacto:'nivel-compacto',intermedio:'nivel-intermedio',extenso:'nivel-extenso'};
@@ -318,7 +297,6 @@
     document.getElementById('perfilDatos').innerHTML=Object.values(vc).filter(Boolean).map(v=>`<span class="pdato">${v}</span>`).join('');
     document.getElementById('panelPerfil').style.display='block';
   }
-
   async function iniciarGeneracion(){
     document.getElementById('btnAccion').disabled=true;
     document.getElementById('errMsg').style.display='none';
@@ -326,14 +304,11 @@
     document.getElementById('progBarra').style.width='3%';
     document.getElementById('progNota').textContent='Definiendo estructura, extension y nivel de detalle adecuados';
     document.getElementById('progreso').style.display='block';
-
     perfilEditorial=await obtenerPerfil();
     mostrarPerfil(perfilEditorial);
-
     const SECS=getSECS(perfilEditorial?.nivel||'intermedio');
     document.getElementById('secsGrid').innerHTML=SECS.map(s=>`<div class="sec" id="s${s.n}"><span class="is">${s.i}</span>${s.l}</div>`).join('');
     document.getElementById('progNota').textContent=`⏱ Perfil ${perfilEditorial?.nivel||'?'} · ${SECS.length} secciones · ${perfilEditorial?.paginas||'?'} · tiempo estimado: ${SECS.length*2+5} minutos aprox.`;
-
     const partes=[];
     for(let i=0;i<SECS.length;i++){
       const s=SECS[i];
@@ -343,7 +318,6 @@
       document.getElementById('progTit').textContent=`Generando: ${s.l} (${i+1} de ${SECS.length})`;
       document.getElementById('progBarra').style.width=`${pct}%`;
       document.getElementById('progPct').textContent=`${pct}%`;
-
       try{
         const texto=await llamarStreaming({
           cliente:buildPayload(),tipo:'nuevo',seccion:s.n,
@@ -360,7 +334,6 @@
       }
       if(i<SECS.length-1)await new Promise(resolve=>setTimeout(resolve,15000));
     }
-
     document.getElementById('progBarra').style.width='100%';
     document.getElementById('progPct').textContent='100% ✅';
     document.getElementById('progTit').textContent='✅ RIOHS completo generado';
@@ -371,7 +344,6 @@
       mostrarResultado(contenido,`RIOHS Completo - Perfil ${perfilEditorial?.nivel||'?'} (${perfilEditorial?.paginas||'?'})`);
     },800);
   }
-
   async function iniciarAuditoria(){
     if(!textoDoc){mostrarErr('Primero sube el RIOHS existente.');return}
     document.getElementById('btnAccion').disabled=true;
@@ -379,18 +351,15 @@
     document.getElementById('secsGrid').innerHTML='';
     document.getElementById('progNota').textContent='El analisis se realiza en 3 partes para mayor precision y para no exceder limites de la API';
     document.getElementById('progreso').style.display='block';
-
     const largo=textoDoc.length;
     const tam=Math.ceil(largo/3);
     const partes=[textoDoc.substring(0,tam),textoDoc.substring(tam,tam*2),textoDoc.substring(tam*2)];
     const todasLasAlertas=[];let idGlobal=1;
-
     for(let i=0;i<3;i++){
       const pct=Math.round((i/3)*90);
       document.getElementById('progTit').textContent=`Analizando parte ${i+1} de 3...`;
       document.getElementById('progBarra').style.width=`${pct}%`;
       document.getElementById('progPct').textContent=`${pct}%`;
-
       try{
         const texto=await llamarStreaming({
           cliente:buildPayload(),tipo:'auditoria_analisis',
@@ -414,10 +383,8 @@
       }
       if(i<2)await new Promise(resolve=>setTimeout(resolve,10000));
     }
-
     document.getElementById('progBarra').style.width='100%';
     document.getElementById('progPct').textContent='✅ Analisis completo';
-
     if(todasLasAlertas.length===0){
       mostrarErr('No se encontraron alertas. Intenta nuevamente.');
       document.getElementById('progreso').style.display='none';
@@ -427,12 +394,10 @@
     alertas=todasLasAlertas;
     setTimeout(()=>{document.getElementById('progreso').style.display='none';mostrarAlertas(todasLasAlertas)},600);
   }
-
   async function aplicarOpcionB(){
     const selec=alertas.filter(a=>seleccionadas.has(a.id));
     alertasAplicadas=selec;
     if(selec.length===0)return;
-
     const porTipo={falta:[],cambio:[],sobra:[],error:[]};
     selec.forEach(a=>{if(porTipo[a.tipo])porTipo[a.tipo].push(a)});
     const instrucciones=[];
@@ -441,19 +406,15 @@
     if(porTipo.sobra.length)instrucciones.push(`ELIMINAR o no incluir: ${porTipo.sobra.map(a=>a.titulo).join('; ')}`);
     if(porTipo.error.length)instrucciones.push(`CORREGIR: ${porTipo.error.map(a=>a.titulo).join('; ')}`);
     const cambiosStr=instrucciones.join('\n');
-
     document.getElementById('panelAlertas').style.display='none';
     document.getElementById('progTit').textContent='Evaluando perfil...';
     document.getElementById('progBarra').style.width='3%';
     document.getElementById('progNota').textContent=`Regenerando RIOHS con ${selec.length} cambios incorporados`;
     document.getElementById('progreso').style.display='block';
-
     perfilEditorial=await obtenerPerfil();
     mostrarPerfil(perfilEditorial);
-
     const SECS=getSECS(perfilEditorial?.nivel||'intermedio');
     document.getElementById('secsGrid').innerHTML=SECS.map(s=>`<div class="sec" id="s${s.n}"><span class="is">${s.i}</span>${s.l}</div>`).join('');
-
     const partes=[];
     for(let i=0;i<SECS.length;i++){
       const s=SECS[i];
@@ -462,7 +423,6 @@
       document.getElementById('progTit').textContent=`Generando con cambios: ${s.l} (${i+1} de ${SECS.length})`;
       document.getElementById('progBarra').style.width=`${pct}%`;
       document.getElementById('progPct').textContent=`${pct}%`;
-
       try{
         const texto=await llamarStreaming({
           cliente:buildPayload(),tipo:'nuevo',seccion:s.n,
@@ -478,7 +438,6 @@
       }
       if(i<SECS.length-1)await new Promise(resolve=>setTimeout(resolve,15000));
     }
-
     document.getElementById('progBarra').style.width='100%';
     document.getElementById('progPct').textContent='100% ✅';
     document.getElementById('progTit').textContent='✅ RIOHS actualizado con todos los cambios';
@@ -494,9 +453,8 @@
       mostrarResultado(contenido,`RIOHS Actualizado con ${selec.length} cambio${selec.length!==1?'s':''} incorporado${selec.length!==1?'s':''}`);
     },800);
   }
-
   async function llamarStreaming(body){
-    const r=await fetch('/api/generarRIOHS',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const r=await fetch(GENERAR_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!r.ok)throw new Error(`Error ${r.status}`);
     const reader=r.body.getReader();const decoder=new TextDecoder();
     let texto='';let buffer='';
@@ -518,7 +476,6 @@
     }
     return texto;
   }
-
   async function genResumen(){
     const btn=document.getElementById('btnRes');
     btn.textContent='⏳ Generando...';btn.disabled=true;
@@ -528,7 +485,6 @@
     }catch(e){alert(`Error: ${e.message}`)}
     finally{btn.textContent='📋 Resumen Ejecutivo';btn.disabled=false}
   }
-
   async function genInforme(){
     const btn=document.getElementById('btnInf');
     btn.textContent='⏳ Generando...';btn.disabled=true;
@@ -538,7 +494,6 @@
     }catch(e){alert(`Error: ${e.message}`)}
     finally{btn.textContent='📊 Informe de Cambios';btn.disabled=false}
   }
-
   function mostrarAlertas(lista){
     document.getElementById('panelAlertas').style.display='block';
     const cnt={falta:0,cambio:0,sobra:0,error:0};lista.forEach(a=>{if(cnt[a.tipo]!==undefined)cnt[a.tipo]++});
@@ -555,38 +510,32 @@
     });
     updCnt();document.getElementById('panelAlertas').scrollIntoView({behavior:'smooth'});
   }
-
   function renderAl(a){
     const pc={alta:'p-a',media:'p-m',baja:'p-b'};
     return `<div class="al-item" id="al${a.id}"><input type="checkbox" class="al-chk" onchange="togAl(${a.id},this.checked)"><div class="al-bod"><div class="al-tit">${a.titulo}</div><div class="al-desc">${a.descripcion}</div><div class="al-meta">${a.prioridad?`<span class="mtag ${pc[a.prioridad]||''}">Prioridad: ${a.prioridad}</span>`:''}${a.seccion?`<span class="mtag">📌 ${a.seccion}</span>`:''}${a.normativa?`<span class="mtag">📋 ${a.normativa}</span>`:''}</div></div></div>`;
   }
-
   function togAl(id,c){c?seleccionadas.add(id):seleccionadas.delete(id);document.getElementById(`al${id}`)?.classList.toggle('sel',c);updCnt()}
   function selT(){alertas.forEach(a=>{seleccionadas.add(a.id);const el=document.getElementById(`al${a.id}`);if(el){el.classList.add('sel');el.querySelector('input').checked=true}});updCnt()}
   function deselT(){seleccionadas.clear();document.querySelectorAll('.al-item').forEach(el=>{el.classList.remove('sel');el.querySelector('input').checked=false});updCnt()}
   function selP(t){alertas.filter(a=>a.tipo===t).forEach(a=>{seleccionadas.add(a.id);const el=document.getElementById(`al${a.id}`);if(el){el.classList.add('sel');el.querySelector('input').checked=true}});updCnt()}
   function updCnt(){const n=seleccionadas.size;document.getElementById('cntSel').textContent=`${n} seleccionada${n!==1?'s':''}`;document.getElementById('btnAplicar').disabled=n===0}
   function togCat(h){const it=h.nextElementSibling;const v=it.style.display!=='none';it.style.display=v?'none':'block';h.querySelector('.cat-tog').textContent=v?'▶':'▼'}
-
   function buildPayload(){
     let n='Todas las obligatorias';
     if(cliente.normativas_json){try{n=JSON.parse(cliente.normativas_json).join(', ')}catch{}}
     return{empresa:cliente.razon_social,rut:cliente.rut,rubro:cliente.rubro,actividad_economica:cliente.actividad_economica,region:cliente.region,num_trabajadores:cliente.num_trabajadores,turnos:cliente.turnos,tiene_sindicato:cliente.tiene_sindicato,organismo_administrador:cliente.organismo_administrador,representante_legal:cliente.representante_legal,direccion:cliente.direccion,normativas_activas:n,funcion_real:cliente.funcion_real||''};
   }
-
   async function guardarDoc(cont,tipoDoc){
     const{data:docs}=await db.from('documentos_riohs').select('version').eq('cliente_id',clienteId).order('version',{ascending:false}).limit(1);
     const v=docs?.length?docs[0].version+1:1;
     await db.from('documentos_riohs').insert({cliente_id:clienteId,tipo:tipoDoc,contenido:cont.substring(0,50000),version:v,nombre_archivo:`RIOHS-${cliente.razon_social}-v${v}.docx`});
   }
-
   function mostrarResultado(cont,titulo){
     document.getElementById('resTit').textContent=`✅ ${titulo}`;
     document.getElementById('riohsC').innerHTML=marked.parse(limpiarEncoding(cont)).replace(/\[PENDIENTE[^\]]*\]/g,'<mark style="background:#fff3cd;padding:2px 6px;border-radius:3px;color:#856404;font-weight:700">$&</mark>');
     document.getElementById('resultado').style.display='block';
     document.getElementById('resultado').scrollIntoView({behavior:'smooth'});
   }
-
   // FIX ENCODING — limpia caracteres corruptos antes de exportar a Word
   function limpiarEncoding(texto){
     if(!texto)return texto;
@@ -595,12 +544,11 @@
       .replace(/√Å/g,'A').replace(/√â/g,'E').replace(/√Ö/g,'I').replace(/√ì/g,'O').replace(/√ü/g,'U')
       .replace(/√±/g,'n').replace(/√Ñ/g,'N').replace(/‚Äî/g,'—').replace(/‚Äì/g,'-')
       .replace(/‚Äú/g,'"').replace(/‚Äù/g,'"').replace(/‚Äò/g,"'").replace(/‚Äô/g,"'")
-      .replace(/√∂/g,'o').replace(/√ñ/g,'o').replace(/\u00e1/g,'a').replace(/\u00e9/g,'e')
-      .replace(/\u00ed/g,'i').replace(/\u00f3/g,'o').replace(/\u00fa/g,'u')
-      .replace(/\u00c1/g,'A').replace(/\u00c9/g,'E').replace(/\u00cd/g,'I').replace(/\u00d3/g,'O').replace(/\u00da/g,'U')
-      .replace(/\u00f1/g,'n').replace(/\u00d1/g,'N').replace(/\u00fc/g,'u');
+      .replace(/√∂/g,'o').replace(/√ñ/g,'o').replace(/á/g,'a').replace(/é/g,'e')
+      .replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u')
+      .replace(/Á/g,'A').replace(/É/g,'E').replace(/Í/g,'I').replace(/Ó/g,'O').replace(/Ú/g,'U')
+      .replace(/ñ/g,'n').replace(/Ñ/g,'N').replace(/ü/g,'u');
   }
-
   function descargar(cont,nombre='RIOHS'){
     if(!cont)return;
     const cp=cliente.color_primario||'#1B2E6E',cs=cliente.color_secundario||'#E87722';
@@ -610,11 +558,10 @@
       const blob=htmlDocx.asBlob(html,{orientation:'portrait',margins:{top:1440,right:1440,bottom:1440,left:1440}});
       const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${nombre}.docx`;a.click();
     }catch(e){
-      const blob=new Blob(['\ufeff',html],{type:'application/msword'});
+      const blob=new Blob(['﻿',html],{type:'application/msword'});
       const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${nombre}.doc`;a.click();
     }
   }
-
   function reiniciar(){
     contenido='';textoDoc='';seleccionadas.clear();alertas=[];alertasAplicadas=[];perfilEditorial=null;
     document.getElementById('resultado').style.display='none';
@@ -626,7 +573,6 @@
     if(tipo==='auditoria'){document.getElementById('uploadArea').classList.remove('ok');document.getElementById('uploadTxt').innerHTML='Haz clic para seleccionar el archivo<br><small>Formatos: .docx, .txt</small>';document.getElementById('inputArchivo').value=''}
     window.scrollTo({top:0,behavior:'smooth'});
   }
-
   function mostrarErr(msg){const el=document.getElementById('errMsg');el.textContent=msg;el.style.display='block'}
   init();
 </script>
