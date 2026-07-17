@@ -532,28 +532,51 @@
   }
   function mostrarResultado(cont,titulo){
     document.getElementById('resTit').textContent=`✅ ${titulo}`;
-    document.getElementById('riohsC').innerHTML=marked.parse(limpiarEncoding(cont)).replace(/\[PENDIENTE[^\]]*\]/g,'<mark style="background:#fff3cd;padding:2px 6px;border-radius:3px;color:#856404;font-weight:700">$&</mark>');
+    const cp=cliente.color_primario||'#1B2E6E',cs=cliente.color_secundario||'#E87722';
+    const logo=cliente.logo_url?`<div style="text-align:center;margin-bottom:1rem"><img src="${cliente.logo_url}" style="max-height:90px;max-width:260px"></div>`:'';
+    const portada=`${logo}<div style="text-align:center;padding-bottom:1.2rem;margin-bottom:1.5rem;border-bottom:2px solid ${cs}"><div style="font-size:.82rem;color:${cs};letter-spacing:2px;font-weight:700">REGLAMENTO INTERNO</div><div style="font-size:1.3rem;color:${cp};font-weight:700;line-height:1.3">DE ORDEN, HIGIENE Y SEGURIDAD</div><div style="font-size:1.05rem;color:${cp};font-weight:700;margin-top:.5rem">${cliente.razon_social||''}</div></div>`;
+    document.getElementById('riohsC').innerHTML=portada+marked.parse(limpiarEncoding(cont)).replace(/\[PENDIENTE[^\]]*\]/g,'<mark style="background:#fff3cd;padding:2px 6px;border-radius:3px;color:#856404;font-weight:700">$&</mark>');
     document.getElementById('resultado').style.display='block';
     document.getElementById('resultado').scrollIntoView({behavior:'smooth'});
   }
   // FIX ENCODING — limpia caracteres corruptos antes de exportar a Word
   function limpiarEncoding(texto){
     if(!texto)return texto;
+    // Corrige SOLO secuencias de mojibake (texto mal decodificado) devolviendo la
+    // letra acentuada correcta. NO elimina las tildes ni las ñ legítimas del texto.
     return texto
-      .replace(/√°/g,'a').replace(/√©/g,'e').replace(/√≠/g,'i').replace(/√≥/g,'o').replace(/√∫/g,'u')
-      .replace(/√Å/g,'A').replace(/√â/g,'E').replace(/√Ö/g,'I').replace(/√ì/g,'O').replace(/√ü/g,'U')
-      .replace(/√±/g,'n').replace(/√Ñ/g,'N').replace(/‚Äî/g,'—').replace(/‚Äì/g,'-')
-      .replace(/‚Äú/g,'"').replace(/‚Äù/g,'"').replace(/‚Äò/g,"'").replace(/‚Äô/g,"'")
-      .replace(/√∂/g,'o').replace(/√ñ/g,'o').replace(/á/g,'a').replace(/é/g,'e')
-      .replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u')
-      .replace(/Á/g,'A').replace(/É/g,'E').replace(/Í/g,'I').replace(/Ó/g,'O').replace(/Ú/g,'U')
-      .replace(/ñ/g,'n').replace(/Ñ/g,'N').replace(/ü/g,'u');
+      .replace(/√°/g,'á').replace(/√©/g,'é').replace(/√≠/g,'í').replace(/√≥/g,'ó').replace(/√∫/g,'ú')
+      .replace(/√Å/g,'Á').replace(/√â/g,'É').replace(/√ç/g,'Í').replace(/√ì/g,'Ó').replace(/√ö/g,'Ú')
+      .replace(/√±/g,'ñ').replace(/√Ñ/g,'Ñ').replace(/√º/g,'ü')
+      .replace(/‚Äî/g,'—').replace(/‚Äì/g,'–')
+      .replace(/‚Äú/g,'"').replace(/‚Äù/g,'"').replace(/‚Äò/g,"'").replace(/‚Äô/g,"'");
   }
-  function descargar(cont,nombre='RIOHS'){
+  // Convierte el logo (URL de Supabase Storage) a base64 para incrustarlo en el Word
+  let _logoCache=null;
+  async function getLogoDataURL(){
+    if(_logoCache!==null)return _logoCache;
+    if(!cliente||!cliente.logo_url){_logoCache='';return _logoCache}
+    try{
+      const resp=await fetch(cliente.logo_url);
+      const blob=await resp.blob();
+      _logoCache=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=()=>res('');fr.readAsDataURL(blob)});
+    }catch(e){console.warn('No se pudo cargar el logo del cliente:',e);_logoCache=''}
+    return _logoCache;
+  }
+  function buildPortada(logoData,cp,cs){
+    const fecha=new Date().toLocaleDateString('es-CL',{year:'numeric',month:'long',day:'numeric'});
+    const logo=logoData?`<img src="${logoData}" style="max-height:150px;max-width:340px;margin-bottom:28pt">`:'';
+    const rut=cliente.rut?`<div style="font-size:11pt;color:#555;margin-top:4pt">RUT: ${cliente.rut}</div>`:'';
+    const region=cliente.region?`<div style="font-size:11pt;color:#555;margin-top:2pt">${cliente.region}</div>`:'';
+    return `<div style="text-align:center;padding-top:70pt">${logo}<div style="font-size:13pt;color:${cs};letter-spacing:3pt;font-weight:bold;margin-bottom:6pt">REGLAMENTO INTERNO</div><div style="font-size:24pt;color:${cp};font-weight:bold;line-height:1.3">DE ORDEN, HIGIENE Y SEGURIDAD</div><div style="width:130pt;height:3pt;background:${cs};margin:22pt auto"></div><div style="font-size:18pt;color:${cp};font-weight:bold;margin-top:10pt">${cliente.razon_social||''}</div>${rut}${region}<div style="margin-top:60pt;font-size:10pt;color:#888">Preparado por Más Prevención · ${fecha}</div></div><div style="page-break-after:always"></div>`;
+  }
+  async function descargar(cont,nombre='RIOHS'){
     if(!cont)return;
     const cp=cliente.color_primario||'#1B2E6E',cs=cliente.color_secundario||'#E87722';
     const contLimpio=limpiarEncoding(cont);
-    const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.6;color:#333;margin:2cm}h1{color:${cp};font-size:18pt;border-bottom:3pt solid ${cs};padding-bottom:6pt;margin-bottom:12pt}h2{color:${cp};font-size:14pt;margin-top:18pt;margin-bottom:6pt}h3{color:${cs};font-size:12pt;margin-top:12pt;margin-bottom:4pt}p{margin-bottom:8pt;text-align:justify}table{width:100%;border-collapse:collapse;margin:10pt 0;font-size:10pt}th{background:${cp};color:white;padding:6pt 8pt;text-align:left;font-weight:bold}td{padding:5pt 8pt;border:1pt solid #ccc}tr:nth-child(even) td{background:#f5f5f5}strong{color:${cp}}ul,ol{margin:6pt 0 6pt 20pt}li{margin-bottom:3pt}hr{border:none;border-top:2pt solid ${cs};margin:12pt 0}mark{background:#fff3cd;padding:2px 6px;color:#856404;font-weight:bold}</style></head><body>${marked.parse(contLimpio)}</body></html>`;
+    let portada='';
+    if(nombre==='riohs'){portada=buildPortada(await getLogoDataURL(),cp,cs)}
+    const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.6;color:#333;margin:2cm}h1{color:${cp};font-size:18pt;border-bottom:3pt solid ${cs};padding-bottom:6pt;margin-bottom:12pt}h2{color:${cp};font-size:14pt;margin-top:18pt;margin-bottom:6pt}h3{color:${cs};font-size:12pt;margin-top:12pt;margin-bottom:4pt}p{margin-bottom:8pt;text-align:justify}table{width:100%;border-collapse:collapse;margin:10pt 0;font-size:10pt}th{background:${cp};color:white;padding:6pt 8pt;text-align:left;font-weight:bold}td{padding:5pt 8pt;border:1pt solid #ccc}tr:nth-child(even) td{background:#f5f5f5}strong{color:${cp}}ul,ol{margin:6pt 0 6pt 20pt}li{margin-bottom:3pt}hr{border:none;border-top:2pt solid ${cs};margin:12pt 0}mark{background:#fff3cd;padding:2px 6px;color:#856404;font-weight:bold}</style></head><body>${portada}${marked.parse(contLimpio)}</body></html>`;
     try{
       const blob=htmlDocx.asBlob(html,{orientation:'portrait',margins:{top:1440,right:1440,bottom:1440,left:1440}});
       const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${nombre}.docx`;a.click();
