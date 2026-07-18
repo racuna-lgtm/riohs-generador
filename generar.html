@@ -234,6 +234,17 @@
     if(nivel==='extenso')return SECS_EXTENSO;
     return SECS_INTERMEDIO;
   }
+  // Ensambla el reglamento: renumera los artículos de forma correlativa y continua
+  // en todo el documento, y antepone un encabezado uniforme a cada sección.
+  function ensamblarReglamento(partes, SECS){
+    let n=0;
+    const bloques=partes.map((texto,i)=>{
+      const t=(texto||'').replace(/Art[íi]culo\s+\d+\s*[°º]?\s*:/g,()=>{n++;return `Artículo ${n}°:`}).trim();
+      const label=(SECS[i]&&SECS[i].l?SECS[i].l:'').toUpperCase();
+      return (label?`## ${label}\n\n`:'')+t;
+    });
+    return bloques.join('\n\n');
+  }
   async function init(){
     const{data:{session}}=await db.auth.getSession();
     if(!session){window.location.href='index.html';return}
@@ -337,7 +348,7 @@
     document.getElementById('progBarra').style.width='100%';
     document.getElementById('progPct').textContent='100% ✅';
     document.getElementById('progTit').textContent='✅ RIOHS completo generado';
-    contenido=partes.join('\n\n---\n\n');
+    contenido=ensamblarReglamento(partes,SECS);
     await guardarDoc(contenido,'nuevo');
     setTimeout(()=>{
       document.getElementById('progreso').style.display='none';
@@ -441,7 +452,7 @@
     document.getElementById('progBarra').style.width='100%';
     document.getElementById('progPct').textContent='100% ✅';
     document.getElementById('progTit').textContent='✅ RIOHS actualizado con todos los cambios';
-    contenido=partes.join('\n\n---\n\n');
+    contenido=ensamblarReglamento(partes,SECS);
     await guardarDoc(contenido,'auditoria');
     setTimeout(()=>{
       document.getElementById('progreso').style.display='none';
